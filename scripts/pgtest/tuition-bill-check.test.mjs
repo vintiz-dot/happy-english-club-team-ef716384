@@ -479,5 +479,68 @@ console.log('\n5. the nightly rebuild no longer claims to refresh bills');
   ok('the hourly job is scheduled by the migration', /cron\.schedule\(\s*'refresh-month-bills'/.test(MIG) && /x-schedule-runner-secret/.test(MIG));
 }
 
+// ------------------------------ 6. no bill for a child who is not in the month
+// Owner, 24 Nov 2026: a child who left stays in their last month and is dropped
+// from the next. calculate-tuition saved a bill on every call, so opening a
+// departed child's page left an empty bill in every month anybody looked at.
+console.log('\n6. a child with no enrolment in the month gets no new bill');
+{
+  const G = Object.fromEntries(['Left Last Month', 'Left, Bill Exists', 'Never Enrolled', 'Left On The First', 'Starts Next Month', 'Left, Paying Late', 'Left, Family Asks']
+    .map((n, i) => [n, U(201 + i)]));
+  for (const [n, id] of Object.entries(G)) await db.query(`INSERT INTO public.students(id, full_name) VALUES ($1, $2)`, [id, n]);
+  const prevEnd = new Date(Date.parse(`${day(1)}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
+  const [yy, mm] = MONTH.split('-').map(Number);
+  const nextStart = mm === 12 ? `${yy + 1}-01-01` : `${yy}-${String(mm + 1).padStart(2, '0')}-01`;
+  const enrolG = (n, from, to) => db.query(
+    `INSERT INTO public.enrollments(student_id, class_id, start_date, end_date, created_at) VALUES ($1, $2, $3, $4, '2026-01-01T00:00:00Z')`, [G[n], CA, from, to]);
+  for (const n of ['Left Last Month', 'Left, Bill Exists', 'Left, Paying Late', 'Left, Family Asks']) await enrolG(n, '2025-01-01', prevEnd);
+  await enrolG('Left On The First', '2025-01-01', day(1));
+  await enrolG('Starts Next Month', nextStart, null);
+  await db.query(`INSERT INTO public.invoices(student_id, month, base_amount, total_amount) VALUES ($1, $2, 0, 0)`, [G['Left, Bill Exists'], MONTH]);
+  const billOf = async (n) => (await db.query(`SELECT * FROM public.invoices WHERE student_id = $1 AND month = $2`, [G[n], MONTH])).rows[0] ?? null;
+  const service = { isServiceRole: true, roles: new Set(['service_role']), userId: '' };
+  const callAs = async (who, body) => {
+    gate = who;
+    const res = await handlers['calculate-tuition'](post({ month: MONTH, ...body }));
+    return { status: res.status, body: await res.json() };
+  };
+
+  invoiceWritesFor = new Set();
+  let r = await callAs(service, { studentId: G['Left Last Month'] });
+  ok('left last month, no bill: answered, nothing charged, and NO bill is made',
+    r.status === 200 && r.body.baseAmount === 0 && r.body.totalAmount === 0 && r.body.invoiceSaved === false
+      && r.body.noBill?.reason === 'not_enrolled' && (await billOf('Left Last Month')) === null && invoiceWritesFor.size === 0, r.body);
+  r = await callAs({ isServiceRole: false, roles: new Set(['admin']), userId: ADMIN }, { studentId: G['Left Last Month'] });
+  ok('an admin opening that child\'s page makes no bill either', r.status === 200 && r.body.noBill?.reason === 'not_enrolled' && (await billOf('Left Last Month')) === null, r.body);
+  r = await callAs(service, { studentId: G['Never Enrolled'] });
+  ok('never enrolled: no bill', r.status === 200 && r.body.invoiceSaved === false && !!r.body.noBill && (await billOf('Never Enrolled')) === null, r.body);
+  r = await callAs(service, { studentId: G['Starts Next Month'] });
+  ok('starts on the 1st of next month: no bill this month', r.status === 200 && !!r.body.noBill && (await billOf('Starts Next Month')) === null, r.body);
+
+  r = await callAs(service, { studentId: G['Left On The First'] });
+  ok('last day is the 1st: still in the month, so the bill is saved as before',
+    r.status === 200 && r.body.invoiceSaved === true && r.body.noBill === undefined && (await billOf('Left On The First')) !== null, r.body);
+  r = await callAs(service, { studentId: G['Left, Bill Exists'] });
+  ok('a bill that already exists is refreshed as before, never dropped by this rule',
+    r.status === 200 && r.body.invoiceSaved === true && r.body.noBill === undefined && (await billOf('Left, Bill Exists')) !== null, r.body);
+
+  // A payment path asks for the bill it needs (record-payment sends createBill).
+  r = await callAs(service, { studentId: G['Left, Paying Late'], createBill: true });
+  const made = await billOf('Left, Paying Late');
+  ok('a payment path asks for one: the bill is made, at nothing charged',
+    r.status === 200 && r.body.invoiceSaved === true && r.body.noBill === undefined && made !== null && Number(made.base_amount) === 0 && Number(made.total_amount) === 0, { body: r.body, made });
+  r = await callAs({ isServiceRole: false, roles: new Set(['family']), userId: PARENT }, { studentId: G['Left, Family Asks'], createBill: true });
+  ok('a family cannot ask for one', r.status === 200 && !!r.body.noBill && (await billOf('Left, Family Asks')) === null, r.body);
+  r = await callAs({ isServiceRole: false, roles: new Set(['admin']), userId: ADMIN }, { studentId: G['Left, Family Asks'], createBill: true });
+  ok('an admin can', r.status === 200 && r.body.invoiceSaved === true && (await billOf('Left, Family Asks')) !== null, r.body);
+
+  ok('the check lists none of these children', (await gapsNow()).every((g) => !Object.values(G).includes(g.student_id)));
+  const m = await import(pathToFileURL(join(out, 'bill-refresh.mjs')).href);
+  ok('readRecalc: no bill and none due is not a failure', m.readRecalc(200, { invoiceSaved: false, noBill: { reason: 'not_enrolled' } }).ok === true);
+  ok('readRecalc: not saved for any other reason still is', m.readRecalc(200, { invoiceSaved: false, siblingUnresolved: true }).ok === false);
+  const rp = read('supabase', 'functions', 'record-payment', 'index.ts').replace(/\/\/[^\n]*/g, '');
+  ok('record-payment asks for the missing bill', /recalc\("price the missing bill", true\)/.test(rp) && /createBill: true/.test(rp));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

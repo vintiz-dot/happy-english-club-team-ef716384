@@ -103,9 +103,11 @@ Deno.serve(async (req) => {
   const occurredAt = input.occurredAt.length === 10 ? `${input.occurredAt}T12:00:00+07:00` : input.occurredAt;
 
   /** Ask calculate-tuition to price / refresh the bill; its failure is logged and returned, never thrown away. */
-  const recalc = async (why: string): Promise<string | null> => {
+  const recalc = async (why: string, createBill = false): Promise<string | null> => {
     try {
-      const { error } = await service.functions.invoke("calculate-tuition", { body: { studentId, month } });
+      const { error } = await service.functions.invoke("calculate-tuition", {
+        body: createBill ? { studentId, month, createBill: true } : { studentId, month },
+      });
       if (!error) return null;
       const detail = error.message ?? String(error);
       console.error(`[record-payment] calculate-tuition (${why}) for ${studentId} ${month}:`, detail);
@@ -137,7 +139,9 @@ Deno.serve(async (req) => {
       }
       // No bill yet: calculate-tuition prices and saves it (the one place
       // tuition is priced). Never a bill made from figures a screen sent.
-      const failed = await recalc("price the missing bill");
+      // createBill: a child not enrolled in the month gets no bill on a plain
+      // call (_lib/month-enrolment.ts); a payment for them needs one to go on.
+      const failed = await recalc("price the missing bill", true);
       if (!(await billExists())) {
         return respond({
           error: `There is no ${month} bill for ${student.full_name} and it could not be created${failed ? ` (calculate-tuition: ${failed})` : ""}. The family discount may still be being worked out. Nothing was recorded: try again in a minute.`,

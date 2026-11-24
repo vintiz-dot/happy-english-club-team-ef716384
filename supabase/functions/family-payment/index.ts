@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
       // the month); this function must not make one up to hold the money.
       const creditBills = (monthInvoices ?? []).filter((inv) => inv.student_id === creditStudentId);
       if (creditBills.length === 0) {
-        throw new Error(`The ${leftover} beyond what the bills owe goes on the first selected student's ${month} bill as credit, but they have no bill for ${month}. Nothing was recorded: open their tuition for ${month} first, or put a student who has one first.`);
+        throw new Error(`The ${leftover} beyond what the bills owe goes on the first selected student's ${month} bill as credit, but they have no bill for ${month}. Nothing was recorded: open their tuition for ${month} first, or put a student who has one first. (A child who was not enrolled in ${month} gets a bill only when a payment is recorded for that child alone.)`);
       }
       let target = allocations.find((a) => a.studentId === creditStudentId);
       if (!target) {
@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
     // instruction for it (it used to be dropped silently).
     for (const a of allocations) {
       if (a.amount > 0 && a.invoices.length === 0) {
-        throw new Error(`A student has no bill for ${month} to put ${a.amount} on; open their tuition for that month first`);
+        throw new Error(`A student has no bill for ${month} to put ${a.amount} on; open their tuition for that month first (a child who was not enrolled in ${month} gets a bill only when a payment is recorded for that child alone). Nothing was recorded.`);
       }
     }
 

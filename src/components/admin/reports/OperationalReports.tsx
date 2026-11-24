@@ -68,7 +68,7 @@ interface PayrollAnswer {
 /** calculate-tuition-bulk over the month's billed roster; results null when any chunk failed. */
 interface TuitionAnswer {
   ids: string[];
-  /** student -> the active classes they were enrolled in that month. */
+  /** student -> the classes they were enrolled in that month (archived since or not). */
   enrolledClasses: Map<string, string[]>;
   results: (BulkTuitionResult & ClassTuitionResult)[] | null;
 }

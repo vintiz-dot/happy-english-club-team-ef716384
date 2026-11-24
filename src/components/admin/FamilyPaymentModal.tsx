@@ -530,7 +530,8 @@ export function FamilyPaymentModal({ open, onClose }: FamilyPaymentModalProps) {
                       <p className="text-hec-small text-hec-ink-soft">
                         It is recorded on that student's {formData.month} bill (the first selected student); whatever is
                         above what that bill owes carries to their next bill as credit. They need a {formData.month} bill:
-                        open their tuition for that month first if they have none.
+                        open their tuition for that month first if they have none (a child who was not enrolled that month gets one
+                        only when a payment is recorded for that child alone).
                       </p>
                     </div>
                   </AlertDescription>

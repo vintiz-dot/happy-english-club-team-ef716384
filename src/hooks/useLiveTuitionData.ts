@@ -56,7 +56,7 @@ export function useLiveTuitionData(month: string) {
 
       const allStudentIds = allStudents.map((s) => s.id);
 
-      // Fetch enrollments for active classes to filter students
+      // The month's enrolments, in every class (one archived since still ran then)
       const enrollments = await fetchEnrollmentsInMonth(month, allStudentIds);
 
       // Map student to classes
@@ -69,7 +69,7 @@ export function useLiveTuitionData(month: string) {
         studentClasses.set(e.student_id, existing);
       });
 
-      // Filter to only students with active enrollments this month
+      // Only students with an enrolment this month
       const studentsWithEnrollments = allStudents.filter(
         (student) => (studentClasses.get(student.id) || []).length > 0
       );

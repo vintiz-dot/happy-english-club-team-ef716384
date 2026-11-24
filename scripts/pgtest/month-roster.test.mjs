@@ -82,5 +82,43 @@ for (const f of srcFiles) {
 }
 ok('RecordedPaymentManager leaves out empty bills of children not in the month', /billShownInMonth\(/.test(code(read('src', 'components', 'admin', 'RecordedPaymentManager.tsx'))));
 
+// The Deno side (supabase/functions/_lib/month-enrolment.ts): the same answer
+// as the browser rule on every case, and when calculate-tuition makes no bill.
+{
+  const f2 = join(dir, 'deno.mjs');
+  writeFileSync(f2, (await build({ entryPoints: [join(repo, 'supabase', 'functions', '_lib', 'month-enrolment.ts')], bundle: true, format: 'esm', write: false })).outputFiles[0].text);
+  const { enrolledInMonth, withoutBill, noBillAnswer } = await import(pathToFileURL(f2).href);
+  const days = ['2025-12-31', '2026-01-01', '2026-01-15', '2026-01-31', '2026-02-01', '2026-02-28', '2026-03-01', '2026-11-30', '2026-12-01', '2026-12-31', '2027-01-01'];
+  const months = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-11', '2026-12', '2027-01'];
+  let cases = 0; const differ = [];
+  for (const start of days) for (const end of [null, ...days]) for (const m of months) {
+    if (end !== null && end < start) continue;
+    cases++;
+    const row = { student_id: 'A', start_date: start, end_date: end };
+    if (enrolledInMonth([row], m) !== enrollmentCoversMonth(row, m)) differ.push([start, end, m]);
+  }
+  ok(`calculate-tuition's test of "in the month" agrees with the lists' on ${cases} cases`, cases > 300 && differ.length === 0, differ.slice(0, 5));
+  ok('no enrolments, or none given: not in the month', !enrolledInMonth([], '2026-11') && !enrolledInMonth(null, '2026-11'));
+  ok('one of several enrolments covering the month is enough', enrolledInMonth([e('A', '2025-01-01', '2025-06-30'), e('A', '2026-11-20')], '2026-11'));
+  const base = { hasSavedBill: false, enrolled: false, base: 0, total: 0, asked: false };
+  ok('no bill is made: none saved, not enrolled, nothing charged, nobody asked', withoutBill(base) === true);
+  ok('a saved bill is always refreshed', withoutBill({ ...base, hasSavedBill: true }) === false);
+  ok('an enrolled child always gets a bill, even at nothing charged', withoutBill({ ...base, enrolled: true }) === false);
+  ok('a charge always gets its bill', withoutBill({ ...base, base: 210000, total: 210000 }) === false && withoutBill({ ...base, base: 210000 }) === false);
+  ok('a payment path that asks gets one', withoutBill({ ...base, asked: true }) === false);
+  ok('the answer says why', noBillAnswer('2026-11').reason === 'not_enrolled' && /2026-11/.test(noBillAnswer('2026-11').message));
+  const calc = code(read('supabase', 'functions', 'calculate-tuition', 'index.ts'));
+  ok('calculate-tuition uses that rule before it saves', /withoutBill\(/.test(calc) && /!siblingPreview && !siblingUnresolved && !noBill/.test(calc));
+  ok('only the service role or an admin may ask for a bill', /createBill === true && \(gate\.isServiceRole \|\| gate\.roles\.has\("admin"\)\)/.test(calc));
+}
+
+// A class archived since still ran in its months: the Finance tab's roster
+// does not look at the class's "active" switch either.
+ok('the month\'s enrolments are read for every class, archived since or not', !/classes\.is_active"?\s*,\s*true/.test(helper));
+{
+  const g = code(read('src', 'components', 'admin', 'GenerateTuition.tsx'));
+  ok('Generate Tuition picks children by enrolment, not by the active switch', !/is_active|deactivated_at/.test(g) && /\.lte\("start_date"/.test(g));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

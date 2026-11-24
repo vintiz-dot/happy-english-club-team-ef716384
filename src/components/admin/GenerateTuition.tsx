@@ -24,23 +24,18 @@ export function GenerateTuition() {
 
       const { data: enrollments, error: enrollError } = await supabase
         .from("enrollments")
-        .select(`student_id, students(id, full_name, is_active, deactivated_at)`)
+        .select(`student_id, students(id, full_name)`)
         .lte("start_date", monthEndStr)
         .or(`end_date.is.null,end_date.gte.${monthStartStr}`);
 
       if (enrollError) throw enrollError;
 
-      // Month-aware: generate for whoever was on the roster during this
-      // month, not just whoever is still here today. Regenerating an old
-      // month must not drop a student who has left since.
+      // Whoever has an enrolment covering a day of this month (the rule of
+      // src/lib/finance/monthRoster.ts, which the query above applies). The
+      // "active" switch and the Deactivate date decide nothing: a child who
+      // was enrolled then is billed for then, whenever they were deactivated.
       const activeStudentIds = Array.from(
-        new Set(
-          enrollments
-            ?.filter((e: any) =>
-              e.students?.is_active ||
-              (e.students?.deactivated_at && e.students.deactivated_at >= monthStartStr))
-            .map((e: any) => e.student_id) || []
-        )
+        new Set((enrollments ?? []).map((e: any) => e.student_id).filter(Boolean)),
       );
 
       if (activeStudentIds.length === 0) {

@@ -101,6 +101,9 @@ export function readRecalc(status: number, body: any): RecalcOutcome {
     if (body.held.priced_as_charged === true) return { ok: true, note: { lessons, message } };
     return { ok: false, held: { lessons, message } };
   }
+  // No bill and none due: the child is not enrolled in the month and nothing is
+  // charged (_lib/month-enrolment.ts). There is nothing to save, so nothing failed.
+  if (body?.noBill && typeof body.noBill === "object") return { ok: true };
   if (body?.invoiceSaved === false) {
     return {
       ok: false,

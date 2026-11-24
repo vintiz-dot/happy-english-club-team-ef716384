@@ -76,7 +76,11 @@ export async function fetchStudentsInMonth(month: string): Promise<StudentInMont
 }
 
 /**
- * Enrollments in active classes that overlap `month`, for the given students.
+ * Enrollments that overlap `month`, for the given students, in every class:
+ * one that was archived later still ran then, and its children were billed.
+ * (Until 24 Nov 2026 this kept only classes active TODAY, so a child whose
+ * only class was archived since was missing from that past month: 1 to 4
+ * children a month, Oct 2025 to Jan 2026, all with paid bills.)
  */
 export async function fetchEnrollmentsInMonth(
   month: string,
@@ -89,7 +93,6 @@ export async function fetchEnrollmentsInMonth(
     .from("enrollments")
     .select("student_id, class_id, classes!inner(id, name, is_active)")
     .in("student_id", studentIds)
-    .eq("classes.is_active", true)
     .lte("start_date", monthEnd)
     .or(`end_date.is.null,end_date.gte.${monthStart}`);
 
@@ -98,9 +101,9 @@ export async function fetchEnrollmentsInMonth(
 }
 
 /**
- * The billable roster for `month`: students who belong to that month and
- * whose enrollment is in an active class. This is the set every finance
- * aggregate and month-close should operate on.
+ * The billable roster for `month`: students with an enrolment covering a day
+ * of it, in a class active today or archived since. This is the set every
+ * finance aggregate and month-close should operate on.
  */
 export async function fetchBilledStudentIds(month: string): Promise<string[]> {
   const students = await fetchStudentsInMonth(month);

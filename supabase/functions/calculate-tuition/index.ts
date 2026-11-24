@@ -9,6 +9,7 @@ import { classFeeOn, readClassFeeHistory } from "../_lib/class-fee.ts";
 import { explainPayment, priceStudentMonth, type MonthDiscount, type PaymentExplained } from "../_lib/tuition-pricing.ts";
 import { refreshableMonths } from "../_lib/bill-refresh.ts";
 import { clockNow } from "../_lib/clock.ts";
+import { enrolledInMonth, noBillAnswer, withoutBill } from "../_lib/month-enrolment.ts";
 import {
   decidePastMonth,
   figuresOf,
@@ -113,9 +114,12 @@ Deno.serve(async (req) => {
       // (_lib/past-month-hold.ts). Ignored for anyone else.
       force: z.boolean().optional().default(false),
       reason: z.string().max(500).optional(),
+      // A payment path needs a bill to put money on, for a child who is not
+      // enrolled in the month (_lib/month-enrolment.ts). Service role or admin only.
+      createBill: z.boolean().optional().default(false),
     });
 
-    const { studentId, month, siblingPreview, force, reason } = InputSchema.parse(await req.json());
+    const { studentId, month, siblingPreview, force, reason, createBill } = InputSchema.parse(await req.json());
     if (siblingPreview && !gate.isServiceRole) {
       return new Response(JSON.stringify({ error: "Internal preview only" }), { status: 403, headers: corsHeaders });
     }
@@ -693,7 +697,18 @@ Deno.serve(async (req) => {
 
     // Never save a bill while the family discount is still being decided:
     // that would overwrite the stored invoice without the discount.
-    const writeInvoice = !siblingPreview && !siblingUnresolved;
+    // Nor a NEW bill for a month the child has no enrolment in and nothing is
+    // charged (_lib/month-enrolment.ts): opening a departed child's page left an
+    // empty bill in every month anybody looked at. A bill that exists is
+    // refreshed as before, and a payment path may ask for one (createBill).
+    const noBill = !siblingPreview && withoutBill({
+      hasSavedBill: !!savedInvoice,
+      enrolled: enrolledInMonth(enrollments, month),
+      base: computed.base,
+      total: computed.total,
+      asked: createBill === true && (gate.isServiceRole || gate.roles.has("admin")),
+    });
+    const writeInvoice = !siblingPreview && !siblingUnresolved && !noBill;
     let invoiceUpsertOk = true;
     let invoiceErrorMsg = "";
     // A held or kept bill is not repriced: only what changed in its labels, flags
@@ -812,6 +827,8 @@ Deno.serve(async (req) => {
       siblingState,
       siblingUnresolved,
       invoiceSaved: writeInvoice,
+      // No bill was made: the child is not enrolled in this month and nothing is charged.
+      ...(noBill ? { noBill: noBillAnswer(month) } : {}),
       tuitionFrozen,
       // The whole month as today's pricing gives it (the saved bill when it is
       // not held or frozen), and, for staff, the lessons already held.
