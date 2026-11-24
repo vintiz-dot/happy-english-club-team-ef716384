@@ -9,7 +9,7 @@ import type { UnitLab } from "@/lib/lessonDecks/lab";
 // and repeats, never from the book pages or the grammar. All text is original.
 
 const correct =
-  "During the rounds, listen and do not stop the talk. Note two or three mistakes you hear (no names). After the last round, write them on the board and let the class fix them together. When a child asks for help in a round, prompt before you tell: point to the frame, start the phrase and pause ('Do you ...?'), or hold up a finger for the missing word.";
+  "During a round, listen and do not stop the talk. Note two or three grammar mistakes you hear (no names). Between rounds 1 and 2, write them on the board and let the class fix them in one minute: children who then say the same thing again use the fixed form. For grammar, prompt the child to fix it (point to the frame, start the phrase and pause: 'Do you ...?', or hold up a finger for the missing -s) rather than saying it for them; for a sound, just say it right and let them echo it. Say every final -s clearly yourself: children copy what they hear.";
 
 export const odL1U10Lab: UnitLab = {
   decks: {
@@ -264,9 +264,9 @@ export const odL1U10Lab: UnitLab = {
             ],
             steps: [
               "Stand in two lines facing each other. Line A talks first.",
+              "Teacher: after round 1, stop for one minute. Put two mistakes you heard on the board and fix them together; then go on.",
               "When the bell rings, line B moves one step to the left: a new partner.",
               "Line B talks next with the same three rounds.",
-              "Teacher: after both lines, put two mistakes on the board and fix them together, then let the class say one fixed sentence fast.",
             ],
             feedback: correct,
             teacherNote: "Same talk, less time, new listener: the 4/3/2 activity scaled for six-year-olds. The new partner keeps the repetition real. Do not add new language between rounds; the gain comes from saying the same thing more fluently.",
