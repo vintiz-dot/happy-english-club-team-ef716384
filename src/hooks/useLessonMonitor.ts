@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ChunkRow } from "@/lib/lessonMonitor";
+import type { GroupRow, VoiceAnswer } from "@/lib/lessonMonitorVoices";
 
 // The lesson monitor pilot's tables and functions (20261117090000) are not in
 // the generated types yet.
@@ -123,6 +124,50 @@ export function useSetTargets() {
       if (error) throw error;
     },
     onSuccess: done,
+  });
+}
+
+/** A report's voice groups and the teacher's answers (20261124120000). Empty before that migration is pasted. */
+export function useVoiceGroups(reportId: string | null) {
+  return useQuery({
+    queryKey: ["lesson-monitor", "voices", reportId],
+    enabled: !!reportId,
+    retry: false,
+    queryFn: async (): Promise<GroupRow[]> => {
+      const { data, error } = await db.from("lesson_monitor_voice_groups")
+        .select("group_key, seconds, line_count, suggested_student, suggested_score, answer, student_id")
+        .eq("report_id", reportId);
+      if (error) return [];
+      return ((data ?? []) as GroupRow[]).map((r) => ({ ...r, seconds: Number(r.seconds) }));
+    },
+  });
+}
+
+/** The children of the lesson, for naming voices (staff of the lesson only). */
+export function useLessonRoster(sessionId: string | null) {
+  return useQuery({
+    queryKey: ["lesson-monitor", "roster", sessionId],
+    enabled: !!sessionId,
+    staleTime: 10 * 60_000,
+    retry: false,
+    queryFn: async (): Promise<{ id: string; name: string }[]> => {
+      const { data, error } = await db.rpc("lesson_speaker_roster", { p_session: sessionId });
+      if (error) return [];
+      return ((data ?? []) as { student_id: string; full_name: string }[]).map((k) => ({ id: k.student_id, name: k.full_name }));
+    },
+  });
+}
+
+export function useNameVoiceGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { reportId: string; group: string; answer: VoiceAnswer | null; childId?: string | null }) => {
+      const { error } = await db.rpc("lesson_monitor_name_voice_group", {
+        p_report: v.reportId, p_group: v.group, p_answer: v.answer, p_student: v.answer === "child" ? v.childId ?? null : null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ["lesson-monitor", "voices", v.reportId] }),
   });
 }
 

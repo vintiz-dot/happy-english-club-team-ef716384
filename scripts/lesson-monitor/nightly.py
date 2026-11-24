@@ -43,6 +43,8 @@ import json
 import shutil
 import sys
 import time
+
+import numpy as np
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -50,6 +52,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pilot_common as pc  # noqa: E402
 import plan  # noqa: E402
 import report  # noqa: E402
+import voiceprints  # noqa: E402
+
+# The voice step (24 Nov 2026). None = off: the voiceprint migration (20261124120000) is not pasted,
+# or this run could not reach its consent list. main() sets it; tests set it directly.
+VOICE: dict | None = None
 
 FINAL_REFUSALS = ("consent_missing", "other_teacher", "no_teacher")
 
@@ -251,6 +258,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             {"room_until_s": lv_room["until_s"], "teacher_until_s": lv_teacher["until_s"]},
             dict(transcribe.settings(), job=pc.JOB_VERSION, step0_talk=bool(step0.get("talk_pass"))),
             offset_s=window[0])
+        vres = run_voice(api, row, folder / "room16k.wav", body, lv_teacher, lv_room, window, duration, guard)
     except transcribe.Stopped:
         left = delete_audio_copy(folder, room)
         remove_draft(rid)
@@ -294,6 +302,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
                                                "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
         pc.log(f"{rid} report saved for the lesson's teacher")
+        finish_voice(api, row, vres)
         request_lesson_report(api, row)
         return "saved"
     except ApiError as e:
@@ -303,6 +312,128 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             return "draft"
         pc.log(f"{rid} refused by the database: {e.message}; nothing kept")
         return "refused"
+
+
+# ------------------------------------------------------------------ voices
+def prepare_voice(api) -> dict | None:
+    """Once per run: which children may have a voiceprint, delete every other, learn from the
+    teacher's answers since the last run. Off (None) when the database has no voiceprint step."""
+    from supa import ApiError
+    try:
+        allowed = {r["student_id"] for r in (api.rpc("lesson_monitor_voiceprint_allowed") or [])}
+    except ApiError as e:
+        pc.log(f"voices: off (the voiceprint consent list could not be read, HTTP {e.status})")
+        return None
+    gone = voiceprints.sync_allowed(allowed)
+    if gone:
+        pc.log(f"voices: {gone} voiceprint(s) deleted (consent withdrawn or not recorded)")
+    old = voiceprints.expire_pending(date.today())
+    if old:
+        pc.log(f"voices: {old} unanswered lessons' voice groups past 30 days deleted")
+    ctx = {"allowed": allowed, "embedder": None}
+    learn_from_answers(api, ctx)
+    return ctx
+
+
+def learn_from_answers(api, ctx: dict) -> int:
+    """The teacher's answers in the app become voice samples of the child they named (only a child
+    whose voiceprint consent stands). A changed answer first takes the old samples back out."""
+    from supa import ApiError
+    try:
+        answers = api.rpc("lesson_monitor_voice_answers", {"p_limit": 500}) or []
+    except ApiError as e:
+        pc.log(f"voices: answers not read (HTTP {e.status})")
+        return 0
+    by_rec: dict[str, list] = {}
+    for a in answers:
+        by_rec.setdefault(a["recording_id"], []).append(a)
+    learned = 0
+    for rid, rows in by_rec.items():
+        pend = (voiceprints.load_pending(rid) or {}).get("groups", {})
+        for a in rows:
+            voiceprints.remove_tag(rid, a["group_key"])
+            g = pend.get(a["group_key"])
+            if a.get("may_learn") and g and a.get("student_id") in ctx["allowed"]:
+                learned += voiceprints.add(a["student_id"], [(np.array(g["e"]), g["s"])], "answer", rid, a["group_key"])
+            if a.get("suggested_student"):
+                voiceprints.note_calibration({"rid": rid, "g": a["group_key"], "suggested": a["suggested_student"],
+                                              "score": a.get("suggested_score"), "answer": a.get("answer"),
+                                              "student": a.get("student_id"),
+                                              "agreed": a.get("answer") == "child" and a.get("student_id") == a["suggested_student"]})
+        try:
+            api.rpc("lesson_monitor_voice_learned", {"p_recording": rid, "p_groups": [a["group_key"] for a in rows]})
+        except ApiError:
+            pass
+    if answers:
+        pc.log(f"voices: {len(answers)} answer(s) read, {learned} voice sample(s) learned")
+    return learned
+
+
+def run_voice(api, row, wav: Path, body: dict, lv_teacher: dict, lv_room: dict, window, duration: float, guard):
+    """Who said each line, while the lesson's audio is still on the laptop. Adds "m" (tapped child) and
+    "g" (voice group) to lines and body["voice"]; returns what finish_voice keeps once the report is saved.
+    Never fails the lesson: a problem leaves the report as it was and logs a code."""
+    if VOICE is None:
+        return None
+    import levels
+    import transcribe
+    import voice
+    rid = row["recording_id"]
+    try:
+        labels = None
+        if lv_teacher.get("db") is not None and lv_room.get("db") is not None:
+            labels = levels.label_seconds(lv_teacher["db"], lv_room["db"], levels.MID_MARGIN_DB,
+                                          lv_teacher.get("cov"), lv_room.get("cov"))
+        marks = api.select("lesson_speaker_marks", {"session_id": f"eq.{row.get('session_id')}", "recording_id": f"eq.{rid}",
+                                                     "select": "kind,student_ids,offset_ms", "order": "at.asc"}) or []
+        marks = [{"kind": m["kind"], "student_ids": m.get("student_ids") or [], "t_s": m["offset_ms"] / 1000.0 - window[0]}
+                 for m in marks if m.get("offset_ms") is not None]
+        turns = voice.tap_turns(marks, duration, labels)
+        if VOICE.get("embedder") is None:
+            VOICE["embedder"] = voice.Embedder()
+        prints = voiceprints.centroids(VOICE["allowed"], voice.SETTINGS["enrol_min_s"])
+        if guard.should_stop():
+            raise transcribe.Stopped()
+        res = voice.analyse(transcribe.read_wav16k(str(wav)), body["lines"], turns, VOICE["embedder"], prints, labels)
+        res["samples"] = {sid: v for sid, v in res["samples"].items() if sid in VOICE["allowed"]}
+        for i, sid in res["tapped"].items():
+            body["lines"][i]["m"] = sid
+        for i, key in res["group_of"].items():
+            body["lines"][i]["g"] = key
+        body["voice"] = voice.body_part(res)
+        n_sug = sum(1 for g in res["groups"] if g["suggested"])
+        pc.log(f"{rid} voices: {len(turns)} tapped turns, {len(res['groups'])} voice groups, {n_sug} with a suggestion, "
+               f"{len(prints)} children known by voice")
+        return res
+    except transcribe.Stopped:
+        raise
+    except Exception as e:  # noqa: BLE001 - the report goes without voices rather than not at all
+        pc.log(f"{rid} voices skipped: error_{type(e).__name__.lower()}"[:120])
+        body.pop("voice", None)
+        for ln in body["lines"]:
+            ln.pop("m", None)
+            ln.pop("g", None)
+        return None
+
+
+def finish_voice(api, row: dict, res) -> None:
+    """After the report is saved: its groups to the database (for the teacher to name), the groups'
+    embeddings kept encrypted here until answered, tapped turns of children with consent into their voiceprints."""
+    from supa import ApiError
+    if not res:
+        return
+    rid = row["recording_id"]
+    try:
+        api.rpc("lesson_monitor_save_voice_groups", {"p_recording": rid, "p_groups": [
+            {"key": g["key"], "seconds": g["seconds"], "lines": len(g["lines"]), "suggested": g["suggested"], "score": g["score"]}
+            for g in res["groups"]]})
+    except ApiError as e:
+        pc.log(f"{rid} voice groups not saved (HTTP {e.status}); the report has none to name")
+        return
+    voiceprints.save_pending(rid, row["session_date"], {g["key"]: (g["vec"], g["seconds"]) for g in res["groups"]})
+    n = sum(voiceprints.add(sid, items, "tap", rid) for sid, items in res["samples"].items())
+    if n:
+        pc.log(f"{rid} voices: {n} voice sample(s) of {len(res['samples'])} child(ren) learned from taps")
 
 
 def request_lesson_report(api, row: dict) -> None:
@@ -380,6 +511,8 @@ def main(argv=None) -> int:
     api = supa.open_api(a.token)
     if a.token:
         print("Pasted token: it cannot be refreshed. Reports that cannot be saved in time stay as local drafts.")
+    global VOICE
+    VOICE = prepare_voice(api)
     gone = purge_local_drafts(api)
     if gone:
         pc.log(f"start: {gone} local drafts deleted (class switched off, consent withdrawn or missing, or recording gone)")

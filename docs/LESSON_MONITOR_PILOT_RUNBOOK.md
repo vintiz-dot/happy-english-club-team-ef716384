@@ -205,3 +205,43 @@ When the evaluation itself ends, delete its data too: `delete_voiceprints.py --y
 - **Step 0** obeys the kill switch, goes through the same database check as the job (`lesson_monitor_begin`, which also writes the audit line), and deletes the 5-minute audio and the sheets when it fails and when you run `step0.py score` (only `result.json` stays).
 - Voice groups (design feature D) and per-child stretches (E) are not built. Option A as approved names nobody, so neither is needed.
 - The class recorder must keep working as it does now. The pilot only reads what it stores.
+
+## 10. Voices: who said each line (added 24 Nov 2026, design Option B)
+
+You asked for this on 24 Nov 2026 ("include voice biometrics"). It changes one line of section 5: with voices switched on, the report **does** put children's names on lines. A name comes from the teacher's tap, from the teacher's answer, or, shown as a question ("Bee?"), from the computer's guess.
+
+**What it can do (measured before it was built, test B2 in the design):** a short answer of 2 seconds is recognised about 1 time in 6. A child who speaks for 8 seconds or more is recognised about 8 times in 10, and the wrong child is named about 1 time in 100. When children talk over each other, a voice group may hold more than one child. So most short answers stay unnamed until the teacher names their group, and every guess waits for the teacher's yes.
+
+**Set-up, once:**
+1. Paste `supabase/migrations/20261124120000_lesson_monitor_voiceprints.sql` in the SQL editor. Until you do, the job prints `voices: off` and reports look as before.
+2. For each class, record the **voiceprint** consent. It is separate from the monitor consent, so a parent can refuse one and keep the other. Record it only when you hold that signed line for every child:
+   ```powershell
+   PY scripts\lesson-monitor\voice_admin.py consent-all --class-id <class id> --note "signed voiceprint lines, office folder M"
+   ```
+   A single child's withdrawal: `voice_admin.py consent --student-id <id> --withdrawn --note "parent phoned <date>"`. This clears that child from every guess at once and deletes the child's voiceprint on this laptop.
+3. Teach the laptop each child's voice. In a recorded lesson, open **Who's speaking** on the recorder screen, tap one child, let them talk for about a minute (introduce themselves, read a page), then tap the next child. The overnight job learns each tapped turn of a child with voiceprint consent. Check who is known well enough: `voice_admin.py list` shows each child's seconds of voice. A child is compared only after 20 seconds; a minute or more is better.
+
+**Each night, nothing new to do:** `nightly.py` now also:
+- deletes the voiceprint of any child without voiceprint consent;
+- learns from the voices the teacher named in the app since the last run;
+- groups each lesson's children's lines by voice and guesses a name only when one child is clearly closest.
+
+It adds about 1-2 seconds per child's line (the voice model loads once, in about 40 seconds).
+
+**Tapping during a lesson is now lighter:** a tap on a child means "this child now". The next child's tap ends the last one's turn, so nobody needs tapping off. The teacher never taps themself, because their microphone shows when they speak. A child's turn ends on its own when the teacher speaks, or after a minute. Hold a name to add a second child for a conversation.
+
+**What the teacher sees:** under the summary, **Voices in this lesson**. Each voice group shows a few of its lines (click a time to listen), the computer's guess ("Sounds like Bee?") or "not sure", and buttons: **Yes, Bee**, another child, **Several voices**, **Me (the teacher)**, **Don't know**. One answer names every line of that group in the transcript, and **Change** undoes it. A named child with voiceprint consent becomes better known to the laptop, and a changed answer takes the wrong voice samples back out.
+
+**Is it getting it right?** `voice_admin.py accuracy` counts the guesses the teacher answered: how many were the right child, another child, or not one child. If "another child" is more than about 1 in 20, raise the threshold in `scripts/lesson-monitor/voice.py` (`group_threshold`) and tell me.
+
+**Where the voiceprints are, and deleting them:** they are only on this laptop, in `pilot\voiceprints\`, encrypted with Windows (DPAPI) for the `hec-pilot` account, so a copy is unreadable on another computer or account. They are numbers made from voices, not audio, but they are still a child's biometric data. To delete them:
+- one child: `voice_admin.py delete --student-id <id>`;
+- all: `voice_admin.py delete --all --yes`;
+- `delete_pilot.py` deletes them along with everything else under `pilot\`.
+
+In the app, the voice groups are deleted with their report (30 days, a withdrawal, the teacher's delete, delete everything). `delete_pilot.py --consents` also deletes the voiceprint consents.
+
+**Not proven yet:**
+- How well it recognises voices on real lessons with in-class enrolment. B2 measured made-up mixes, and real lessons then named 0 of 12 groups without enrolment. The first weeks' `accuracy` will tell.
+- The thresholds are B2's, not tuned on your classes.
+- DPAPI was checked on this laptop's own account, not on `hec-pilot`.

@@ -47,6 +47,23 @@ console.log('\n1. tapping');
   ok('a mark row with two children reads as a conversation', S.isConversation({ kind: 'student', student_ids: ['x', 'y'] }) && !S.isConversation({ kind: 'student', student_ids: ['x'] }));
 }
 
+console.log('\n1b. quicker taps (24 Nov 2026): a tap replaces, a hold adds');
+{
+  let s = S.tapOne(S.NOBODY, { kind: 'student', id: 'a' });
+  ok('a tap: that child speaks', s.kind === 'student' && s.studentIds.join() === 'a');
+  s = S.tapOne(s, { kind: 'student', id: 'b' });
+  ok('the next child\'s tap ends the last one\'s turn (no tapping off)', s.studentIds.join() === 'b' && !S.isConversation(s));
+  s = S.tap(s, { kind: 'student', id: 'c' });
+  ok('a hold adds a second child: a conversation', s.studentIds.join() === 'b,c' && S.isConversation(s));
+  s = S.tapOne(s, { kind: 'student', id: 'c' });
+  ok('tapping a speaking child in a conversation stops only that child', s.studentIds.join() === 'b');
+  s = S.tapOne(s, { kind: 'student', id: 'b' });
+  ok('tapping the one speaking child stops them: nobody', s.kind === 'stop');
+  ok('the teacher and chorus tiles behave as before', S.tapOne(S.NOBODY, { kind: 'chorus' }).kind === 'chorus');
+  const panel = read('src', 'components', 'speakers', 'SpeakerTapPanel.tsx');
+  ok('the board: a plain tap is tapOne, a long press is tap', /onClick=\{\(\) => void send\(tapOne\(state, \{ kind: "student"/.test(panel) && /onLongPress=\{\(\) => void send\(tap\(state, \{ kind: "student"/.test(panel));
+}
+
 console.log('\n2. the label');
 {
   const names = { a: 'An', b: 'Binh' };

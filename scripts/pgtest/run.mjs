@@ -49,6 +49,7 @@ const SUITES = [
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
   // Who's speaking on the recorder screen: tap on / off, two or more = conversation, present children only.
   { name: "speaker board", file: "speaker-board.test.mjs", migrations: [] },
+  { name: "lesson monitor voices view", file: "lesson-monitor-voices-view.test.mjs", migrations: [] },
   // Vocabulary: 10 new words a Hanoi day, held by the database; the word bank only through save-word.
   { name: "vocab daily cap", file: "vocab-daily-cap.test.mjs", migrations: [] },
   // A bill's paid figure moves only with a payment behind it (audit phase 1).
@@ -365,6 +366,7 @@ const SUITES = [
   // Lesson reports (21 Nov 2026): the contract, then each stage's migration (2026112113xxxx_lesson_report_*).
   { name: "lesson reports", file: "lesson-reports.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121131000_lesson_report_family.sql", "20261121132000_lesson_report_quiz.sql"] },
   // Who's speaking (21 Nov 2026): staff tap who talks during a recorded lesson.
+  { name: "lesson monitor voiceprints", file: "lesson-monitor-voiceprints.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261124120000_lesson_monitor_voiceprints.sql"] },
   { name: "lesson speaker marks", file: "lesson-speaker-marks.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121140000_lesson_speaker_marks.sql"] },
   // Course book lessons: what a lesson set out to teach, given to the report draft as context.
   { name: "curriculum lessons", file: "curriculum-lessons.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261121130000_lesson_reports.sql", "20261121150000_curriculum_lessons.sql", "20261121151000_od2e_level3_lessons.sql", "20261122100000_od2e_level1_lessons.sql", "20261122101000_od2e_level2_lessons.sql", "20261122130000_reach_higher_3a_lessons.sql", "20261122160000_reach_higher_3b_lessons.sql"] },

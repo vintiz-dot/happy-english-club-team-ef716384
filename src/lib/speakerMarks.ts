@@ -20,6 +20,25 @@ export function tap(cur: SpeakerState, tile: { kind: "teacher" | "chorus" } | { 
   return next.length ? { kind: "student", studentIds: next } : NOBODY;
 }
 
+/**
+ * 24 Nov 2026 (owner: tapping on and off was tedious). A plain tap on a child
+ * is "now THIS child speaks": it replaces whoever was marked, so the next
+ * child's tap ends the last one's turn and nobody needs tapping off. The
+ * teacher's own turns come from their microphone overnight, and a child's
+ * turn ends there on its own when the teacher speaks. Tapping the one child
+ * who is speaking stops them. A long press adds a child to whoever is
+ * speaking: a conversation (`tap`).
+ */
+export function tapOne(cur: SpeakerState, tile: { kind: "teacher" | "chorus" } | { kind: "student"; id: string }): SpeakerState {
+  if (tile.kind !== "student") return tap(cur, tile);
+  const ids = cur.kind === "student" ? cur.studentIds : [];
+  if (ids.includes(tile.id)) {
+    const rest = ids.filter((x) => x !== tile.id);
+    return rest.length ? { kind: "student", studentIds: rest } : NOBODY;
+  }
+  return { kind: "student", studentIds: [tile.id] };
+}
+
 /** "1:05:09" / "4:07" into the recording. */
 export function offsetLabel(ms: number | null | undefined): string {
   if (ms == null || !Number.isFinite(ms)) return "";

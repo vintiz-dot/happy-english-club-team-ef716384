@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CircleDot, GraduationCap, Loader2, MessagesSquare, MicOff, Undo2, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import {
-  isConversation, NOBODY, offsetLabel, presentChildren, speakingLabel, stateOf, tap,
+  isConversation, NOBODY, offsetLabel, presentChildren, speakingLabel, stateOf, tap, tapOne,
   type SpeakerKind, type SpeakerState,
 } from "@/lib/speakerMarks";
+
+const LONG_PRESS_MS = 450;
 
 /**
  * Who's speaking: tap a child when they start speaking, tap again when they
@@ -175,7 +177,10 @@ export function SpeakerTapPanel({ sessionId, embedded = false }: { sessionId: st
           </span>
         </div>
       ) : null}
-      <p className="text-sm text-muted-foreground">Tap a child when they start speaking, tap again when they stop. Two or more at once is a conversation.</p>
+      <p className="text-sm text-muted-foreground">
+        Tap the child who starts speaking; tapping the next child ends the last one's turn. No need to tap yourself: your microphone shows when you speak.
+        Hold a name to add a second child (a conversation). To learn a child's voice, tap them and let them talk for about a minute.
+      </p>
       {nowLine}
 
       <div className={cn("grid gap-2", embedded ? "grid-cols-2" : "grid-cols-2 gap-3")}>
@@ -192,7 +197,8 @@ export function SpeakerTapPanel({ sessionId, embedded = false }: { sessionId: st
           <div className={cn("grid gap-2", embedded ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 gap-3")}>
             {kids.map((k) => (
               <Tile key={k.student_id} small={embedded} on={isOn("student", k.student_id)} disabled={busy}
-                onClick={() => void send(tap(state, { kind: "student", id: k.student_id }))}>
+                onClick={() => void send(tapOne(state, { kind: "student", id: k.student_id }))}
+                onLongPress={() => void send(tap(state, { kind: "student", id: k.student_id }))}>
                 {k.avatar_url
                   ? <img src={k.avatar_url} alt="" className={cn("rounded-full object-cover", embedded ? "h-9 w-9" : "h-14 w-14")} />
                   : <span className={cn("rounded-full bg-muted text-foreground flex items-center justify-center font-bold", embedded ? "h-9 w-9 text-base" : "h-14 w-14 text-xl")}>{k.full_name.slice(0, 1)}</span>}
@@ -214,10 +220,25 @@ export function SpeakerTapPanel({ sessionId, embedded = false }: { sessionId: st
   );
 }
 
-function Tile({ on, disabled, small, onClick, children }: { on: boolean; disabled?: boolean; small?: boolean; onClick: () => void; children: React.ReactNode }) {
+function Tile({ on, disabled, small, onClick, onLongPress, children }: {
+  on: boolean; disabled?: boolean; small?: boolean; onClick: () => void; onLongPress?: () => void; children: React.ReactNode;
+}) {
+  // A hold of LONG_PRESS_MS is the long press; the click that follows it is swallowed.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const held = useRef(false);
+  const clear = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; };
   return (
-    <button type="button" onClick={onClick} disabled={disabled} aria-pressed={on}
-      className={cn("rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 font-semibold transition-colors select-none touch-manipulation disabled:opacity-70",
+    <button type="button" disabled={disabled} aria-pressed={on}
+      onClick={() => { if (held.current) { held.current = false; return; } onClick(); }}
+      onPointerDown={() => {
+        held.current = false;
+        if (!onLongPress) return;
+        clear();
+        timer.current = setTimeout(() => { held.current = true; onLongPress(); }, LONG_PRESS_MS);
+      }}
+      onPointerUp={clear} onPointerLeave={clear} onPointerCancel={clear}
+      onContextMenu={(e) => { if (onLongPress) e.preventDefault(); }}
+      className={cn("rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 font-semibold transition-colors select-none [-webkit-touch-callout:none] touch-manipulation disabled:opacity-70",
         small ? "p-2 min-h-20 text-sm" : "p-3 min-h-28 gap-2 text-base",
         on ? "border-primary bg-primary text-primary-foreground shadow-lg" : "border-border bg-card hover:bg-muted")}>
       {children}

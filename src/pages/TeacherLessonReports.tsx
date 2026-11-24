@@ -8,9 +8,11 @@ import {
   WORDING, chunkAt, duration, mmss, parseWords, toReportView, transcriptItems, type ReportView,
 } from "@/lib/lessonMonitor";
 import {
-  downloadChunk, useDeleteReport, useFeedback, useMyLessons, useMyPilotClasses, useMyReports, useReport, useRoomChunks,
-  useSetTargets, useStopPilot, type ReportRow,
+  downloadChunk, useDeleteReport, useFeedback, useLessonRoster, useMyLessons, useMyPilotClasses, useMyReports, useReport, useRoomChunks,
+  useSetTargets, useStopPilot, useVoiceGroups, type ReportRow,
 } from "@/hooks/useLessonMonitor";
+import { hasVoices, lineVoices, speakerOf } from "@/lib/lessonMonitorVoices";
+import { VoiceGroups } from "@/components/lessonMonitor/VoiceGroups";
 
 /**
  * /teacher/lesson-reports - the lesson monitor pilot (Option A, D-28). The
@@ -100,6 +102,16 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const view = useMemo<ReportView | null>(() => (q.data ? toReportView(q.data.body) : null), [q.data]);
   const [showTranscript, setShowTranscript] = useState(false);
   const player = usePlayer(q.data?.recording_id ?? null, view?.offsetS ?? 0);
+  // Who said each line (Option B, 24 Nov 2026): taps, voice groups and the teacher's answers.
+  const voices = useMemo(() => (q.data ? lineVoices(q.data.body) : []), [q.data]);
+  const groups = useVoiceGroups(q.data && hasVoices(q.data.body) ? id : null);
+  const roster = useLessonRoster(groups.data?.length ? (q.data as { session_id?: string | null } | undefined)?.session_id ?? null : null);
+  const nameOf = useMemo(() => {
+    const m = new Map((roster.data ?? []).map((k) => [k.id, k.name]));
+    return (sid: string) => m.get(sid) ?? "a child";
+  }, [roster.data]);
+  const groupRows = useMemo(() => new Map((groups.data ?? []).map((g) => [g.group_key, g])), [groups.data]);
+  const lineIndex = useMemo(() => new Map((view?.lines ?? []).map((l, i) => [l, i])), [view]);
 
   if (q.isLoading) return <p className="text-hec-small text-hec-ink-soft flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Opening…</p>;
   if (!q.data || !view) return <p className={card}>This report is no longer there. <Button variant="link" onClick={onBack}>Back</Button></p>;
@@ -144,6 +156,11 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <p className="text-hec-caption text-hec-ink-faint">{WORDING.readOnly}</p>
       </section>
 
+      {groups.data && groups.data.length > 0 && (
+        <VoiceGroups reportId={id} rows={groups.data} voices={voices} lines={view.lines} kids={roster.data ?? []}
+          nameOf={nameOf} play={(t) => void player.play(t)} />
+      )}
+
       <Feedback row={q.data} />
 
       <section className={card} aria-label="Transcript">
@@ -165,7 +182,21 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 <li key={`l${i}`} className={cn("flex items-baseline gap-2 text-hec-small", it.line.uncertain ? "text-hec-ink-faint" : "text-hec-ink", it.line.faded && "opacity-60")}>
                   <button type="button" onClick={() => player.play(it.line.t)} aria-label={`Play ${mmss(it.line.t)}`}
                     className="shrink-0 tabular-nums text-hec-brass underline-offset-2 hover:underline min-w-[3.5rem] text-left">{mmss(it.line.t)}</button>
-                  {it.line.teacher && <span className="shrink-0 font-medium" title="Your microphone carried this line">{WORDING.teacherMic}</span>}
+                  {(() => {
+                    const v = voices[lineIndex.get(it.line) ?? -1];
+                    const who = v ? speakerOf(v, it.line.teacher, groupRows, nameOf) : null;
+                    if (!who || !who.kind || who.kind === "teacher") {
+                      return it.line.teacher || who?.kind === "teacher"
+                        ? <span className="shrink-0 font-medium" title="Your microphone carried this line">{WORDING.teacherMic}</span> : null;
+                    }
+                    return (
+                      <span className={cn("shrink-0 rounded-hec-sm px-1.5 text-hec-caption",
+                        who.kind === "suggested" ? "bg-hec-brass/10 text-hec-ink-soft" : who.kind === "several" ? "bg-hec-sunken text-hec-ink-soft" : "bg-hec-leaf-tint text-hec-leaf")}
+                        title={who.kind === "suggested" ? "The computer's guess, not named yet" : who.kind === "tapped" ? "You tapped this child" : undefined}>
+                        {who.label}
+                      </span>
+                    );
+                  })()}
                   <span>{it.line.text}{it.line.uncertain && <span className="sr-only"> ({WORDING.uncertainLine})</span>}</span>
                 </li>
               ))}
