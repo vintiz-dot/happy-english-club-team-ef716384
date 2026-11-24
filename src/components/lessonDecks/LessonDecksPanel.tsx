@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { UNITS, unitKey, unitLabel } from "@/content/lessonDecks";
 import type { Deck, Slide, Unit } from "@/lib/lessonDecks/types";
 import { paceLessons, type WeeklySlot } from "@/lib/lessonDecks/pacing";
-import { checksIn, classBook, grammarDeck, unitInterests, unitPlan, type PlanItem } from "@/lib/lessonDecks/views";
+import { checksIn, grammarDeck, unitInterests, unitPlan, type PlanItem } from "@/lib/lessonDecks/views";
+import { courseOf, unitsForClass } from "@/lib/curriculumLessons";
 import { useClassRoster } from "./useClassRoster";
 import { WeekHomeworkButtons } from "./WeekHomework";
 import { isWeekHomework, tierGroups } from "@/lib/lessonDecks/weekHomework";
@@ -100,7 +101,6 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
   const [holidays, setHolidays] = useState("");
   const [playing, setPlaying] = useState<{ deck: Deck; unit: Unit; at: number } | null>(null);
 
-  const unit = UNITS.find((u) => unitKey(u) === unitId) ?? null;
   const roster = useClassRoster(classId);
   const names = roster.data?.names ?? [];
   // Homework is for the children who were in the lesson: today's Present and Late marks.
@@ -123,14 +123,20 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
       return { slots: Array.isArray(t?.weeklySlots) ? t!.weeklySlots! : [], curriculum: (data as any)?.curriculum ?? null };
     },
   });
-  const book = classBook(cls?.curriculum);
+  // A class sees only its own course material: its book, at its level. With no class
+  // chosen the whole library is shown for browsing. A class whose book is unset (or
+  // none of ours) sees no units, never another course's.
+  const classLoading = !!classId && !cls;
+  const units = !classId ? UNITS : classLoading ? [] : unitsForClass(UNITS, cls?.curriculum);
+  const unit = units.find((u) => unitKey(u) === unitId) ?? (classId ? units[0] ?? null : null);
 
-  // Open on the class's own book: the unit it last used, else the first unit of its level.
+  // Open on the class's own book: the unit it last used (if that is its course), else the first unit of its level.
   useEffect(() => {
+    if (!classId || classLoading) return;
     const last = findDeck(place.state?.deck_id)?.unit;
-    const own = last ?? (book ? UNITS.find((u) => u.curriculum === book.curriculum && u.level === book.level) : undefined);
+    const own = (last && units.includes(last) ? last : undefined) ?? units[0];
     if (own) setUnitId(unitKey(own));
-  }, [classId, place.state?.deck_id, book?.level]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [classId, classLoading, cls?.curriculum, place.state?.deck_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const plan = useMemo(() => (unit ? unitPlan(unit) : []), [unit]);
   const skip = holidays.split(/[\s,]+/).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
@@ -145,7 +151,9 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
     setPlaying({ deck, unit: u, at });
     if (classId && !deck.id.endsWith("-grammar")) void markCovered(deck, classId, className);
   };
-  const resume = findDeck(place.state?.deck_id);
+  // "Left off at" only when that deck belongs to this class's course.
+  const found = findDeck(place.state?.deck_id);
+  const resume = found && (!classId || units.includes(found.unit)) ? found : null;
 
   if (UNITS.length === 0) {
     return (
@@ -175,12 +183,19 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
         </div>
         <div className="space-y-1">
           <Label>Unit</Label>
-          <Select value={unitId} onValueChange={setUnitId}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Select value={unit ? unitKey(unit) : ""} onValueChange={setUnitId} disabled={units.length === 0}>
+            <SelectTrigger><SelectValue placeholder={classLoading ? "Loading…" : "No units for this class"} /></SelectTrigger>
             <SelectContent>
-              {UNITS.map((u) => <SelectItem key={unitKey(u)} value={unitKey(u)}>{unitLabel(u)}</SelectItem>)}
+              {units.map((u) => <SelectItem key={unitKey(u)} value={unitKey(u)}>{unitLabel(u)}</SelectItem>)}
             </SelectContent>
           </Select>
+          {classId && !classLoading && units.length === 0 && (
+            <p className="text-xs text-hec-ink-soft">
+              {courseOf(cls?.curriculum).curriculum
+                ? "No lesson decks have been written for this class's level yet."
+                : "This class's book is not set to a course we have decks for. Set it in Admin > class > Settings."}
+            </p>
+          )}
         </div>
         <div className="space-y-1">
           <Label htmlFor="deck-start">First lesson on or after</Label>

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookOpen, Loader2, Plus, X } from "lucide-react";
-import { type CurriculumLesson, curriculumFromText, lessonLabel, levelFromCurriculum, nextLesson, sortLessons } from "@/lib/curriculumLessons";
+import { type CurriculumLesson, courseOf, lessonLabel, nextLesson, sortLessons } from "@/lib/curriculumLessons";
 
 // The tables are new (20261121150000) and not in the generated types yet.
 const db = supabase as any;
@@ -19,20 +19,24 @@ export default function LessonPlanPicker({ sessionId, classId, date, canEdit }: 
   const qc = useQueryClient();
   const planKey = ["session-lesson-plan", sessionId];
 
-  // The class's course book, from its curriculum text ("Reach Higher 3A"; otherwise Oxford Discover).
+  // The class's own course and level, from its curriculum text. A class whose book
+  // is unset, or is not one of ours, gets no picker; the IELTS class (Sun Class) has
+  // no course-book lessons to pick from. Never another course's lessons.
   const book = useQuery({
     queryKey: ["lesson-plan-book", classId],
     staleTime: 10 * 60_000,
     queryFn: async () => {
       const { data } = await db.from("classes").select("curriculum").eq("id", classId).maybeSingle();
-      return curriculumFromText(data?.curriculum);
+      return { text: (data?.curriculum as string | null) ?? null, ...courseOf(data?.curriculum) };
     },
   });
-  const curriculum = book.data;
+  const curriculum = book.data?.curriculum ?? null;
+  const classLevel = book.data?.level ?? null;
+  const hasLessonRows = curriculum === "oxford-discover-2e" || curriculum === "reach-higher";
 
   const lessons = useQuery({
     queryKey: ["curriculum-lessons", curriculum],
-    enabled: !!curriculum,
+    enabled: hasLessonRows,
     staleTime: 10 * 60_000,
     queryFn: async (): Promise<CurriculumLesson[]> => {
       const { data, error } = await db.from("curriculum_lessons").select("*").eq("curriculum", curriculum);
@@ -51,29 +55,28 @@ export default function LessonPlanPicker({ sessionId, classId, date, canEdit }: 
     },
   });
 
-  // The class's level (its curriculum text) and the last lesson it covered before this one.
+  // The last lesson this class covered before this one.
   const context = useQuery({
     queryKey: ["lesson-plan-context", classId, date],
     queryFn: async () => {
-      const [{ data: cls }, { data: prev }] = await Promise.all([
-        db.from("classes").select("curriculum").eq("id", classId).maybeSingle(),
-        db.from("session_lesson_plans").select("lesson_id, position, sessions!inner(class_id, date)")
-          .eq("sessions.class_id", classId).lt("sessions.date", date)
-          .order("date", { referencedTable: "sessions", ascending: false }).order("position", { ascending: false }).limit(1),
-      ]);
-      return { level: levelFromCurriculum(cls?.curriculum), lastId: (prev?.[0]?.lesson_id as string | undefined) ?? null };
+      const { data: prev } = await db.from("session_lesson_plans").select("lesson_id, position, sessions!inner(class_id, date)")
+        .eq("sessions.class_id", classId).lt("sessions.date", date)
+        .order("date", { referencedTable: "sessions", ascending: false }).order("position", { ascending: false }).limit(1);
+      return { lastId: (prev?.[0]?.lesson_id as string | undefined) ?? null };
     },
   });
 
-  const all = lessons.data ?? [];
+  // Only the class's own level when its book names one (Oxford Discover 3 sees Level 3 only).
+  const rows = lessons.data ?? [];
+  const all = useMemo(() => (classLevel === null ? rows : rows.filter((l) => l.level === classLevel)), [rows, classLevel]);
   const levels = useMemo(() => [...new Set(all.map((l) => l.level))].sort((a, b) => a - b), [all]);
   const last = all.find((l) => l.id === context.data?.lastId) ?? null;
   const [level, setLevel] = useState<number | null>(null);
   const [pick, setPick] = useState<string>("");
   useEffect(() => {
     if (level !== null || !levels.length || context.isLoading) return;
-    setLevel(last?.level ?? context.data?.level ?? (levels.length === 1 ? levels[0] : null));
-  }, [levels, last, context.data, context.isLoading, level]);
+    setLevel(last?.level ?? classLevel ?? (levels.length === 1 ? levels[0] : null));
+  }, [levels, last, classLevel, context.isLoading, level]);
   const inLevel = all.filter((l) => l.level === level);
   const suggestion = level !== null ? nextLesson(inLevel, last && last.level === level ? last.id : null) : null;
   useEffect(() => { if (!pick && suggestion) setPick(suggestion.id); }, [suggestion, pick]);
@@ -97,10 +100,17 @@ export default function LessonPlanPicker({ sessionId, classId, date, canEdit }: 
     onError: (e: any) => toast.error(e?.message ?? "Could not remove the lesson"),
   });
 
+  if (book.isLoading) return <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</p>;
+  if (curriculum === "hec-ielts-sl") {
+    return <p className="text-sm text-muted-foreground">This class follows HEC's own IELTS Speaking &amp; Listening programme, which has no course-book lesson to choose. The report is written from the lesson itself.</p>;
+  }
+  if (!hasLessonRows) {
+    return <p className="text-sm text-muted-foreground">This class's book is {book.data?.text ? `"${book.data.text}", which has no lesson list here` : "not set"}. Set it in Admin &gt; class &gt; Settings to choose a course-book lesson.</p>;
+  }
   if (lessons.error || plan.error) {
     return <p className="text-sm text-muted-foreground">Course book lessons are not switched on yet. Ask the school's admin to apply the latest database update.</p>;
   }
-  if (book.isLoading || lessons.isLoading || plan.isLoading) return <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</p>;
+  if (lessons.isLoading || plan.isLoading) return <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</p>;
   if (!all.length) return <p className="text-sm text-muted-foreground">No course book lessons have been added yet.</p>;
 
   const chosen = plan.data ?? [];

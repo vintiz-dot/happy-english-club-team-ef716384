@@ -58,14 +58,43 @@ export function nextLesson<T extends Pick<CurriculumLesson, "id" | "level" | "un
   return next && next.level === sorted[i].level ? next : null;
 }
 
-/** The level a class is on, when its curriculum says so ("Oxford Discover 3", "OD3", "Level 3", "Reach Higher 3A"). */
+/** The level a class is on, when its curriculum says so ("Oxford Discover 3", "OD3", "Level 3", "Reach Higher 3A", "..., Year 1"). */
 export function levelFromCurriculum(text: string | null | undefined): number | null {
   if (!text) return null;
-  const m = text.match(/(?:discover|od|level|higher|rh)\s*(\d{1,2})[ab]?\b/i);
+  const m = text.match(/(?:discover|od|level|year|higher|rh)\s*(\d{1,2})[ab]?\b/i);
   return m ? Number(m[1]) : null;
 }
 
-/** Which course book a class's curriculum text names; Oxford Discover when it says nothing else. */
-export function curriculumFromText(text: string | null | undefined): "oxford-discover-2e" | "reach-higher" {
-  return text && /reach\s*higher|\brh\s*\d/i.test(text) ? "reach-higher" : "oxford-discover-2e";
+export type CourseId = "oxford-discover-2e" | "reach-higher" | "hec-ielts-sl";
+
+/**
+ * Which course a class's curriculum text names, or null when it names none we
+ * know. Null is an answer: a class whose book is unset, or is some other book,
+ * must not be shown another course's lessons (this used to fall back to Oxford
+ * Discover, which put the Oxford Discover picker on Sun Class, the IELTS class).
+ */
+export function curriculumFromText(text: string | null | undefined): CourseId | null {
+  if (!text) return null;
+  if (/ielts/i.test(text)) return "hec-ielts-sl";
+  if (/reach\s*higher|\brh\s*\d/i.test(text)) return "reach-higher";
+  if (/oxford|discover|\bod\s*\d/i.test(text)) return "oxford-discover-2e";
+  return null;
+}
+
+/** A class's course: which book and, when its text says, which level (Year, for IELTS). */
+export function courseOf(text: string | null | undefined): { curriculum: CourseId | null; level: number | null } {
+  const curriculum = curriculumFromText(text);
+  return { curriculum, level: curriculum ? levelFromCurriculum(text) : null };
+}
+
+/**
+ * The units (or any rows with a curriculum and a level) a class may see: its own
+ * course, at its own level when the text names one. A class whose book is unset or
+ * is none of ours sees none, never another course's. One rule for the deck panel,
+ * the lesson picker and anything else that lists course material for a class.
+ */
+export function unitsForClass<T extends { curriculum: string; level: number }>(units: T[], text: string | null | undefined): T[] {
+  const c = courseOf(text);
+  if (!c.curriculum) return [];
+  return units.filter((u) => u.curriculum === c.curriculum && (c.level === null || u.level === c.level));
 }

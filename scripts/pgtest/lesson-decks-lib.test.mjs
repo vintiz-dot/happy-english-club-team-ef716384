@@ -399,9 +399,27 @@ eq("blocks rank in order within a unit and after the unit before",
   C2.sortLessons([{ level: 3, unit_from: 3, unit_to: 3, lesson: "Unit Launch" }, { level: 3, unit_from: 2, unit_to: 2, lesson: "Unit Wrap-Up" },
     { level: 3, unit_from: 2, unit_to: 2, lesson: "Part 1 Reading" }, { level: 3, unit_from: 2, unit_to: 2, lesson: "Unit Launch" }]).map((l) => `${l.unit_from} ${l.lesson}`),
   ["2 Unit Launch", "2 Part 1 Reading", "2 Unit Wrap-Up", "3 Unit Launch"]);
-eq("curriculum text names the book", ["Reach Higher 3A", "RH3B", "Oxford Discover 3", null].map(C2.curriculumFromText),
-  ["reach-higher", "reach-higher", "oxford-discover-2e", "oxford-discover-2e"]);
+eq("curriculum text names the book, and a text that names none names none (never Oxford Discover by default)",
+  ["Reach Higher 3A", "RH3B", "Oxford Discover 3", "HEC IELTS Speaking & Listening, Year 1", "Family and Friends 3", "Phonics", "", null].map(C2.curriculumFromText),
+  ["reach-higher", "reach-higher", "oxford-discover-2e", "hec-ielts-sl", null, null, null, null]);
 eq("level from a Reach Higher label", ["Reach Higher 3A", "Reach Higher Level 3", "RH 4B"].map(C2.levelFromCurriculum), [3, 3, 4]);
+eq("level from the labels the class Settings writes", [
+  "Oxford Discover 2nd edition, Level 3", "Reach Higher, Level 3", "HEC IELTS Speaking & Listening, Year 2"].map((t) => C2.courseOf(t)),
+  [{ curriculum: "oxford-discover-2e", level: 3 }, { curriculum: "reach-higher", level: 3 }, { curriculum: "hec-ielts-sl", level: 2 }]);
+// A class sees only its own course material (the Sun Class picker showed Oxford Discover).
+{
+  const lib = [
+    { curriculum: "oxford-discover-2e", level: 2, unit: 1 }, { curriculum: "oxford-discover-2e", level: 3, unit: 1 }, { curriculum: "oxford-discover-2e", level: 3, unit: 2 },
+    { curriculum: "reach-higher", level: 3, unit: 1 }, { curriculum: "hec-ielts-sl", level: 1, unit: 1 }, { curriculum: "hec-ielts-sl", level: 2, unit: 1 },
+  ];
+  const seen = (t) => C2.unitsForClass(lib, t).map((u) => `${u.curriculum}/${u.level}/${u.unit}`);
+  eq("Sun Class (IELTS Year 1) sees only IELTS Year 1", seen("HEC IELTS Speaking & Listening, Year 1"), ["hec-ielts-sl/1/1"]);
+  eq("an Oxford Discover 3 class sees only Level 3 of Oxford Discover", seen("Oxford Discover 2nd edition, Level 3"), ["oxford-discover-2e/3/1", "oxford-discover-2e/3/2"]);
+  eq("free text 'OD2' still reads as Oxford Discover Level 2", seen("OD2"), ["oxford-discover-2e/2/1"]);
+  eq("a Reach Higher class sees only Reach Higher", seen("Reach Higher 3A"), ["reach-higher/3/1"]);
+  eq("a book named without a level sees that whole course", seen("Oxford Discover"), ["oxford-discover-2e/2/1", "oxford-discover-2e/3/1", "oxford-discover-2e/3/2"]);
+  eq("a class with no book, or a book that is none of ours, sees nothing", [seen(null), seen(""), seen("Family and Friends 3")], [[], [], []]);
+}
 // Units 13-18 carry the same round-2 features as Unit 12.
 for (const n of [13, 14, 15, 16, 17, 18]) {
   const u = units.find((x) => x.u.unit === n && x.u.level === 3)?.u;
