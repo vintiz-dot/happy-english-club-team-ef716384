@@ -29,7 +29,10 @@ function bell() {
 }
 
 /** The rounds of a fluency routine, each with its own countdown (on screen) or as a list (on paper). */
-export function FluencyRounds({ rounds, audience }: { rounds: { seconds: number; say: string }[]; audience?: Audience }) {
+/** Routines in which every partner gives the talk in every round: the round time is each speaker's. */
+export const BOTH_SPEAK = ["4-3-2", "retell", "task repeat"];
+
+export function FluencyRounds({ rounds, audience, eachSpeaker }: { rounds: { seconds: number; say: string }[]; audience?: Audience; eachSpeaker?: boolean }) {
   const [cur, setCur] = useState<number | null>(null);
   const [left, setLeft] = useState(0);
   const [running, setRunning] = useState(false);
@@ -49,7 +52,7 @@ export function FluencyRounds({ rounds, audience }: { rounds: { seconds: number;
   if (audience) {
     return (
       <ol className="list-decimal space-y-1 pl-8 text-xl text-hec-ink">
-        {rounds.map((r, n) => <li key={n}><strong>Round {n + 1}, {said(r.seconds)}:</strong> {r.say}</li>)}
+        {rounds.map((r, n) => <li key={n}><strong>Round {n + 1}, {said(r.seconds)}{eachSpeaker ? " each" : ""}:</strong> {r.say}</li>)}
       </ol>
     );
   }
@@ -59,7 +62,7 @@ export function FluencyRounds({ rounds, audience }: { rounds: { seconds: number;
         {rounds.map((r, n) => (
           <button key={n} type="button" onClick={() => start(n)} title={r.say}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-lg font-semibold ${cur === n ? "bg-amber-500 text-white" : "bg-white text-amber-900 hover:bg-amber-100 dark:bg-amber-900/60 dark:text-amber-50"}`}>
-            <Timer className="h-5 w-5" />Round {n + 1} · {said(r.seconds)}
+            <Timer className="h-5 w-5" />Round {n + 1} · {said(r.seconds)}{eachSpeaker ? " each" : ""}
           </button>
         ))}
       </div>
@@ -81,7 +84,7 @@ export function FluencyRounds({ rounds, audience }: { rounds: { seconds: number;
           <p className="min-w-[14rem] flex-1 text-xl text-hec-ink">{rounds[cur].say}</p>
         </div>
       ) : (
-        <p className="mt-3 text-lg text-hec-ink-soft">Tap a round to start its timer. A bell rings when time is up.</p>
+        <p className="mt-3 text-lg text-hec-ink-soft">Tap a round to start its timer. A bell rings when time is up.{eachSpeaker ? " Each partner talks for the round's time: tap the round again for the second speaker." : ""}</p>
       )}
     </div>
   );

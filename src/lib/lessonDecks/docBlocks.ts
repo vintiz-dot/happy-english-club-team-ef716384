@@ -117,7 +117,7 @@ export function slideBlock(s: Slide, teacher: boolean): DocBlock | null {
         paragraphs: [s.goal],
         lists: nonEmpty([
           list("steps", s.steps),
-          list("bullets", s.rounds.map((r, n) => `Round ${n + 1} (${mmss(r.seconds)}): ${r.say}`), "Rounds"),
+          list("bullets", s.rounds.map((r, n) => `Round ${n + 1} (${mmss(r.seconds)}${["4-3-2", "retell", "task repeat"].includes(s.routine) ? " each" : ""}): ${r.say}`), "Rounds"),
           list("frames", s.chunks, "Say these fast and smooth"),
           list("frames", s.recycle, "From earlier units"),
           list("bullets", s.prompts, "Cues"),

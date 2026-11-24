@@ -3,7 +3,7 @@ import { ExamSlide } from "./ExamSlide";
 import { HomeworkGuide } from "./HomeworkGuide";
 import { MediaBar } from "./MediaBar";
 import type { Assessment, BookRef, CreativeTask, Deck, Mode, ScriptLine, Slide, Tier, TierLevel, Unit } from "@/lib/lessonDecks/types";
-import { FluencyRounds, WritingText } from "./LabParts";
+import { BOTH_SPEAK, FluencyRounds, WritingText } from "./LabParts";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
 import { RUBRIC, PEER_STEPS } from "@/lib/lessonDecks/ieltsRubric";
 import type { Audience } from "@/lib/lessonDecks/audience";
@@ -603,7 +603,7 @@ function SlideBody({ slide }: { slide: Slide }) {
           <Meta tag={`Fluency · ${slide.routine}`} mode={slide.mode} minutes={slide.minutes} />
           <p className="text-2xl font-medium text-amber-700 dark:text-amber-300">{slide.goal}</p>
           <List items={slide.steps} ordered />
-          <FluencyRounds rounds={slide.rounds} audience={audience} />
+          <FluencyRounds rounds={slide.rounds} audience={audience} eachSpeaker={BOTH_SPEAK.includes(slide.routine)} />
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/40">
               <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Say it fast and smooth</p>

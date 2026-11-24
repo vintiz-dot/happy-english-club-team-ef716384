@@ -194,6 +194,9 @@ for (const { f, u } of units) {
         && s.rounds.every((r) => Number.isInteger(r.seconds) && r.seconds >= 15 && r.seconds <= 240 && r.say));
       if (s.routine === "4-3-2" || s.routine === "retell") ok(`${d.id} / ${s.title}: ${s.routine} rounds get shorter`, s.rounds.every((r, i) => i === 0 || r.seconds < s.rounds[i - 1].seconds));
       ok(`${d.id} / ${s.title}: 4-15 minutes`, s.minutes >= 4 && s.minutes <= 15, String(s.minutes));
+      // The rounds fit the slide's minutes: in a 4-3-2, retell or task repeat both partners speak every round; plus the one-minute fix and half a minute per change.
+      const talk = s.rounds.reduce((a, r) => a + r.seconds, 0) * (["4-3-2", "retell", "task repeat"].includes(s.routine) ? 2 : 1);
+      ok(`${d.id} / ${s.title}: the rounds fit ${s.minutes} minutes`, talk + 60 + 30 * s.rounds.length <= s.minutes * 60 + 30, `${Math.round((talk + 60 + 30 * s.rounds.length) / 6) / 10} min needed`);
     }
     for (const s of d.slides.filter((x) => x.kind === "writing")) {
       ok(`${d.id} / ${s.title}: a writing routine has steps and a checklist`, s.steps.length > 0 && s.checklist.length >= 2);
