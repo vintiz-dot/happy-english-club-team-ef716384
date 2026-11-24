@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Assessment, BookRef, Deck, Slide, Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { castSlide } from "@/lib/lessonDecks/names";
@@ -12,7 +12,11 @@ import { LISTENING_BANDS, RUBRIC } from "@/lib/lessonDecks/ieltsRubric";
 import { SlideView, SlideContext, WorksheetView, AssessmentView, type SlideCtx } from "./SlideView";
 import { useSpeech } from "./speech";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChevronLeft, ChevronRight, Shuffle, X, Timer, Pause, Play, Printer, Volume2, Turtle, ExternalLink, BookOpen } from "lucide-react";
+
+/** What a slide is called in the pager tooltip: its title, else its kind. */
+const slideLabel = (s: Slide) => ("title" in s && s.title ? s.title : s.kind);
 
 export type ClassFlipbook = FlipbookLite & { id: string; title: string };
 
@@ -285,11 +289,18 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
   const [book, setBook] = useState<{ url: string; label: string; note?: string } | null>(null);
   const slides = useCastDeck(deck, roster, shuffle);
   const timer = useCountdown();
+  const dotsRef = useRef<HTMLDivElement>(null);
   const speech = useSpeech();
   const raw = deck.slides[i];
   const minutes = "minutes" in raw ? raw.minutes : undefined;
 
   useEffect(() => { onSlide?.(i); }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A long deck scrolls its dots sideways: keep the current one in view.
+  useEffect(() => {
+    const box = dotsRef.current;
+    const dot = box?.querySelector<HTMLElement>("[data-current='true']");
+    if (box && dot) box.scrollTo({ left: dot.offsetLeft - box.clientWidth / 2 + dot.offsetWidth / 2, behavior: "smooth" });
+  }, [i]);
 
   const go = useCallback((d: number) => { setI((x) => Math.min(slides.length - 1, Math.max(0, x + d))); timer.clear(); }, [slides.length, timer]);
   const reshuffle = () => setShuffle((s) => { const n = [...s]; n[i] = (n[i] ?? 0) + 1; return n; });
@@ -382,15 +393,33 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
         )}
       </div>
       {/* Room on the right for the classroom tools button, which floats above the deck. */}
-      <div className="flex items-center justify-between border-t border-hec-line bg-hec-surface py-2 pl-4 pr-20 md:pr-24">
-        <Button variant="outline" onClick={() => go(-1)} disabled={i === 0}><ChevronLeft className="h-5 w-5" />Back</Button>
-        <div className="flex items-center gap-1" aria-label={`Slide ${i + 1} of ${slides.length}`}>
-          {slides.map((_, k) => (
-            <button key={k} onClick={() => { setI(k); timer.clear(); }} aria-label={`Slide ${k + 1}`}
-              className={`h-2.5 rounded-full transition-all ${k === i ? "w-6 bg-amber-500" : "w-2.5 bg-hec-line"}`} />
-          ))}
+      <div className="flex items-center justify-between gap-3 border-t border-hec-line bg-hec-surface py-2 pl-4 pr-20 md:pr-24">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" onClick={() => go(-1)} disabled={i === 0} aria-label="Previous slide"><ChevronLeft className="h-5 w-5" />Back</Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Previous slide · ← or Page Up</TooltipContent>
+        </Tooltip>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
+          <span className="shrink-0 text-sm font-medium tabular-nums text-hec-ink" aria-live="polite">{i + 1} / {slides.length}</span>
+          <div ref={dotsRef} className="flex min-w-0 items-center gap-1.5 overflow-x-auto px-1 py-2" role="group" aria-label={`Slide ${i + 1} of ${slides.length}`}>
+            {slides.map((_, k) => (
+              <Tooltip key={k}>
+                <TooltipTrigger asChild>
+                  <button type="button" data-current={k === i} onClick={() => { setI(k); timer.clear(); }} aria-label={`Slide ${k + 1}: ${slideLabel(deck.slides[k])}`} aria-current={k === i ? "step" : undefined}
+                    className={`h-3 shrink-0 rounded-full transition-all ${k === i ? "w-7 bg-amber-500" : "w-3 bg-hec-line-strong/50 hover:bg-hec-line-strong"}`} />
+                </TooltipTrigger>
+                <TooltipContent side="top">{k + 1}. {slideLabel(deck.slides[k])}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         </div>
-        <Button onClick={() => go(1)} disabled={i === slides.length - 1}>Next<ChevronRight className="h-5 w-5" /></Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button onClick={() => go(1)} disabled={i === slides.length - 1} aria-label="Next slide">Next<ChevronRight className="h-5 w-5" /></Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Next slide · → , Space or Page Down</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
