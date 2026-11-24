@@ -10,6 +10,7 @@ import { explainPayment, priceStudentMonth, type MonthDiscount, type PaymentExpl
 import { refreshableMonths } from "../_lib/bill-refresh.ts";
 import { clockNow } from "../_lib/clock.ts";
 import { enrolledInMonth, noBillAnswer, withoutBill } from "../_lib/month-enrolment.ts";
+import { heldBillChanges } from "../_lib/held-bill-changes.ts";
 import {
   decidePastMonth,
   figuresOf,
@@ -839,7 +840,20 @@ Deno.serve(async (req) => {
       lessons: lessonList,
       // exact | explained (by lessons cancelled or excused since) | over | under | none.
       sincePaid,
-      ...(heldBill ? { held: pastMonthHeld(month, savedFigures!, computed) } : {}),
+      // With what changed, class by class: lessons, custom rates and discounts,
+      // charged then and priced today (_lib/held-bill-changes.ts; nothing priced there).
+      ...(heldBill
+        ? {
+            held: {
+              ...pastMonthHeld(month, savedFigures!, computed),
+              changes: heldBillChanges({
+                saved: savedInvoice,
+                priced: pricedMonth,
+                className: (id: string) => classNameMap.get(id) as string | undefined,
+              }),
+            },
+          }
+        : {}),
       // A closed month answered exactly as it was charged (same total today).
       ...(keptBill ? { keptAsCharged: true } : {}),
       ...(registerHoles.length > 0 && !heldBill

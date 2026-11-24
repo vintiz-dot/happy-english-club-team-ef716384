@@ -9,6 +9,7 @@ import { priceStudentMonth, type MonthDiscount } from "../_lib/tuition-pricing.t
 import { refreshableMonths } from "../_lib/bill-refresh.ts";
 import { clockNow } from "../_lib/clock.ts";
 import { decidePastMonth, figuresOf, isClosedMonth, pastMonthHeld } from "../_lib/past-month-hold.ts";
+import { heldBillChanges } from "../_lib/held-bill-changes.ts";
 import { classFeeOn, indexClassFees, isMissingFeeHistory, type ClassFeeHistory } from "../_lib/class-fee.ts";
 
 const corsHeaders = {
@@ -317,7 +318,7 @@ Deno.serve(async (req) => {
     // 11. Current month invoices
     const currentInvoices: any[] = await fetchChunked(
       supabase, "invoices",
-      "student_id, id, recorded_payment, confirmation_status, status, tuition_frozen, base_amount, discount_amount, total_amount, class_breakdown",
+      "student_id, id, recorded_payment, confirmation_status, status, tuition_frozen, base_amount, discount_amount, total_amount, class_breakdown, review_flags",
       "student_id", studentIds,
       (q: any) => q.eq("month", month)
     );
@@ -435,7 +436,18 @@ Deno.serve(async (req) => {
         // held: the total differs; kept: the same total, split differently
         // between base and discount. Either way the saved bill is answered.
         const asSaved = pastMode === "held" || pastMode === "kept";
-        const heldInfo = pastMode === "held" ? pastMonthHeld(month, savedFigures!, computed) : null;
+        // A held bill also says what changed, class by class: lessons, custom rates
+        // and discounts, charged then and priced today (_lib/held-bill-changes.ts).
+        const heldInfo = pastMode === "held"
+          ? {
+              ...pastMonthHeld(month, savedFigures!, computed),
+              changes: heldBillChanges({
+                saved: frozenInv,
+                priced: pricedMonth,
+                className: (id: string) => classMap.get(id)?.name,
+              }),
+            }
+          : null;
         if (asSaved) {
           baseAmount = savedFigures!.base;
           totalDiscount = savedFigures!.discount;

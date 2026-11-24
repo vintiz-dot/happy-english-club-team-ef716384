@@ -8,6 +8,45 @@
  * figure is the function's.
  */
 
+/**
+ * What changed on a held bill, as the calculators answer it in `held.changes`
+ * (supabase/functions/_lib/held-bill-changes.ts): the saved bill beside
+ * today's pricing, class by class. The shape only; nothing is worked out here.
+ */
+export interface HeldPriceGroup { price_vnd: number; class_fee_vnd: number; lessons: number; custom_rate: boolean }
+export interface HeldLesson { date: string; mark: string | null; price_vnd: number; held: boolean }
+export interface HeldClassChange {
+  class_id: string | null;
+  class_name: string;
+  charged: { lessons: number; rate_vnd: number; amount_vnd: number; net_amount_vnd: number } | null;
+  today: {
+    lessons: number;
+    amount_vnd: number;
+    net_amount_vnd: number;
+    prices: HeldPriceGroup[];
+    billed: HeldLesson[];
+    not_billed: Array<{ date: string; mark: string | null; state: "excused" | "cancelled" | "free" }>;
+  } | null;
+}
+export interface HeldDiscountLine { name: string; type: "percent" | "amount"; value: number; amount_vnd: number; class_name: string | null }
+export interface HeldBillChanges {
+  has_saved_lines: boolean;
+  charged: { base_vnd: number; discount_vnd: number; total_vnd: number };
+  today: { base_vnd: number; discount_vnd: number; total_vnd: number };
+  classes: HeldClassChange[];
+  discounts: { charged_total_vnd: number; charged_names: string[]; today_total_vnd: number; today: HeldDiscountLine[] };
+  reasons: string[];
+}
+
+/** The breakdown as sent, or null from a function that predates it (or a malformed one). */
+export function readChanges(v: unknown): HeldBillChanges | null {
+  const c = v as HeldBillChanges | null | undefined;
+  if (!c || typeof c !== "object") return null;
+  if (!Array.isArray(c.classes) || !Array.isArray(c.reasons) || !c.discounts || !Array.isArray(c.discounts.today)) return null;
+  if (!c.charged || !c.today) return null;
+  return c;
+}
+
 export interface HeldBillRow {
   studentId: string;
   name: string;
@@ -23,6 +62,8 @@ export interface HeldBillRow {
   /** What the family has paid on this month's bill. */
   paid: number;
   message: string;
+  /** What changed, class by class; null when the function did not send it. */
+  changes: HeldBillChanges | null;
 }
 
 const num = (v: unknown): number => {
@@ -71,6 +112,7 @@ export function heldRows(results: any[] | null | undefined, month: string, names
       difference: newTotal - savedTotal,
       paid: num(r.payments?.monthPayments),
       message: typeof h.message === "string" ? h.message : "",
+      changes: readChanges(h.changes),
     });
   }
   return rows;

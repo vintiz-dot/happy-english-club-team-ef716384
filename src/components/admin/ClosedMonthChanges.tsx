@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,155 @@ import type { Json } from "@/integrations/supabase/types";
  */
 const BULK_CHUNK = 200;
 
+const MARK_WORD: Record<string, string> = { excused: "Excused", cancelled: "Cancelled", free: "No charge" };
+
+/** One held bill, opened: the saved bill beside today's pricing. Every figure is the function's. */
+function WhatChanged({ row }: { row: HeldBillRow }) {
+  const c = row.changes;
+  if (!c) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        The breakdown is not available for this bill yet. Check again in a minute.
+      </p>
+    );
+  }
+  const day = (d: string) => dayjs(d).format("D MMM");
+  return (
+    <div className="space-y-4 text-sm">
+      <div>
+        <div className="font-medium">Why the figure differs</div>
+        <ul className="mt-1 list-disc space-y-1 pl-5">
+          {c.reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+      </div>
+
+      {c.classes.map((cl, i) => (
+        <div key={`${cl.class_id ?? cl.class_name}-${i}`} className="rounded-md border p-3">
+          <div className="font-medium">{cl.class_name}</div>
+          <div className="mt-2 grid gap-3 md:grid-cols-2">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Charged</div>
+              {cl.charged ? (
+                <div className="tabular-nums">
+                  {cl.charged.lessons} lesson{cl.charged.lessons === 1 ? "" : "s"} at {formatVND(cl.charged.rate_vnd)} ={" "}
+                  {formatVND(cl.charged.amount_vnd)}
+                  {cl.charged.net_amount_vnd !== cl.charged.amount_vnd && (
+                    <div className="text-muted-foreground">
+                      {formatVND(cl.charged.net_amount_vnd)} after the enrolment's own discount
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-muted-foreground">
+                  {c.has_saved_lines ? "Not on the saved bill." : "The saved bill lists no classes."}
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Today's pricing</div>
+              {cl.today ? (
+                <div className="tabular-nums">
+                  {cl.today.prices.length === 0 && <div>No lesson is billed.</div>}
+                  {cl.today.prices.map((p, j) => (
+                    <div key={j}>
+                      {p.lessons} lesson{p.lessons === 1 ? "" : "s"} at {formatVND(p.price_vnd)}
+                      {p.custom_rate && (
+                        <span className="text-muted-foreground"> (custom rate; class fee {formatVND(p.class_fee_vnd)})</span>
+                      )}
+                    </div>
+                  ))}
+                  {cl.today.prices.length > 0 && <div>= {formatVND(cl.today.amount_vnd)}</div>}
+                  {cl.today.net_amount_vnd !== cl.today.amount_vnd && (
+                    <div className="text-muted-foreground">
+                      {formatVND(cl.today.net_amount_vnd)} after the enrolment's own discount
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-muted-foreground">No lesson of this class is inside the enrolment for this month.</div>
+              )}
+            </div>
+          </div>
+          {cl.today && (cl.today.billed.length > 0 || cl.today.not_billed.length > 0) && (
+            <div className="mt-3 space-y-2">
+              {cl.today.billed.length > 0 && (
+                <div>
+                  <div className="text-xs text-muted-foreground">Lessons billed today</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {cl.today.billed.map((l, j) => (
+                      <span
+                        key={j}
+                        className={`rounded border px-1.5 py-0.5 text-xs ${l.held && !l.mark ? "border-amber-500 bg-amber-50 text-amber-900" : ""}`}
+                      >
+                        {day(l.date)} {l.mark ?? (l.held ? "no mark" : "coming")}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {cl.today.not_billed.length > 0 && (
+                <div>
+                  <div className="text-xs text-muted-foreground">Not billed today</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {cl.today.not_billed.map((l, j) => (
+                      <span key={j} className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">
+                        {day(l.date)} {MARK_WORD[l.state] ?? l.state}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div className="rounded-md border p-3">
+        <div className="font-medium">Discounts</div>
+        <div className="mt-2 grid gap-3 md:grid-cols-2">
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Charged</div>
+            <div className="tabular-nums">{formatVND(c.discounts.charged_total_vnd)} taken off</div>
+            {c.discounts.charged_names.length > 0 ? (
+              <div className="text-muted-foreground">
+                {c.discounts.charged_names.join(", ")} (the bill saved the names and the total, not each amount)
+              </div>
+            ) : (
+              c.discounts.charged_total_vnd > 0 && (
+                <div className="text-muted-foreground">The saved bill does not name its discounts.</div>
+              )
+            )}
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Today's pricing</div>
+            <div className="tabular-nums">{formatVND(c.discounts.today_total_vnd)} taken off</div>
+            {c.discounts.today.map((d, j) => (
+              <div key={j} className="tabular-nums text-muted-foreground">
+                {d.name}
+                {d.type === "percent" ? ` ${d.value}%` : ""}
+                {d.class_name ? ` on ${d.class_name}` : ""}: {formatVND(d.amount_vnd)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="tabular-nums">
+          <span className="text-muted-foreground">Charged: </span>
+          {formatVND(c.charged.base_vnd)} of lessons, less {formatVND(c.charged.discount_vnd)} = {formatVND(c.charged.total_vnd)}
+        </div>
+        <div className="tabular-nums">
+          <span className="text-muted-foreground">Today: </span>
+          {formatVND(c.today.base_vnd)} of lessons, less {formatVND(c.today.discount_vnd)} = {formatVND(c.today.total_vnd)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ClosedMonthChanges() {
   const queryClient = useQueryClient();
   const [rows, setRows] = useState<HeldBillRow[] | null>(null);
@@ -34,6 +183,14 @@ export function ClosedMonthChanges() {
   const [reason, setReason] = useState("");
   const [approving, setApproving] = useState<string | null>(null);
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const toggle = (key: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   const check = async () => {
     setChecking(true);
@@ -160,7 +317,8 @@ export function ClosedMonthChanges() {
           A closed month keeps the bill it was charged. When the register, a discount or the pricing rules would give
           another figure today, the bill is held as charged and listed here. Approve a line only if the new figure is what
           the family should be charged; the payment already recorded stays, and the difference becomes credit or a
-          balance owed. Leaving a line alone keeps the bill as it is.
+          balance owed. Leaving a line alone keeps the bill as it is. "What changed" on a line shows the lessons, the
+          lesson price (custom rates included) and the discounts, as charged and as priced today.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -208,7 +366,8 @@ export function ClosedMonthChanges() {
                   {rows.map((r) => {
                     const key = `${r.studentId}|${r.month}`;
                     return (
-                      <TableRow key={key}>
+                      <Fragment key={key}>
+                      <TableRow>
                         <TableCell className="font-medium whitespace-normal break-words">{r.name}</TableCell>
                         <TableCell className="whitespace-nowrap">{dayjs(`${r.month}-01`).format("MMM YYYY")}</TableCell>
                         <TableCell className="text-right tabular-nums whitespace-nowrap">{formatVND(r.savedTotal)}</TableCell>
@@ -218,7 +377,10 @@ export function ClosedMonthChanges() {
                           {r.difference > 0 ? "+" : "-"}
                           {formatVND(Math.abs(r.difference))}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Button size="sm" variant="ghost" aria-expanded={open.has(key)} onClick={() => toggle(key)}>
+                            {open.has(key) ? "Hide" : "What changed"}
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -229,6 +391,14 @@ export function ClosedMonthChanges() {
                           </Button>
                         </TableCell>
                       </TableRow>
+                      {open.has(key) && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="whitespace-normal bg-muted/30">
+                            <WhatChanged row={r} />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      </Fragment>
                     );
                   })}
                 </TableBody>
