@@ -39,6 +39,27 @@ export function studentSlide(s: Slide): Slide {
     }
     case "exam":
       return { ...s, items: s.items.map((i) => ({ q: i.q, ...(i.options ? { options: i.options } : {}), answer: "" })) };
+    case "fluency": {
+      // How the teacher corrects is the teacher's; the phrases and rounds are the children's.
+      const { teacherNote: _note, feedback: _fb, ...rest } = s;
+      return { ...rest, steps: pupilLines(rest.steps)!, ...(rest.prompts ? { prompts: pupilLines(rest.prompts) } : {}) };
+    }
+    case "writing": {
+      // A dictogloss text is what the children rebuild, so it is the answer: it goes.
+      // A model text stays (they read it). Combine / expand / fix answers go.
+      const { teacherNote: _note, text, items, ...rest } = s;
+      return {
+        ...rest,
+        steps: pupilLines(rest.steps)!,
+        ...(text && s.routine !== "dictogloss" ? { text } : {}),
+        ...(items ? { items: items.map((i) => ({ q: i.q, answer: "" })) } : {}),
+      };
+    }
+    case "vlog": {
+      // The children see what is looked for (kidSummary, the criteria's labels), never the weights.
+      const { rubric, ...rest } = s;
+      return { ...rest, ...(rest.steps ? { steps: pupilLines(rest.steps) } : {}), ...(rubric ? { rubric: rubric.map((r) => ({ label: r.label, description: r.description, weight: 0 })) } : {}) };
+    }
     default:
       return s;
   }

@@ -59,7 +59,7 @@ for (const u of UNITS) {
   const su = A.studentUnit(u);
   const left = [
     ...allItems(su).filter((m) => m !== '"answer":""').slice(0, 2),
-    ...(JSON.stringify(su).match(/"(teacherNote|decoding|resources)":/g) ?? []).slice(0, 2),
+    ...(JSON.stringify(su).match(/"(teacherNote|decoding|resources|feedback)":/g) ?? []).slice(0, 2),
     ...(su.decks.some((d) => d.slides.some((s) => s.kind === "listening" && s.script.length)) ? ["a listening script"] : []),
     ...((su.assessments ?? []).some((a) => a.sections.some((x) => x.script) || (a.speaking && a.speaking.rubric.length)) ? ["a test script or rubric"] : []),
     ...(su.generalizations.length ? ["the teacher's generalizations"] : []),
@@ -97,6 +97,11 @@ for (const u of UNITS) {
           if (distinctive(bare) && !visible.includes(bare) && one.includes(bare)) leaks.push(`exam answer: ${it.answer}`);
         }
       }
+      // Lab slides: how the teacher corrects, a dictogloss text (the children rebuild it) and the model answers stay off the student copy.
+      if (s.kind === "fluency" && distinctive(s.feedback) && st.includes(s.feedback.slice(0, 40))) leaks.push(`correction move: ${s.feedback.slice(0, 40)}`);
+      if (s.kind === "writing" && s.routine === "dictogloss" && s.text && st.includes(s.text.text.slice(0, 40))) leaks.push(`dictogloss text: ${s.text.text.slice(0, 40)}`);
+      if (s.kind === "writing") { const v = shown(s.steps, s.frames, s.checklist, s.sayIt, s.tiers, s.routine === "dictogloss" ? null : s.text, (s.items ?? []).map((i) => i.q)); for (const it of s.items ?? []) if (leaked(it, v, st)) leaks.push(`model answer: ${it.answer}`); }
+      if ((s.kind === "fluency" || s.kind === "writing") && distinctive(s.teacherNote)) ok(`${d.id}: the teacher copy keeps the note on "${s.title}"`, te.includes(s.teacherNote.slice(0, 40)));
       if ((s.kind === "activity" || s.kind === "speaking") && distinctive(s.teacherNote)) ok(`${d.id}: the teacher copy keeps the note on "${s.title}"`, te.includes(s.teacherNote.slice(0, 40)));
     }
     ok(`${d.id}: nothing for the teacher only reaches the student copy`, leaks.length === 0, leaks.slice(0, 3).join(" | "));

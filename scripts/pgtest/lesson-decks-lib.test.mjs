@@ -187,6 +187,25 @@ for (const { f, u } of units) {
       ok(`${d.id}: keeps the Sun Class lesson rules (scripts/lesson-decks/ielts-rules.mjs)`, probs.length === 0, probs.join("; "));
     }
     ok(`${d.id}: same course book as its unit`, d.curriculum === u.curriculum && d.level === u.level && d.unit === u.unit);
+    // Speaking & Writing Lab slides (src/lib/lessonDecks/lab.ts): well-formed wherever they appear.
+    for (const s of d.slides.filter((x) => x.kind === "fluency")) {
+      ok(`${d.id} / ${s.title}: a fluency routine has a goal, 3+ whole phrases, steps and 2-4 timed rounds of 15-240 s`,
+        !!s.goal && s.chunks.length >= 3 && s.steps.length > 0 && s.rounds.length >= 2 && s.rounds.length <= 4
+        && s.rounds.every((r) => Number.isInteger(r.seconds) && r.seconds >= 15 && r.seconds <= 240 && r.say));
+      if (s.routine === "4-3-2" || s.routine === "retell") ok(`${d.id} / ${s.title}: ${s.routine} rounds get shorter`, s.rounds.every((r, i) => i === 0 || r.seconds < s.rounds[i - 1].seconds));
+      ok(`${d.id} / ${s.title}: 4-15 minutes`, s.minutes >= 4 && s.minutes <= 15, String(s.minutes));
+    }
+    for (const s of d.slides.filter((x) => x.kind === "writing")) {
+      ok(`${d.id} / ${s.title}: a writing routine has steps and a checklist`, s.steps.length > 0 && s.checklist.length >= 2);
+      if (s.routine === "dictogloss" || s.routine === "model, then write") ok(`${d.id} / ${s.title}: ${s.routine} has its original text (15-90 words)`, !!s.text && (s.text.text.split(/\s+/).length >= 15) && s.text.text.split(/\s+/).length <= 90, String(s.text?.text.split(/\s+/).length));
+      if (["sentence combining", "expand it", "fix it"].includes(s.routine)) ok(`${d.id} / ${s.title}: ${s.routine} has 3+ items, each with a model answer`, (s.items ?? []).length >= 3 && s.items.every((i) => i.q && i.answer));
+      ok(`${d.id} / ${s.title}: 4-15 minutes`, s.minutes >= 4 && s.minutes <= 15, String(s.minutes));
+    }
+    for (const s of d.slides.filter((x) => x.kind === "vlog" && x.rubric)) {
+      ok(`${d.id} / ${s.title}: a recorded talk has 2-6 scored criteria, a 30-600 s cap and a child's summary`,
+        s.rubric.length >= 2 && s.rubric.length <= 6 && s.rubric.every((r) => r.label && r.description && r.weight > 0)
+        && Number.isInteger(s.maxSeconds) && s.maxSeconds >= 30 && s.maxSeconds <= 600 && !!s.kidSummary && (s.steps ?? []).length > 0);
+    }
     // Exam practice: every item has an answer, multiple choice has 2-4 options and the
     // answer names one of them, and the minutes count like any timed slide.
     for (const s of d.slides.filter((x) => x.kind === "exam")) {
@@ -203,6 +222,15 @@ for (const { f, u } of units) {
       ok(`${d.id}: has a creative writing task with a challenge, in class or as homework`, d.slides.some((s) => (s.kind === "project" && s.project === "writing" && !!s.challenge) || s.kind === "creative"));
       ok(`${d.id}: ends with a reflection`, d.slides.some((s) => s.kind === "reflect"));
     }
+  }
+  // A unit with a Lab: everything it names is in the decks, every lesson gets a fluency
+  // routine and a writing routine, and about one recorded talk a week (every other lesson).
+  if (u.lab) {
+    ok(`${f}: the Lab names only slides and decks the unit has`, u.lab.issues.length === 0, u.lab.issues.slice(0, 4).join(" | "));
+    ok(`${f}: every lesson has a fluency routine and a writing routine`, u.decks.every((d) => d.slides.some((s) => s.kind === "fluency") && d.slides.some((s) => s.kind === "writing")),
+      u.decks.filter((d) => !(d.slides.some((s) => s.kind === "fluency") && d.slides.some((s) => s.kind === "writing"))).map((d) => d.id).join(", "));
+    const talks = u.decks.filter((d) => d.slides.some((s) => s.kind === "vlog" && s.rubric)).length;
+    ok(`${f}: a recorded talk about every other lesson (${talks} for ${u.decks.length} lessons)`, talks >= Math.max(1, Math.floor(u.decks.length / 2)));
   }
   if (u.curriculum === "reach-higher") {
     if (u.decks.length === 1) {

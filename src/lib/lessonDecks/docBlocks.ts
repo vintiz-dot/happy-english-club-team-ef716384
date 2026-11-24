@@ -106,7 +106,32 @@ export function slideBlock(s: Slide, teacher: boolean): DocBlock | null {
     case "project":
       return clean({ heading: s.title, eyebrow: s.project === "writing" ? "Writing project" : "Speaking project", paragraphs: nonEmpty([s.goal, s.model ? `${s.model.title}: ${s.model.text}` : null, s.challenge ? `Challenge: ${s.challenge}` : null]), lists: nonEmpty([list("steps", s.steps), list("checks", s.criteria, "Success looks like"), list("frames", s.frames, "Sentence frames")]) });
     case "vlog":
-      return { heading: s.title, eyebrow: `Video homework · ${s.length}`, paragraphs: [s.prompt], tiers: s.tiers.map((t) => ({ level: t.level, task: `${t.who}. ${t.tips.join(" ")}`.trim(), ...(t.frames.length ? { frames: t.frames } : {}) })) };
+      return clean({
+        heading: s.title, eyebrow: `Video homework · ${s.length}`, paragraphs: nonEmpty([s.prompt, s.kidSummary ? `What your teacher is looking for: ${s.kidSummary}` : null]),
+        lists: nonEmpty([list("steps", s.steps, "Before you record"), list("checks", (s.rubric ?? []).map((r) => `${r.label}: ${r.description}`), "You are scored on")]),
+        tiers: s.tiers.map((t) => ({ level: t.level, task: `${t.who}. ${t.tips.join(" ")}`.trim(), ...(t.frames.length ? { frames: t.frames } : {}) })),
+      });
+    case "fluency":
+      return clean({
+        heading: s.title, eyebrow: `Fluency · ${s.routine}`, chips: chips(s.minutes, s.mode),
+        paragraphs: [s.goal],
+        lists: nonEmpty([
+          list("steps", s.steps),
+          list("bullets", s.rounds.map((r, n) => `Round ${n + 1} (${mmss(r.seconds)}): ${r.say}`), "Rounds"),
+          list("frames", s.chunks, "Say these fast and smooth"),
+          list("frames", s.recycle, "From earlier units"),
+          list("bullets", s.prompts, "Cues"),
+        ]),
+        tiers: s.tiers, teacher: teacher ? nonEmpty([note("How to correct", [s.feedback]), note("Teacher note", [s.teacherNote])]) : undefined,
+      });
+    case "writing":
+      return clean({
+        heading: s.title, eyebrow: `Writing · ${s.routine}`, chips: chips(s.minutes, s.mode),
+        paragraphs: nonEmpty([s.text && (teacher || s.routine !== "dictogloss") ? `${s.text.title}: ${s.text.text}` : null, s.sayIt ? `Say it: ${s.sayIt}` : null]),
+        lists: nonEmpty([list("steps", s.steps), list("frames", s.frames, "Sentence frames"), list("checks", s.checklist, "Check your writing")]),
+        questions: s.items?.length ? { space: "line", items: s.items.map((i) => item(i, teacher)) } : undefined,
+        tiers: s.tiers, teacher: teacher ? nonEmpty([note("Teacher note", [s.teacherNote])]) : undefined,
+      });
     case "reflect":
       return { heading: s.title ?? "Think back", eyebrow: "Reflection", lists: [{ style: "bullets", items: s.prompts }], writingLines: teacher ? undefined : 4 } as DocBlock;
     case "creative":

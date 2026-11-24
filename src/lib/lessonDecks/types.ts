@@ -61,6 +61,24 @@ export type MediaLink = { kind: "audio" | "video"; label: string; tracks: { labe
 
 export type Thinking = "Create" | "Design" | "Evaluate" | "Argue" | "Compare and justify";
 
+// Speaking & Writing Lab (24 Nov 2026): routines that turn the lesson's grammar into
+// language a child says without stopping to build it (automaticity), and writes well.
+// Each unit's routines live in `<unit>/lab.ts` and are put into its decks by lab.ts.
+//   4-3-2: the same talk to three partners, less time each round (Nation).
+//   task repeat: the lesson's speaking task again with a new partner after a planning minute (Bygate).
+//   chunk sprint: a cue, then the whole phrase, fast: chorus, then pairs, then alone.
+//   question chain: ask, answer, turn and ask the next child, round the circle.
+//   retell: retell the story or text again, shorter each time, from key-word cards.
+export type FluencyRoutine = "4-3-2" | "task repeat" | "chunk sprint" | "question chain" | "retell";
+//   dictogloss: the teacher reads a short ORIGINAL text twice; groups rebuild it.
+//   sentence combining: two or three short sentences become one with a joining word.
+//   expand it: a bare sentence grows (who, where, when, why, a describing word).
+//   fix it: sentences with the class's typical mistakes, found and fixed.
+//   model, then write: notice what a short model does, then write your own with frames.
+export type WritingRoutine = "dictogloss" | "sentence combining" | "expand it" | "fix it" | "model, then write";
+/** A criterion a recorded talk is scored on (video_homework_rubrics.criteria). */
+export type TalkCriterion = { label: string; description: string; weight: number };
+
 export type CreativeTask = {
   title: string;
   task: string; // what to make, in one or two sentences a child can follow
@@ -154,6 +172,52 @@ export type Slide =
       prompt: string;
       length: string; // "60-90 seconds"
       tiers: { level: "Support" | "Core" | "Stretch"; who: string; frames: string[]; tips: string[] }[];
+      // A vlog that can be posted as in-app video homework (the weekly recorded talk):
+      // how to practise before recording, the recorder's cap, and the rubric the
+      // video is scored on. All optional: older vlogs are printed and set by hand.
+      steps?: string[];
+      maxSeconds?: number; // 30-600 (homeworks.video_max_seconds)
+      rubric?: TalkCriterion[]; // 2-6 criteria
+      kidSummary?: string; // "What your teacher is looking for", in a child's words
+      words?: string[];
+      grammar?: string[];
+    }
+  | {
+      // A fluency routine (see FluencyRoutine). `rounds` run in order, each with its
+      // own timer on screen; `chunks` are the whole phrases the children say, and
+      // `recycle` mixes in phrases from earlier units (spaced retrieval).
+      kind: "fluency";
+      title: string;
+      routine: FluencyRoutine;
+      mode: Mode;
+      minutes: number;
+      goal: string; // what the children aim for, in their words
+      chunks: string[];
+      recycle?: string[];
+      rounds: { seconds: number; say: string }[];
+      steps: string[];
+      prompts?: string[];
+      feedback?: string; // how the teacher corrects during the rounds (teacher only)
+      teacherNote?: string;
+      tiers?: Tier[];
+    }
+  | {
+      // A writing routine (see WritingRoutine). `text` is an original short text: a
+      // model shown on screen, or for a dictogloss read aloud and kept folded (it is
+      // the answer). `items` are the sentences to combine, expand or fix, answers folded.
+      kind: "writing";
+      title: string;
+      routine: WritingRoutine;
+      mode: Mode;
+      minutes: number;
+      steps: string[];
+      text?: { title: string; text: string };
+      items?: { q: string; answer: string }[];
+      frames?: string[];
+      checklist: string[]; // what the children check in their own writing
+      sayIt?: string; // the spoken step: read it to a partner, then say it without looking
+      teacherNote?: string;
+      tiers?: Tier[];
     }
   | { kind: "reflect"; title?: string; prompts: string[] }
   | {
@@ -313,4 +377,7 @@ export type Unit = {
   // The grammar strand a unit carries for the class's entrance exam (Jupiter): the
   // book's own points and the ones added, in teaching order. Shown to the teacher.
   grammarStrand?: { point: string; lesson: number; source: "book" | "added" | "stretch" }[];
+  // Set by withLab (lab.ts): what the unit's Speaking & Writing Lab changed, and any
+  // part of it that named a slide the deck does not have (the suite fails on those).
+  lab?: { added: number; issues: string[] };
 };

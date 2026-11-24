@@ -18,10 +18,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Play, Printer, Users, BookOpen, CalendarDays, ExternalLink, FileText, ClipboardCheck, Trophy, Lightbulb, PenLine, RotateCcw, Send, Heart } from "lucide-react";
+import { Play, Printer, Users, BookOpen, CalendarDays, ExternalLink, FileText, ClipboardCheck, Trophy, Lightbulb, PenLine, RotateCcw, Send, Heart, Video } from "lucide-react";
 import { toast } from "sonner";
 import { pickSession } from "@/lib/lessonDecks/covered";
 import { odCompanions } from "@/lib/lessonDecks/odCompanions";
+import { talkHomework, type TalkHomework } from "@/lib/lessonDecks/talk";
 
 type ClassLite = { id: string; name: string };
 type FlipbookRow = ClassFlipbook & { class_id: string | null };
@@ -248,6 +249,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                 const g = grammarDeck(d);
                 const checks = checksIn(d).map((id) => unit.assessments?.find((a) => a.id === id)).filter(Boolean);
                 const hw = homeworkBody(d);
+                const talk = talkHomework(d);
                 return (
                   <TableRow key={d.id}>
                     <TableCell>{d.lesson}</TableCell>
@@ -285,6 +287,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                           </Button>
                         )}
                         {hw && classId && <SetHomework classId={classId} title={hw.title} body={hw.body} due={paced[k + 1]?.date ?? null}
+                          getPresent={getPresent} enrolled={roster.data?.enrolled.length ?? 0} />}
+                        {talk && classId && <SetTalk classId={classId} talk={talk} due={paced[k + 2]?.date ?? paced[k + 1]?.date ?? null}
                           getPresent={getPresent} enrolled={roster.data?.enrolled.length ?? 0} />}
                         {!hw && isWeekHomework(d) && <WeekHomeworkButtons deck={d} classId={classId} getPresent={getPresent}
                           enrolled={roster.data?.enrolled.length ?? 0} interests={place.state?.interests ?? {}} due={paced[k + 1]?.date ?? null} />}
@@ -466,6 +470,50 @@ function SetHomework({ classId, title, body, due, getPresent, enrolled }: {
         else toast.success("Homework posted", { description: `${title} · ${present.length} children${due ? ` · due ${due}` : ""}` });
       }}>
       <Send className="h-4 w-4" />Set in app
+    </Button>
+  );
+}
+
+/**
+ * Post the lesson's weekly talk as in-app video homework for the children present
+ * today, with the deck's rubric saved as the approved rubric (the teacher can still
+ * change it in the rubric editor). Same attendance rule as Set in app.
+ */
+function SetTalk({ classId, talk, due, getPresent, enrolled }: {
+  classId: string; talk: TalkHomework; due: string | null; getPresent: () => Promise<{ id: string }[] | null>; enrolled: number;
+}) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button size="sm" variant="outline" disabled={busy} title="Posts the weekly talk as video homework (Record my video) for the children present today, with its rubric"
+      onClick={async () => {
+        const present = await getPresent();
+        if (!present || present.length === 0) { toast.error(NO_ATTENDANCE); return; }
+        const away = Math.max(enrolled - present.length, 0);
+        if (!confirm(`Post the recorded talk "${talk.title}" for the ${present.length} children present today${away ? ` (${away} absent get nothing)` : ""}${due ? `, due ${due}` : ""}? They record it in the app; nothing reaches a family before you approve the report.`)) return;
+        setBusy(true);
+        const { data: auth } = await supabase.auth.getUser();
+        const { data: row, error } = await supabase.from("homeworks")
+          .insert({
+            class_id: classId, title: talk.title, body: talk.body, due_date: due, created_by: auth.user?.id ?? null,
+            student_ids: present.map((s) => s.id), submission_type: "video", video_max_seconds: talk.maxSeconds,
+          } as any)
+          .select("id").maybeSingle();
+        if (error || !row) {
+          setBusy(false);
+          if (error && (error.code === "PGRST204" || error.code === "42703" || /student_ids/.test(error.message)))
+            toast.error("Not posted: homework for present children needs migration 20261122150000_homework_for_present.sql");
+          else toast.error("Could not post the talk", { description: error?.message });
+          return;
+        }
+        const { error: rErr } = await db.from("video_homework_rubrics").upsert({
+          homework_id: (row as { id: string }).id, ...talk.rubric,
+          status: "approved", approved_by: auth.user?.id ?? null, approved_at: new Date().toISOString(),
+        }, { onConflict: "homework_id" });
+        setBusy(false);
+        if (rErr) toast.warning("Talk posted, but its rubric was not saved", { description: `Open the homework's rubric editor to make one. ${rErr.message}` });
+        else toast.success("Talk posted", { description: `${talk.title} · ${present.length} children${due ? ` · due ${due}` : ""}` });
+      }}>
+      <Video className="h-4 w-4" />Set talk in app
     </Button>
   );
 }

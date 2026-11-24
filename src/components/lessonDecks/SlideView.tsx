@@ -3,10 +3,11 @@ import { ExamSlide } from "./ExamSlide";
 import { HomeworkGuide } from "./HomeworkGuide";
 import { MediaBar } from "./MediaBar";
 import type { Assessment, BookRef, CreativeTask, Deck, Mode, ScriptLine, Slide, Tier, TierLevel, Unit } from "@/lib/lessonDecks/types";
+import { FluencyRounds, WritingText } from "./LabParts";
 import type { FlipTarget } from "@/lib/lessonDecks/bookPages";
 import { RUBRIC, PEER_STEPS } from "@/lib/lessonDecks/ieltsRubric";
 import type { Audience } from "@/lib/lessonDecks/audience";
-import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket, Scale, Play, Turtle } from "lucide-react";
+import { BookOpen, Clock, Users, User, UsersRound, Presentation, Mic, PenLine, Video, Lightbulb, AlertTriangle, CheckCircle2, Home, Target, Sparkles, Volume2, Headphones, ExternalLink, FileText, ClipboardCheck, Trophy, Rocket, Scale, Play, Turtle, Zap, RotateCcw, Repeat } from "lucide-react";
 
 /**
  * What a slide may use besides its own content. The player fills all of it; a
@@ -580,6 +581,80 @@ function SlideBody({ slide }: { slide: Slide }) {
               </div>
             ))}
           </div>
+          {slide.steps?.length ? (
+            <div className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+              <p className="mb-2 text-sm uppercase tracking-widest text-hec-ink-soft">Before you record</p>
+              <List items={slide.steps} ordered />
+            </div>
+          ) : null}
+          {slide.kidSummary && <p className="text-xl text-hec-ink"><strong>What your teacher is looking for:</strong> {slide.kidSummary}<Say text={slide.kidSummary} /></p>}
+          {slide.rubric?.length ? (
+            <div className="flex flex-wrap gap-2">
+              {slide.rubric.map((r) => <Chip key={r.label}><CheckCircle2 className="h-4 w-4" />{r.label}</Chip>)}
+              {slide.maxSeconds ? <Chip tone="accent"><Clock className="h-4 w-4" />Up to {mmss(slide.maxSeconds)}</Chip> : null}
+            </div>
+          ) : null}
+        </div>
+      );
+    case "fluency":
+      return (
+        <div className="space-y-5">
+          <H Icon={Zap}>{slide.title}</H>
+          <Meta tag={`Fluency · ${slide.routine}`} mode={slide.mode} minutes={slide.minutes} />
+          <p className="text-2xl font-medium text-amber-700 dark:text-amber-300">{slide.goal}</p>
+          <List items={slide.steps} ordered />
+          <FluencyRounds rounds={slide.rounds} audience={audience} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/40">
+              <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Say it fast and smooth</p>
+              <List items={slide.chunks} say />
+              {slide.recycle?.length ? (
+                <>
+                  <p className="mb-2 mt-4 flex items-center gap-1 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200"><RotateCcw className="h-4 w-4" />From earlier units</p>
+                  <List items={slide.recycle} say />
+                </>
+              ) : null}
+            </div>
+            {slide.prompts?.length ? (
+              <div className="rounded-2xl bg-sky-50 p-5 dark:bg-sky-950/40">
+                <p className="mb-2 text-sm uppercase tracking-widest text-sky-800 dark:text-sky-200">Cues</p>
+                <List items={slide.prompts} say />
+              </div>
+            ) : null}
+          </div>
+          <Tiers tiers={slide.tiers} />
+          {slide.feedback && audience !== "student" && <p className="text-base text-hec-ink-soft italic">How to correct: {slide.feedback}</p>}
+          {slide.teacherNote && audience !== "student" && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
+        </div>
+      );
+    case "writing":
+      return (
+        <div className="space-y-5">
+          <H Icon={PenLine}>{slide.title}</H>
+          <Meta tag={`Writing · ${slide.routine}`} mode={slide.mode} minutes={slide.minutes} />
+          <List items={slide.steps} ordered />
+          {slide.text && <WritingText text={slide.text} hidden={slide.routine === "dictogloss"} audience={audience} speakScript={speakScript} />}
+          {slide.items?.length ? (
+            <div className="rounded-2xl border border-hec-line bg-hec-surface p-4">
+              <ol className="list-decimal space-y-2 pl-6 text-xl text-hec-ink">{slide.items.map((it, i) => <li key={i}>{it.q}</li>)}</ol>
+              <TeacherAnswers items={slide.items} label="Model answers (teacher)" />
+            </div>
+          ) : null}
+          <div className="grid gap-4 md:grid-cols-2">
+            {slide.frames?.length ? (
+              <div className="rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/40">
+                <p className="mb-2 text-sm uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Sentence frames</p>
+                <List items={slide.frames} say />
+              </div>
+            ) : null}
+            <div className="rounded-2xl bg-hec-paper border border-hec-line p-5">
+              <p className="mb-2 text-sm uppercase tracking-widest text-hec-ink-soft">Check your writing</p>
+              <ul className="space-y-1 text-xl text-hec-ink">{slide.checklist.map((c, i) => <li key={i}>☐ {c}</li>)}</ul>
+            </div>
+          </div>
+          {slide.sayIt && <p className="flex items-start gap-2 text-xl text-hec-ink"><Repeat className="mt-1 h-5 w-5 shrink-0 text-amber-600" /><span><strong>Say it:</strong> {slide.sayIt}</span></p>}
+          <Tiers tiers={slide.tiers} />
+          {slide.teacherNote && audience !== "student" && <p className="text-base text-hec-ink-soft italic">Teacher: {slide.teacherNote}</p>}
         </div>
       );
     case "exam":
