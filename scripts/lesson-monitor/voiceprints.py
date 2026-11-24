@@ -23,7 +23,6 @@ whether the teacher agreed; no embeddings).
 """
 from __future__ import annotations
 
-import ctypes
 import json
 import sys
 from dataclasses import dataclass, field
@@ -41,30 +40,7 @@ PENDING_DAYS = 30        # as long as a report is kept
 
 
 # ------------------------------------------------------------------ encryption
-class Dpapi:
-    """Windows DPAPI, current user. No key file exists: Windows holds it with the account."""
-
-    class _Blob(ctypes.Structure):
-        _fields_ = [("cbData", ctypes.c_uint32), ("pbData", ctypes.POINTER(ctypes.c_char))]
-
-    def _call(self, fn, data: bytes) -> bytes:
-        crypt32, kernel32 = ctypes.windll.crypt32, ctypes.windll.kernel32
-        buf = ctypes.create_string_buffer(data, len(data))
-        src = self._Blob(len(data), ctypes.cast(buf, ctypes.POINTER(ctypes.c_char)))
-        dst = self._Blob()
-        if not fn(ctypes.byref(src), None, None, None, None, 0x1, ctypes.byref(dst)):  # 0x1: UI forbidden
-            raise OSError("DPAPI refused")
-        try:
-            return ctypes.string_at(dst.pbData, dst.cbData)
-        finally:
-            kernel32.LocalFree(dst.pbData)
-
-    def protect(self, data: bytes) -> bytes:
-        return self._call(lambda *a: ctypes.windll.crypt32.CryptProtectData(a[0], "hec-voiceprint", *a[2:]), data)
-
-    def unprotect(self, data: bytes) -> bytes:
-        return self._call(lambda *a: ctypes.windll.crypt32.CryptUnprotectData(a[0], None, *a[2:]), data)
-
+from dpapi import Dpapi  # noqa: E402  (Windows DPAPI, current user)
 
 CODEC = None  # tests put a stand-in here; production uses DPAPI and nothing else
 
@@ -74,7 +50,7 @@ def codec():
     if CODEC is None:
         if sys.platform != "win32":
             raise RuntimeError("voiceprints are kept only on the school's Windows laptop (DPAPI)")
-        CODEC = Dpapi()
+        CODEC = Dpapi("hec-voiceprint")
     return CODEC
 
 

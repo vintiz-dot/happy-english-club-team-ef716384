@@ -1,6 +1,17 @@
 """Signing in for the pilot, and the few Supabase calls the job makes.
 
-HOW THE OPERATOR SIGNS IN (once per night, nothing stored):
+REMEMBERED SIGN-IN (owner, 24 Nov 2026: "store this one time and stop asking me"):
+  After one sign-in with email and password, the scripts keep the app's SESSION,
+  never the password: the refresh token the sign-in returns, sealed with Windows
+  DPAPI for this Windows account (dpapi.py) in %USERPROFILE%/.hec-pilot/session.bin,
+  outside the repo and the pilot folder. Another Windows account or computer
+  cannot open it. Each run swaps it for a fresh one (Supabase refresh tokens are
+  single-use), exactly as the website stays signed in. If it is refused (signed
+  out everywhere, password changed, long unused) the script asks once more.
+  `py -3 scripts/lesson-monitor/supa.py forget` deletes it; signing out of all
+  devices in the app also ends it.
+
+HOW THE OPERATOR SIGNS IN (the first time, or when the remembered session is refused):
   The job is started by a person at the end of the day (the owner as admin, or
   the class's teacher). It asks for that person's app email and password with
   a hidden prompt, signs in through the app's normal sign-in (the publishable
@@ -88,11 +99,12 @@ def _message(raw: bytes) -> str:
 class Session:
     """The signed-in person's tokens, in memory only."""
 
-    def __init__(self, url: str, key: str, transport=http):
+    def __init__(self, url: str, key: str, transport=http, on_refresh=None):
         self.url, self.key, self._http = url, key, transport
         self._token = ""
         self._refresh = ""
         self._exp = 0.0
+        self.on_refresh = on_refresh  # called with every new refresh token (the remembered sign-in keeps it)
 
     def _take(self, st: int, raw: bytes) -> None:
         try:
@@ -104,6 +116,22 @@ class Session:
         self._token = d["access_token"]
         self._refresh = d.get("refresh_token") or ""
         self._exp = float(d.get("expires_at") or (time.time() + float(d.get("expires_in") or 3600)))
+        if self._refresh and self.on_refresh:
+            self.on_refresh(self._refresh)
+
+    def sign_in_refresh(self, refresh_token: str) -> bool:
+        """A remembered session. False (nothing raised) when the app refuses it or cannot be reached."""
+        try:
+            st, raw = self._http("POST", f"{self.url}/auth/v1/token?grant_type=refresh_token",
+                                 {"apikey": self.key, "Content-Type": "application/json"},
+                                 json.dumps({"refresh_token": refresh_token}).encode())
+            d = json.loads(raw) if raw else {}
+        except (ValueError, OSError):
+            return False
+        if st != 200 or not d.get("access_token"):
+            return False
+        self._take(st, raw)
+        return True
 
     def sign_in_password(self, email: str, password: str) -> None:
         st, raw = self._http("POST", f"{self.url}/auth/v1/token?grant_type=password",
@@ -190,13 +218,73 @@ class Api:
         return raw
 
 
-def open_api(pasted_token: bool = False) -> Api:
+# ------------------------------------------------------------------ the remembered session
+CODEC = None  # tests put a stand-in here; on the laptop it is DPAPI
+
+
+def _codec():
+    global CODEC
+    if CODEC is None:
+        from dpapi import Dpapi
+        CODEC = Dpapi("hec-pilot-session")
+    return CODEC
+
+
+def session_file() -> Path:
+    return Path(os.environ.get("HEC_SESSION_FILE") or (Path.home() / ".hec-pilot" / "session.bin"))
+
+
+def remember(refresh_token: str) -> None:
+    try:
+        f = session_file()
+        f.parent.mkdir(parents=True, exist_ok=True)
+        tmp = f.with_suffix(".tmp")
+        tmp.write_bytes(_codec().protect(refresh_token.encode()))
+        os.replace(tmp, f)
+    except (OSError, RuntimeError):
+        pass  # not remembered: the next run asks again, nothing else changes
+
+
+def remembered() -> str:
+    try:
+        return _codec().unprotect(session_file().read_bytes()).decode()
+    except (OSError, RuntimeError, UnicodeDecodeError):
+        return ""
+
+
+def forget() -> bool:
+    f = session_file()
+    if f.exists():
+        f.unlink()
+        return True
+    return False
+
+
+def open_api(pasted_token: bool = False, transport=http) -> Api:
     url, key = supabase_conf()
-    s = Session(url, key)
+    s = Session(url, key, transport)
+    if pasted_token:
+        if not sys.stdin.isatty():
+            sys.exit("The pilot signs in interactively: run it in a terminal window")
+        s.use_pasted_token()
+        return Api(s)
+    old = remembered()
+    s.on_refresh = remember
+    if old and s.sign_in_refresh(old):
+        print("Signed in (remembered on this Windows account; `supa.py forget` removes it).")
+        return Api(s)
+    if old:
+        forget()
+        print("The remembered sign-in was refused (signed out, password changed or unused too long): sign in again.")
     if not sys.stdin.isatty():
         sys.exit("The pilot signs in interactively: run it in a terminal window")
-    if pasted_token:
-        s.use_pasted_token()
-    else:
-        s.sign_in_prompt()
+    s.sign_in_prompt()
+    print("Signed in. You will not be asked again on this Windows account.")
     return Api(s)
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["forget"]:
+        print("remembered sign-in deleted" if forget() else "no remembered sign-in on this Windows account")
+    else:
+        print("usage: supa.py forget")

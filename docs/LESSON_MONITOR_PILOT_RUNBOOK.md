@@ -142,7 +142,7 @@ It runs for 28 days from today. The app refuses if any Venus child lacks the lin
 
 1. Sign in to Windows as `hec-pilot`. Plug the laptop in. Do not run other heavy work that night.
 2. In PowerShell: `cd C:\hec-pilot\code` and run `PY scripts\lesson-monitor\nightly.py`.
-3. Type your app email and password when asked. They are hidden, never saved and never shown. The job keeps the sign-in in memory only and renews it itself while it works. Closing the window ends it.
+3. The first time, type your app email and password. They are hidden and never saved. From 24 Nov 2026 every script (`nightly.py`, `pilot_admin.py`, `voice_admin.py`) then remembers the sign-in on this Windows account and stops asking. It keeps the app's session, never the password, sealed by Windows in `%USERPROFILE%\.hec-pilot\session.bin`, which another account or computer cannot open. It asks again only if the session is refused (you signed out of all devices, changed your password, or did not use it for a long time). `py -3 scripts\lesson-monitor\supa.py forget` makes it forget.
 4. It prints how many lessons are waiting, which it will do tonight (oldest first, as many as finish by 07:00, at most 3), and any it refuses (a missing consent, a cover teacher). About **2 hours per lesson**. Leave the window open and the laptop awake (set Settings > System > Power > "When plugged in, put my device to sleep after" to **Never** in this account).
 5. In the morning, look at the last lines of `C:\hec-pilot\pilot\logs\nightly-<date>.log`. Each lesson ends with `report saved` and `audio copy deleted (0 files left)`. The log holds ids and counts, never words from the lesson.
 
