@@ -90,7 +90,8 @@ export const odL1U17Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l1-u17-l2": {
-      objectives: ["I can tell my friend about living and nonliving things three times, faster each time."],
+      objectives: ["I can tell my friend about living and nonliving things three times, faster each time.", "I can write a short paragraph about a living and a nonliving thing."],
+      trim: { "Act it out": 5 },
       add: [
         {
           after: "Team Living and Team Nonliving",
@@ -130,29 +131,22 @@ export const odL1U17Lab: UnitLab = {
           after: "Living and Nonliving chart (SB 171 Think)",
           slide: {
             kind: "writing",
-            title: "Listen and build: plant and rock",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 5,
-            steps: [
-              "Listen to the teacher read the short text. Do not write yet.",
-              "Listen again. Write the words you hear: plant, grows, rock, doesn't.",
-              "Work together to build the text. Read it aloud.",
-              "Teacher: remind the class first: living things grow and breathe; nonliving things don't.",
-            ],
+            title: "Living and nonliving: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
+            mode: "solo",
+            minutes: 8,
+            steps: ["Read the model with the teacher. Point to the living thing and the nonliving thing.","Plan: look at your three drawings. Say one sentence for each box to your partner.","Write: one sentence from each frame. Say it first, then write it.","Check: tick the checklist. Your partner points to every capital letter and every full stop.","Teacher: look only at capital letters and the verb after doesn't. Put a dot next to a line with a mistake; the child finds it and fixes it."],
             text: {
-              title: "A plant and a rock",
-              text: "A plant is a living thing. It grows and it changes. A rock is a nonliving thing. It doesn't grow, and it doesn't breathe.",
+              title: "Model: A plant and a rock",
+              text: "A plant is a living thing. It grows and it needs water. A rock is a nonliving thing. It doesn't grow and it doesn't breathe.",
             },
-            frames: ["A ___ is a living thing.", "It ___.", "A ___ is a nonliving thing.", "It doesn't ___."],
-            checklist: ["A capital letter at the start of each sentence", "A full stop at the end", "grows: the -s is there"],
-            sayIt: "Read your text to the class, then say it again without looking.",
-            teacherNote: "Read at a natural speed, twice, and say the final s in grows clearly. Children rebuild the meaning, not the exact words: accept 'A plant is living. It grows.' as a good try and compare with the model afterwards. Good listening, not copying, is the point.",
-            tiers: [
-              { level: "Support", task: "Fill in the frames from the board.", frames: ["A plant is a ___ thing.", "It ___."] },
-              { level: "Core", task: "Build the whole text with your group." },
-              { level: "Stretch", task: "Build the text, then write one more sentence about a cat or a toy." },
-            ],
+            organiser: [{"label":"Living","prompt":"Draw a living thing. Say: A ___ is a living thing."},{"label":"It does","prompt":"Draw what the living thing does. Say: It grows."},{"label":"Nonliving","prompt":"Draw a nonliving thing. Say what it doesn't do."}],
+            frames: ["A ___ is a living thing.","It ___ and it ___.","A ___ is a nonliving thing.","It doesn't ___."],
+            checklist: ["Three or four sentences: living, what it does, nonliving","A capital letter at the start and a full stop at the end","grows, breathes: the -s is there; after doesn't no -s"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking.",
+            teacherNote: "A first paragraph about the unit's big idea, planned by drawing. The four frames are the four sentences; children may copy and complete them. Mark only two things (capital letters, the verb after doesn't). It can be the script for the home talk 'Living things breathe and grow': the child reads it, then tells it without looking. The dictogloss text is now the model.",
+            tiers: [{"level":"Support","task":"Copy the frames and fill in one word in each.","frames":["A ___ is a living thing.","It ___."]},{"level":"Core","task":"Write three or four sentences from the frames."},{"level":"Stretch","task":"Add a sentence about a cat or a toy: 'A toy cat doesn't breathe.'"}],
           },
         },
       ],
@@ -260,7 +254,8 @@ export const odL1U17Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 4
     "od2e-l1-u17-l4": {
       objectives: ["I can say what I can see in my park, and which things are living, without stopping."],
-      trim: { "Park walk": 3, "What's missing?": 3, "Describing word mime": 3 },
+      drop: ["What's missing?"],
+      trim: { "Park walk": 3, "Describing word mime": 3 },
       add: [
         {
           after: "My favorite park (SB 174 Think)",
@@ -300,28 +295,22 @@ export const odL1U17Lab: UnitLab = {
           after: "Circle the describing words (SB 175 F)",
           slide: {
             kind: "writing",
-            title: "Write like the park model",
-            routine: "model, then write",
+            title: "My park: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
             mode: "solo",
-            minutes: 4,
-            steps: [
-              "Read the model with the teacher. Say it once together.",
-              "Look: which sentence tells living or nonliving? Which tells a describing word?",
-              "Write your own sentences about a thing in the park. Use the frames.",
-            ],
+            minutes: 8,
+            steps: ["Read the model with the teacher. Point to what you see in the park and which things are living.","Plan: look at your three drawings. Say one sentence for each box to your partner.","Write: one sentence from each frame. Say it first, then write it.","Check: tick the checklist. Your partner points to every capital letter and every full stop.","Teacher: look only at capital letters and the verb after can. Put a dot next to a line with a mistake; the child finds it and fixes it."],
             text: {
-              title: "A bush and a statue",
-              text: "A bush is a living thing. It is green. It can grow. A statue is a nonliving thing. It is big. It can't move.",
+              title: "Model: My park",
+              text: "In my park I can see a tree. The tree is a living thing and it can grow. I can see a bench too. The bench is a nonliving thing.",
             },
-            frames: ["A ___ is a living thing. It is ___. It can ___.", "A ___ is a nonliving thing. It is ___. It can't ___."],
-            checklist: ["A capital letter at the start", "A full stop at the end", "a before the thing: a bush"],
-            sayIt: "Read your sentences to your partner, then say them again without looking.",
-            teacherNote: "Children copy the shape of a model, then change the words: that is exactly what you want. Say the final t of can't clearly.",
-            tiers: [
-              { level: "Support", task: "Copy the model and change one word." },
-              { level: "Core", task: "Write two sentences about a living thing in the park." },
-              { level: "Stretch", task: "Write three sentences, then join two with 'and': 'It is green and big.'" },
-            ],
+            organiser: [{"label":"I can see","prompt":"Draw one thing in your park. Say: In my park I can see a ___."},{"label":"Living","prompt":"Draw a living thing. Say what it can do."},{"label":"Nonliving","prompt":"Draw a nonliving thing in your park. Say: I can see a ___ too."}],
+            frames: ["In my park I can see a ___.","The ___ is a living thing and it can ___.","I can see a ___ too.","The ___ is a nonliving thing."],
+            checklist: ["Three or four sentences: what I see, living, nonliving","A capital letter at the start and a full stop at the end","a before the thing: a tree, a bench"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking.",
+            teacherNote: "A paragraph on the lesson's own words, planned by drawing, with the old model text turned into the sentence frames. Children copy the shape and change the words, which is what you want. Mark only two things (capital letters, a before the thing). It can be the script for the home talk 'My living and nonliving things'.",
+            tiers: [{"level":"Support","task":"Copy the frames and change one word in each.","frames":["In my park I can see a ___.","The ___ is a living thing."]},{"level":"Core","task":"Write four sentences from the frames."},{"level":"Stretch","task":"Add a describing word: 'The tree is big and green.'"}],
           },
         },
       ],
@@ -330,7 +319,7 @@ export const odL1U17Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l1-u17-l5": {
       objectives: ["I can say what things can and can't do, again and again, smooth and fast."],
-      trim: { "Garden path game": 7 },
+      trim: { "Garden path game": 4 },
       add: [
         {
           after: "What can it do? Find the missing answers",
@@ -370,30 +359,22 @@ export const odL1U17Lab: UnitLab = {
           after: "Write like a champion: can and can't",
           slide: {
             kind: "writing",
-            title: "Join the can sentences",
-            routine: "sentence combining",
-            mode: "pairs",
-            minutes: 4,
-            steps: [
-              "Read the two short sentences with your partner.",
-              "Join them into one sentence with 'and' or 'but'.",
-              "Write the new sentence. Read it aloud together.",
-            ],
-            items: [
-              { q: "A bird can fly. A bird can sing.", answer: "A bird can fly and sing." },
-              { q: "I can jump. I can clap.", answer: "I can jump and clap." },
-              { q: "A fish can swim. A fish can't walk.", answer: "A fish can swim, but it can't walk." },
-              { q: "A plant can grow. A plant can't run.", answer: "A plant can grow, but it can't run." },
-            ],
-            frames: ["A ___ can ___ and ___.", "A ___ can ___, but it can't ___."],
-            checklist: ["A capital letter at the start", "A full stop at the end", "and joins two things it can do; but joins can and can't"],
-            sayIt: "Read your joined sentences to your partner, then say them again without looking.",
-            teacherNote: "Joining short sentences is a well-researched way to help young writers write longer sentences. Say the joined sentence with a clear 'and' or 'but' and a tiny pause before 'but'. Watch for 'can runs' and 'cans fly': after can the verb stays plain.",
-            tiers: [
-              { level: "Support", task: "Join sentences 1 and 2 with 'and'." },
-              { level: "Core", task: "Join all four sentences." },
-              { level: "Stretch", task: "Write your own pair of sentences and join them." },
-            ],
+            title: "What it can do: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
+            mode: "solo",
+            minutes: 8,
+            steps: ["Read the model with the teacher. Point to what the puppy can do and can't do.","Plan: look at your three drawings. Say one sentence for each box to your partner.","Write: one sentence from each frame. Say it first, then write it.","Check: tick the checklist. Your partner points to every capital letter and every full stop.","Teacher: look only at capital letters and the verb after can or can't. Put a dot next to a line with a mistake; the child finds it and fixes it."],
+            text: {
+              title: "Model: My puppy",
+              text: "My little puppy is a living thing. It can run fast and jump. It can't read a book. I love my puppy!",
+            },
+            organiser: [{"label":"My pet","prompt":"Draw your pet or a favorite animal. Say: My ___ is a living thing."},{"label":"It can","prompt":"Draw what it can do. Say: It can ___."},{"label":"It can't","prompt":"Draw one thing it can't do. Say: It can't ___."}],
+            frames: ["My ___ is a living thing.","It can ___ and ___.","It can't ___.","I love my ___!"],
+            checklist: ["Three or four sentences: my pet, it can, it can't","A capital letter at the start and a full stop or ! at the end","After can and can't the next word has no -s"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking.",
+            teacherNote: "The paragraph that uses the unit's grammar, planned by drawing. Joining with 'and' (can run and jump) now happens inside the frames; say the 'and' clearly. Mark only two things (capital letters, no -s after can). It can be the script for the home talk 'What can it do?'.",
+            tiers: [{"level":"Support","task":"Copy the frames and fill in one word in each.","frames":["My ___ is a living thing.","It can ___."]},{"level":"Core","task":"Write four sentences from the frames."},{"level":"Stretch","task":"Add 'but': 'A fish can swim, but it can't walk.'"}],
           },
         },
       ],

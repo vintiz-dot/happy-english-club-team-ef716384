@@ -16,7 +16,7 @@ export const odL1U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l1-u10-l1": {
       objectives: ["I can say 'I like ___.' and 'I don't like ___.' fast, without stopping."],
-      trim: { "Run and touch": 5, "Mystery bag: eat it or not?": 6 },
+      trim: { "Run and touch": 4, "Mystery bag: eat it or not?": 6, "Whisper chant": 3 },
       add: [
         {
           after: "My food, your food",
@@ -54,27 +54,35 @@ export const odL1U10Lab: UnitLab = {
           after: "What goes in the soup? (SB 97 E)",
           slide: {
             kind: "writing",
-            title: "Grow my soup sentence",
-            routine: "expand it",
+            title: "My soup likes: plan, write, check",
+            routine: "paragraph",
+            genre: "likes and dislikes",
             mode: "solo",
-            minutes: 5,
+            minutes: 8,
             steps: [
-              "Read the small sentence with the teacher.",
-              "Make it bigger: add a number or a colour word.",
-              "Write your big sentence. Read it to your partner.",
+              "Read the model with the teacher. Point to what the child likes and what the child does not like.",
+              "Plan: look at your three drawings. Say one sentence for each box to your partner.",
+              "Write: one sentence for each box. Start with I like, My favorite soup has, I don't like.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at capital letters and the plural -s. Put a dot next to a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "I like soup. (add: hot)", answer: "I like hot soup." },
-              { q: "I have carrots. (add: three)", answer: "I have three carrots." },
-              { q: "I don't like onions. (add: big)", answer: "I don't like big onions." },
+            text: {
+              title: "Model: My soup",
+              text: "I like hot soup. My favorite soup has carrots and potatoes. I don't like onions in my soup. Hot soup is yummy!",
+            },
+            organiser: [
+              { label: "I like", prompt: "Draw a soup you like. Say: I like ___ soup." },
+              { label: "My soup has", prompt: "Draw what is in your favorite soup. Say what it has." },
+              { label: "I don't like", prompt: "Draw one food you don't like. Say: I don't like ___." },
             ],
-            frames: ["I like ___ soup.", "I have ___ carrots."],
-            checklist: ["A capital letter at the start", "A full stop at the end", "Carrots, onions, potatoes: the -s is there"],
-            sayIt: "Read your sentence to your partner, then say it again without looking.",
+            frames: ["I like ___ soup.","My favorite soup has ___ and ___.","I don't like ___ in my soup.","___ soup is yummy!"],
+            checklist: ["Three or four sentences: what I like, what is in my soup, what I don't like","A capital letter at the start and a full stop or ! at the end","More than one: add -s (carrots, onions)"],
+            sayIt: "Read your soup paragraph to your partner. Then tell it again without looking.",
+            teacherNote: "A first paragraph about the child's own taste, planned by drawing, so no notes are needed. The three frames are the three sentences; children may copy and complete them. Mark only two things (capital letters, plural -s) and let the child find the mistake from your dot. The sentence-level expand-it practice (hot soup, three carrots) now happens inside the frames.",
             tiers: [
-              { level: "Support", task: "Copy the big sentence from the board and draw it." },
-              { level: "Core", task: "Write one big sentence of your own." },
-              { level: "Stretch", task: "Write two big sentences with 'and': 'I have three carrots and two onions.'" },
+              { level: "Support", task: "Copy the three frames and fill in one word in each.", frames: ["I like ___ soup.","I don't like ___ in my soup."] },
+              { level: "Core", task: "Write three or four sentences: what you like, what is in your soup, what you don't like, and a happy ending." },
+              { level: "Stretch", task: "Add a fourth sentence with a number: 'I have three carrots and two onions.'" },
             ],
           },
         },
@@ -187,7 +195,7 @@ export const odL1U10Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l1-u10-l3": {
       objectives: ["I can ask 'Do you have ___?' and answer fast, round the circle."],
-      trim: { "Pass the bag: Do you have ___?": 6, "Find someone who has": 7 },
+      trim: { "Pass the bag: Do you have ___?": 4, "Find someone who has": 6 },
       add: [
         {
           after: "Ask and answer (SB 101 F)",
@@ -226,23 +234,35 @@ export const odL1U10Lab: UnitLab = {
           after: "Find someone who has",
           slide: {
             kind: "writing",
-            title: "Write a question, write an answer",
-            routine: "model, then write",
+            title: "My backpack: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
             mode: "solo",
-            minutes: 5,
+            minutes: 8,
             steps: [
-              "Read the model with the teacher. Find the question mark.",
-              "Write one question for a friend and draw the thing.",
-              "Swap with your partner. They write the answer.",
+              "Read the model with the teacher. Point to what the child has and what the child does not have.",
+              "Plan: look at your three drawings. Say one sentence for each box to your partner.",
+              "Write: one sentence for each box. Start with This is my backpack, I have, I don't have.",
+              "Check: tick the checklist. Your partner points to every capital letter and the question mark.",
+              "Teacher: look only at capital letters and 'I don't have'. Put a dot next to a line with a mistake; the child finds it and fixes it.",
             ],
-            text: { title: "Two friends at the market", text: "Do you have a pot? Yes, I do. I have a big red pot. Do you have a stone? No, I don't. I have three carrots and an onion." },
-            frames: ["Do you have a ___?", "Yes, I do. / No, I don't.", "I have ___."],
-            checklist: ["My question starts with Do", "A question mark at the end of the question", "The answer is 'Yes, I do.' or 'No, I don't.'"],
-            sayIt: "Ask your partner your question out loud and listen to the answer.",
+            text: {
+              title: "Model: My backpack",
+              text: "This is my backpack. I have a red pen and two books. I don't have a ruler. Do you have a ruler?",
+            },
+            organiser: [
+              { label: "My backpack", prompt: "Draw your backpack. What color is it?" },
+              { label: "I have", prompt: "Draw two or three things you have in it." },
+              { label: "I don't have", prompt: "Draw one thing you don't have. Who can you ask?" },
+            ],
+            frames: ["This is my backpack.","I have a ___ and ___.","I don't have a ___.","Do you have a ___?"],
+            checklist: ["Three or four sentences: my backpack, what I have, what I don't have","A capital letter at the start, a full stop or a question mark at the end","'I don't have' and 'Do you have' are right"],
+            sayIt: "Read your backpack paragraph to your partner. Your partner answers your last question. Then tell it again without looking.",
+            teacherNote: "The paragraph uses the unit's grammar twice: a statement with have and the question Do you have ___? at the end, so the partner's spoken answer closes the task. It replaces the earlier question-and-answer slip; the pairs still ask and answer in the Ask and answer and Question chain slides. Mark only capital letters and the do-support in 'I don't have'.",
             tiers: [
-              { level: "Support", task: "Copy one question and one answer from the model." },
-              { level: "Core", task: "Write your own question; your partner writes the answer." },
-              { level: "Stretch", task: "Write two questions and a 'No, I don't. I have ___.' answer." },
+              { level: "Support", task: "Copy the three frames and fill in one word in each.", frames: ["This is my backpack.","I have a ___ and ___."] },
+              { level: "Core", task: "Write four sentences: my backpack, what I have, what I don't have, and a question for your partner." },
+              { level: "Stretch", task: "Add a number sentence: 'I have three pencils.'" },
             ],
           },
         },

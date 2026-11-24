@@ -109,7 +109,8 @@ Most verified studies are with adults or children of 10-12. Evidence for 6-8-yea
 - Combine / expand / fix: the model answers are folded under "Model answers (teacher)".
 - Finish with the "Say it" step: the sentence aloud, then without looking.
 
-**Paragraphs (SKY 1 and Jupiter, at least half the lessons)**
+**Paragraphs (every class, at least half the lessons)**
+Venus (Level 1) writes a mini paragraph of three or four sentences, planned by drawing in three boxes; Level 2 writes four or five sentences with joining words; SKY 1 and Jupiter write a full paragraph.
 1. Read the model paragraph together; children point to the topic sentence, the details and the closing.
 2. Plan in the boxes with a few words each (not sentences).
 3. Write the paragraph from the plan, with the frames for Support.

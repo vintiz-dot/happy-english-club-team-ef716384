@@ -93,7 +93,8 @@ export const odL2U17Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l2-u17-l2": {
-      objectives: ["I can tell my partner about shapes three times, faster each time."],
+      objectives: ["I can tell my partner about shapes three times, faster each time.", "I can write a short paragraph about shapes in nature."],
+      trim: { "Chant and shape hunt": 6 },
       add: [
         {
           after: "Our shape chart",
@@ -139,29 +140,35 @@ export const odL2U17Lab: UnitLab = {
           after: "Same and different",
           slide: {
             kind: "writing",
-            title: "Moon and egg dictation",
-            routine: "dictogloss",
-            mode: "pairs",
-            minutes: 6,
+            title: "My shapes in nature: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Listen to the text once. Do not write. Just listen.",
-              "Listen again. Write the key words you hear.",
-              "With your partner, build the text again from your words. Say it before you write it.",
-              "Compare it with the real text. What is different?",
+              "Read the model with the teacher. Point to First, Then and At the end.",
+              "Plan: in each box draw one shape you see in nature, or write a few words. Tell your partner.",
+              "Write: four or five short sentences, one for each part of your plan. Use First, Then, and, but and At the end.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at 'a' or 'an' and the full stops. Put a dot next to a line with a mistake; the child finds it and fixes it.",
             ],
             text: {
-              title: "Shapes in the sky and in the kitchen",
-              text: "Look at the moon. It is a crescent. A crescent is thin and curved. Look at an egg. It is an oval. An oval is round, but it is not a circle. Shapes are in nature, and artists see them!",
+              title: "Model: shapes in nature",
+              text: "I see a lot of shapes in nature. First, I see a crescent in the sky, and it is thin and curved. Then I see an egg. It is an oval, but it is not a circle. At the end, I see a spiral on a shell.",
             },
-            frames: ["Look at ___. It is a ___.", "A ___ is ___ and ___.", "___ is round, but it is not ___."],
-            checklist: ["A capital letter and a full stop in each sentence", "an egg, an oval: 'an' before a vowel sound", "'is' in each sentence about a shape"],
-            sayIt: "Read your text aloud with your partner, then say it again without looking.",
-            teacherNote:
-              "Dictogloss: read the text twice at a natural speed, children note key words and rebuild it in pairs. It works after a short reminder of the grammar, so say 'a crescent, an oval' before you read. Vietnamese learners often leave out 'is' (the be verb), so listen for it in what pairs build.",
+            organiser: [
+              { label: "First", prompt: "Draw a shape in the sky or on a tree. What is it called? What is it like?" },
+              { label: "Then", prompt: "Draw a shape in the kitchen or the garden. Is it round or straight?" },
+              { label: "At the end", prompt: "Draw one more shape. Where do you see it?" },
+            ],
+            frames: ["I see a lot of shapes in nature.","First, I see a ___ in the ___, and it is ___.","Then I see ___. It is a ___, but it is not a ___.","At the end, I see a ___ on a ___."],
+            checklist: ["A capital letter at the start and a full stop at the end of every sentence","a or an: a crescent, an oval","I used First, Then, and or but to join my ideas"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, like a nature guide.",
+            teacherNote: "A short first paragraph for seven-year-olds: four or five sentences, each planned in a box with a drawing or a few words. It uses the words and sentences from the shape chart and the dictogloss text children met earlier in the lesson. Joining words give it shape: First, Then, and, but, At the end. Mark only two things (a / an and full stops); the dot tells the child where to look and the child finds the mistake. Vietnamese has no a / an, so model the clear 'an oval' when you read the model aloud. This paragraph can also be the script for the recorded talk 'My shape hunt at home'. It replaces the moon and egg dictation, whose text is now the model's pattern.",
             tiers: [
-              { level: "Support", task: "Rebuild the first four sentences with the frames." },
-              { level: "Core", task: "Rebuild the whole text with your partner." },
-              { level: "Stretch", task: "Rebuild it, then write two more sentences about another shape." },
+              {"level":"Support","task":"Copy the frames and fill in one word in each. Draw your plan first.","frames":["First, I see a ___ in the ___.","At the end, I see a ___ on a ___."]},
+              {"level":"Core","task":"Write four or five sentences with First, Then, and, but and At the end."},
+              {"level":"Stretch","task":"Write five sentences and add a sixth: 'A spiral goes round and round, but a circle has no corners.'"},
             ],
           },
         },
@@ -197,7 +204,8 @@ export const odL2U17Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l2-u17-l3": {
-      objectives: ["I can say 'There are a lot of ___' and 'There isn't any ___' fast, without stopping."],
+      objectives: ["I can say 'There are a lot of ___' and 'There isn't any ___' fast, without stopping.", "I can write a short paragraph about my collage."],
+      trim: { "Can we count it? Mess about": 6 },
       add: [
         {
           after: "Practice with a partner (SB 173 F)",
@@ -242,30 +250,36 @@ export const odL2U17Lab: UnitLab = {
           after: "Transfer: our own collage shop",
           slide: {
             kind: "writing",
-            title: "Join the collage sentences",
-            routine: "sentence combining",
-            mode: "pairs",
-            minutes: 6,
+            title: "My collage: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Read the two short sentences.",
-              "Make ONE sentence with 'and' or 'but'. Say it first, then write it.",
-              "Read your sentence to your partner. Is it still true?",
+              "Read the model with the teacher. Point to 'a lot of' and 'any'.",
+              "Plan: in each box draw or write a few words. Can we count it? Tell your partner.",
+              "Write: four or five short sentences, one for each part of your plan. Use and, but and because.",
+              "Check: tick the checklist. Your partner asks 'Can we count it?' about every thing.",
+              "Teacher: look only at is / are and the -s on the things. Put a dot next to a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "There are a lot of stars. There aren't any ovals. (but)", answer: "There are a lot of stars, but there aren't any ovals." },
-              { q: "There is a lot of glue. There isn't any paint. (but)", answer: "There is a lot of glue, but there isn't any paint." },
-              { q: "There is a lot of sand. There are a lot of shells. (and)", answer: "There is a lot of sand, and there are a lot of shells." },
-              { q: "There aren't any stars. There isn't any glitter. (and)", answer: "There aren't any stars, and there isn't any glitter." },
+            text: {
+              title: "Model: my collage",
+              text: "This is my collage. There are a lot of stars in it, but there aren't any ovals. There is a lot of glue, and there is a lot of glitter, too. There isn't any paint. I like my collage because it is shiny.",
+            },
+            organiser: [
+              { label: "Things I can count", prompt: "Draw the shapes. What are there a lot of? What aren't there?" },
+              { label: "Stuff I can't count", prompt: "Draw the glue or the glitter. What is there a lot of?" },
+              { label: "None of this stuff", prompt: "Is there any paint? What isn't there?" },
+              { label: "I like it", prompt: "Why do you like your collage?" },
             ],
-            frames: ["There are a lot of ___, but there aren't any ___.", "There is a lot of ___, but there isn't any ___."],
-            checklist: ["is for the stuff we cannot count, are for things we can count", "A comma before 'but' or 'and'", "-s on the things: stars, ovals, shells"],
-            sayIt: "Say each joined sentence to your partner, then say it again without looking.",
-            teacherNote:
-              "Sentence combining teaches joining words through use, not rules. Model the first item aloud and cross out the repeated words. The common slips are 'There is a lot of stars', 'There aren't any paint', and a missing -s: ask 'Can we count it?' and let the child decide.",
+            frames: ["This is my collage.","There are a lot of ___ in it, but there aren't any ___.","There is a lot of ___, and there is a lot of ___, too.","There isn't any ___.","I like my collage because it is ___."],
+            checklist: ["A capital letter at the start and a full stop at the end of every sentence","are and -s for things we count (stars); is for stuff we cannot count (glue)","I used and, but or because to join my ideas"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, like an artist.",
+            teacherNote: "Children turn the collage sentences they have been joining into a paragraph: five sentences, each planned in a box. The boxes sort the things we count from the stuff we cannot count, so the child chooses is or are before writing. The joining words and, but and because link the ideas. It replaces the sentence-combining task: the 'but' and 'and' sentences are now the second and third frames. Mark only two things (is / are and the -s on plural things) and let the child find the mistake from your dot. Ask 'Can we count it?' when you point.",
             tiers: [
-              { level: "Support", task: "Do items 1 and 2 with the teacher." },
-              { level: "Core", task: "Do all four items." },
-              { level: "Stretch", task: "Write one of your own: a 'but' sentence about your own collage." },
+              {"level":"Support","task":"Copy three frames and fill in one word in each. Draw your plan first.","frames":["There are a lot of ___ in it.","There isn't any ___."]},
+              {"level":"Core","task":"Write four or five sentences with a lot of, any, and, but and because."},
+              {"level":"Stretch","task":"Write five sentences and add a sixth: 'I can make a mosaic because there are a lot of squares.'"},
             ],
           },
         },
@@ -353,8 +367,8 @@ export const odL2U17Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l2-u17-l5": {
-      objectives: ["I can talk about my art table for three rounds, faster each time."],
-      trim: { "Grammar mystery: Mimi and the art cupboard": 6, "Stock the art cupboard": 8, "Does the rule work here too?": 4 },
+      objectives: ["I can talk about my art table for three rounds, faster each time.", "I can write a short paragraph about the mosaic I want to make."],
+      trim: { "Grammar mystery: Mimi and the art cupboard": 6, "Stock the art cupboard": 5, "Does the rule work here too?": 4 },
       add: [
         {
           after: "Champion talk: 3 rounds",
@@ -397,30 +411,36 @@ export const odL2U17Lab: UnitLab = {
           after: "Say it, then write: my art cupboard",
           slide: {
             kind: "writing",
-            title: "Fix the art cupboard notes",
-            routine: "fix it",
-            mode: "pairs",
-            minutes: 5,
+            title: "My mosaic plan: plan, write, check",
+            routine: "paragraph",
+            genre: "all about me",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Mimi wrote notes about her art cupboard, but she made mistakes!",
-              "Read each note with your partner. Ask: can we count it?",
-              "Write it the right way and read it aloud together.",
+              "Read the model with the teacher. Point to First, Then, so and At the end.",
+              "Plan: in each box draw or write a few words about your own mosaic. Tell your partner.",
+              "Write: four or five short sentences, one for each part of your plan. Use First, Then, but, so and At the end.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at 'a lot of' and 'any' (is / are and the -s). Put a dot next to a line with a mistake; the child finds it and fixes it.",
             ],
-            items: [
-              { q: "There is a lot of stars in my picture.", answer: "There are a lot of stars in my picture." },
-              { q: "There aren't any star.", answer: "There aren't any stars." },
-              { q: "There are a lot of glues on the table.", answer: "There is a lot of glue on the table." },
-              { q: "There aren't any paint.", answer: "There isn't any paint." },
-              { q: "There are a lot beads.", answer: "There are a lot of beads." },
+            text: {
+              title: "Model: my mosaic",
+              text: "I want to make a mosaic. First, I have a lot of tiles, but there isn't any glue. Then I ask my friend, and she has a lot of glue. There aren't any red tiles, so I use blue tiles. At the end, I have a beautiful mosaic!",
+            },
+            organiser: [
+              { label: "First", prompt: "Draw your things. What do you have a lot of? What isn't there?" },
+              { label: "Then", prompt: "Who helps you? What do you get?" },
+              { label: "So", prompt: "What aren't there? What do you use instead?" },
+              { label: "At the end", prompt: "Draw your mosaic. How is it?" },
             ],
-            checklist: ["Can we count it? Then are and -s. If not, is", "any: aren't any + things, isn't any + stuff", "a lot OF: do not forget 'of'"],
-            sayIt: "Say all the fixed notes to your partner, fast.",
-            teacherNote:
-              "Fix-it works best on the mistakes children really make, so each item is one of this unit's common errors. Do the first item together and ask 'Can we count it?' every time. The missing -s on plurals and the 'is / are' choice are the two to watch. Keep to two or three error types; do not add more.",
+            frames: ["I want to make a ___.","First, I have a lot of ___, but there isn't any ___.","Then I ask my friend, and she has a lot of ___.","There aren't any ___, so I use ___.","At the end, I have a ___ ___!"],
+            checklist: ["A capital letter at the start and a full stop or ! at the end of every sentence","a lot of, any, is or are: can we count it?","I used First, Then, but, so or At the end to join my ideas"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, like an artist.",
+            teacherNote: "This paragraph can be the script for the recorded talk 'My art table talk' at home: the child tells it three times, each time a little faster. It replaces the fix-it notes: the common mistakes (is / are, missing -s, 'a lot' without 'of') are now the two things you mark. The boxes carry the story, so no full sentences are written until the Write step. The joining words but and so are new for some children: say the model aloud with a pause before each one. Mark only two things and let the child find the mistake from your dot.",
             tiers: [
-              { level: "Support", task: "Fix notes 1 and 2 with the frames on the board." },
-              { level: "Core", task: "Fix all five notes." },
-              { level: "Stretch", task: "Write one new note with a mistake for your partner to fix." },
+              {"level":"Support","task":"Copy the frames and fill in one word in each. Draw your plan first.","frames":["First, I have a lot of ___.","At the end, I have a ___ ___!"]},
+              {"level":"Core","task":"Write four or five sentences with a lot of, any, but, so and At the end."},
+              {"level":"Stretch","task":"Write five sentences and add a sixth with 'because': 'I like it because the colors are bright.'"},
             ],
           },
         },

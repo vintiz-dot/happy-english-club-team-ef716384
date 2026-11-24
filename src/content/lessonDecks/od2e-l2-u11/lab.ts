@@ -19,6 +19,7 @@ export const odL2U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l2-u11-l1": {
       objectives: ["I can say what we need to live, fast and without stopping."],
+      trim: { "The mystery bag": 4 },
       add: [
         {
           after: "What do we need? (SB 109 Think)",
@@ -56,29 +57,65 @@ export const odL2U11Lab: UnitLab = {
           after: "Main idea umbrella (SB 109 C)",
           slide: {
             kind: "writing",
-            title: "Grow my resource sentence",
-            routine: "expand it",
+            title: "What we need to live: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
             mode: "solo",
-            minutes: 5,
+            minutes: 8,
             steps: [
-              "Read the small sentence with the teacher.",
-              "Make it bigger: add the extra words in the brackets.",
-              "Write your big sentence. Read it to your partner.",
+              "Read the model with the teacher. Point to each sentence and to the joining words.",
+              "Plan: use the four boxes. Draw or write a few words in each box.",
+              "Write: one sentence for each box, in order. Join the ideas with and, but and then.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at capital letters and the verb -s (Plants need, a plant needs). Put a dot next to a line with a mistake; the child finds it and fixes it."
             ],
-            items: [
-              { q: "We need water. (add: to live)", answer: "We need water to live." },
-              { q: "Plants need sunlight. (add: to grow)", answer: "Plants need sunlight to grow." },
-              { q: "I need food. (add: every day)", answer: "I need food every day." },
-              { q: "I want a toy. (add: but I don't need it)", answer: "I want a toy, but I don't need it." },
+            text: {
+              title: "Model: What we need",
+              text: "We need many things to live. First, we need water and food every day. Plants need sunlight and water, too. I want a new toy, but I don't need it. Then I say thank you to the Earth!",
+            },
+            organiser: [
+              {
+                "label": "We need",
+                "prompt": "Draw water and food. What do you need every day?"
+              },
+              {
+                "label": "Plants need",
+                "prompt": "Draw a plant. What does it need to grow?"
+              },
+              {
+                "label": "I want",
+                "prompt": "Draw a toy you want, but do not need."
+              },
+              {
+                "label": "Thank you",
+                "prompt": "Draw the Earth. Who do you thank?"
+              }
             ],
-            frames: ["We need ___ to ___.", "I want ___, but I don't need it."],
-            checklist: ["A capital letter at the start", "A full stop at the end", "Plants need (many things): the verb has no -s"],
-            sayIt: "Read your sentence to your partner, then say it again without looking.",
-            teacherNote: "Vietnamese has no verb ending, so 'Plants needs' and 'A plant need' both appear. Say the pair aloud together first: 'Plants need, a plant needs.' Keep the explanation to one sentence.",
+            frames: ["We need many things to live.","First, we need ___ and ___ every day.","Plants need ___ and ___, too.","I want ___, but I don't need it.","Then I say thank you to the ___!"],
+            checklist: [
+              "A capital letter at the start and a full stop at the end of every sentence",
+              "Plants need, a plant needs: check the verb ending",
+              "At least one joining word: and, but or then"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking.",
+            teacherNote: "A first paragraph for seven-year-olds: four or five sentences, planned in four boxes with drawings or a few words. It replaces the one-sentence 'grow my sentence' task, and the best sentence from that task ('I want a toy, but I don't need it') is now the fourth sentence. Mark only two things (capital letters, the verb -s) and let the child find the mistake from your dot.",
             tiers: [
-              { level: "Support", task: "Copy the big sentence from the board and draw it." },
-              { level: "Core", task: "Write one big sentence of your own." },
-              { level: "Stretch", task: "Write two big sentences with 'and': 'We need water and food to live.'" },
+              {
+                "level": "Support",
+                "task": "Copy two frames and fill in one word in each. Use the drawings to help.",
+                "frames": [
+                  "We need ___ to live.",
+                  "I want ___, but I don't need it."
+                ]
+              },
+              {
+                "level": "Core",
+                "task": "Write four sentences, one for each box, with one joining word."
+              },
+              {
+                "level": "Stretch",
+                "task": "Write five sentences and use and, but and because: 'We need water because we drink it every day.'"
+              }
             ],
           },
         },
@@ -184,7 +221,7 @@ export const odL2U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l2-u11-l3": {
       objectives: ["I can ask and say where things are, round the circle, without stopping."],
-      trim: { "Teddy says: place game": 5 },
+      trim: { "Teddy says: place game": 5, "Where is the bear? Chant": 4 },
       add: [
         {
           after: "Park picture talk (SB 113 E)",
@@ -223,29 +260,65 @@ export const odL2U11Lab: UnitLab = {
           after: "Look around the classroom (SB 113 F)",
           slide: {
             kind: "writing",
-            title: "Fix the park sentences",
-            routine: "fix it",
-            mode: "pairs",
-            minutes: 5,
+            title: "My park: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Read each sentence with your partner. Something is wrong!",
-              "Find it: a missing is / are, an extra word, or a word in the wrong place.",
-              "Write the sentence the right way. Read it aloud together.",
+              "Read the model with the teacher. Point to each sentence and to the joining words.",
+              "Plan: use the four boxes. Draw or write a few words in each box.",
+              "Write: one sentence for each box. Say where each thing is. Use and and because.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at capital letters and is / are in every place sentence. Put a dot next to a line with a mistake; the child finds it and fixes it."
             ],
-            items: [
-              { q: "The bird above the tree.", answer: "The bird is above the tree." },
-              { q: "The trash can is behind of the tree.", answer: "The trash can is behind the tree." },
-              { q: "The tree is in front the bin.", answer: "The tree is in front of the bin." },
-              { q: "Where the bin is?", answer: "Where is the bin?" },
-              { q: "The bottles is across from the park.", answer: "The bottles are across from the park." },
+            text: {
+              title: "Model: My park",
+              text: "This is my park. The pond is in front of the big tree, and the bench is behind the tree. Two birds are above the pond. The bin is across from the bench because people eat lunch there. I like my park!",
+            },
+            organiser: [
+              {
+                "label": "My park",
+                "prompt": "Draw your park. What do you like in it?"
+              },
+              {
+                "label": "Pond, tree, bench",
+                "prompt": "Draw the pond, the tree and the bench. Where is each one?"
+              },
+              {
+                "label": "Birds",
+                "prompt": "Draw the birds. Where are they?"
+              },
+              {
+                "label": "Bin",
+                "prompt": "Draw the bin. Where is it? Why is it there?"
+              }
             ],
-            checklist: ["Every place sentence has is or are", "No extra 'of' after behind or above", "A question starts with Where is / Is"],
-            sayIt: "Read your fixed sentences to your partner, then say one without looking.",
-            teacherNote: "These are common mistakes for children who speak Vietnamese: leaving out 'is' / 'are', 'behind of' (copied from 'in front of'), and the question order 'Where the bin is?'. Fix the first one together, and say why in one short sentence. Do not correct more than three error types.",
+            frames: ["This is my park.","The ___ is in front of the ___, and the ___ is behind the ___.","Two ___ are above the ___.","The bin is across from the ___ because ___.","I like my park!"],
+            checklist: [
+              "Every place sentence has is or are",
+              "No extra 'of' after behind or above",
+              "A capital letter at the start and a full stop at the end of every sentence"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking at the page.",
+            teacherNote: "The park paragraph uses the place words of the lesson in real sentences. It replaces the 'fix the park sentences' task: the common mistakes (a missing is / are, 'behind of', 'Where the bin is?') are now the checklist, so the child checks for them in their own writing. Mark only is / are and capital letters, with a dot beside the line.",
             tiers: [
-              { level: "Support", task: "Fix sentences 1, 2 and 4." },
-              { level: "Core", task: "Fix all five sentences." },
-              { level: "Stretch", task: "Write one more sentence with a mistake for your partner to fix." },
+              {
+                "level": "Support",
+                "task": "Copy two frames and fill in one word in each. Point to your drawing.",
+                "frames": [
+                  "The ___ is behind the ___.",
+                  "Two ___ are above the ___."
+                ]
+              },
+              {
+                "level": "Core",
+                "task": "Write four sentences, one for each box."
+              },
+              {
+                "level": "Stretch",
+                "task": "Write five sentences with and, but and because. Write two sentences about the same two things: 'The bin is behind the tree. The tree is in front of the bin.'"
+              }
             ],
           },
         },
@@ -322,7 +395,7 @@ export const odL2U11Lab: UnitLab = {
     // ------------------------------------------------------------------ Lesson 5
     "od2e-l2-u11-l5": {
       objectives: ["I can say where things are in my park, again and again, faster each time."],
-      trim: { "Trash hunt: ask, find, say": 8, "Remember it!": 4 },
+      trim: { "Trash hunt: ask, find, say": 8, "Remember it!": 4, "Grammar mystery: Pip and the trash": 4 },
       add: [
         {
           after: "Two parks, five differences",
@@ -360,29 +433,65 @@ export const odL2U11Lab: UnitLab = {
           after: "Say it, then write: my clean park map",
           slide: {
             kind: "writing",
-            title: "Join my park sentences",
-            routine: "sentence combining",
-            mode: "pairs",
-            minutes: 5,
+            title: "My clean park plan: plan, write, check",
+            routine: "paragraph",
+            genre: "description",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Read the two short sentences aloud.",
-              "Join them with the word in the brackets. Write one long sentence.",
-              "Read it aloud, and say it again without looking.",
+              "Read the model with the teacher. Point to each sentence and to the joining words.",
+              "Plan: use the four boxes. Draw or write a few words in each box.",
+              "Write: one sentence for each box. Use First, Then and At the end, and one because.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at capital letters and is / are and the place words. Put a dot next to a line with a mistake; the child finds it and fixes it."
             ],
-            items: [
-              { q: "The bin is behind the tree. The bench is in front of the pond. (and)", answer: "The bin is behind the tree, and the bench is in front of the pond." },
-              { q: "The bottle is in front of the bin. It is not in the bin. (but)", answer: "The bottle is in front of the bin, but it is not in the bin." },
-              { q: "I put the bin in front of the bench. People can reach it. (because)", answer: "I put the bin in front of the bench because people can reach it." },
-              { q: "The bird flies above the pond. It sits behind the tree. (and then)", answer: "The bird flies above the pond, and then it sits behind the tree." },
+            text: {
+              title: "Model: My clean park",
+              text: "I put the recycling bin in front of the bench because people can see it. First, people sit on the bench and drink water. Then they put the bottles in the bin. The trash can is behind the tree, but the bin is easy to see. At the end, our park is clean!",
+            },
+            organiser: [
+              {
+                "label": "Where",
+                "prompt": "Draw the bin on your map. Where is it? Why?"
+              },
+              {
+                "label": "First",
+                "prompt": "Draw the people. What do they do first?"
+              },
+              {
+                "label": "Then",
+                "prompt": "Draw the bottles going in the bin. Where is the trash can?"
+              },
+              {
+                "label": "At the end",
+                "prompt": "Draw the clean park. How is it?"
+              }
             ],
-            frames: ["The ___ is ___ the ___, and ___.", "The ___ is ___ the ___, but ___.", "I put the ___ ___ the ___ because ___."],
-            checklist: ["is / are in every part", "A comma before and or but", "A capital letter at the start and a full stop at the end"],
-            sayIt: "Read your long sentences to your partner, then say one without looking.",
-            teacherNote: "Combining makes the children hold two place sentences together, which is the same skill as saying them fluently. Do the first one together. Keep to and / but / because; do not correct anything else.",
+            frames: ["I put the recycling bin ___ the ___ because ___.","First, people ___.","Then they put the ___ in the bin.","The trash can is ___ the ___, but the bin is ___.","At the end, our park is ___!"],
+            checklist: [
+              "Every place sentence has is or are",
+              "A comma after First and after At the end",
+              "A capital letter at the start and a full stop at the end of every sentence"
+            ],
+            sayIt: "Read your paragraph to your partner. Then tell it again, pointing to your map.",
+            teacherNote: "This paragraph turns the clean park map the children just made and talked about into writing; the map is the plan. It replaces the sentence-combining task, whose and / but / because are now used inside the paragraph. If the class records the clean park talk at home, this paragraph is its script. Mark only is / are and capital letters.",
             tiers: [
-              { level: "Support", task: "Join sentences 1 and 2 with the frames." },
-              { level: "Core", task: "Join all four sentences." },
-              { level: "Stretch", task: "Write two of your own pairs and join them." },
+              {
+                "level": "Support",
+                "task": "Copy two frames and fill in one word in each. Use your map.",
+                "frames": [
+                  "I put the bin ___ the ___.",
+                  "At the end, our park is ___!"
+                ]
+              },
+              {
+                "level": "Core",
+                "task": "Write four sentences, one for each box."
+              },
+              {
+                "level": "Stretch",
+                "task": "Write five sentences and write two sentences about the same two things: 'The bin is behind the tree. The tree is in front of the bin.'"
+              }
             ],
           },
         },

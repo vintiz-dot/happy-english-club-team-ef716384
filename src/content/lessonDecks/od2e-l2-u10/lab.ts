@@ -36,7 +36,7 @@ export const odL2U10Lab: UnitLab = {
   decks: {
     // ------------------------------------------------------------------ Lesson 1
     "od2e-l2-u10-l1": {
-      objectives: ["I can say what polite children do, fast and without stopping: 'I knock before I come in.'"],
+      objectives: ["I can say what polite children do, fast and without stopping: 'I knock before I come in.'", "I can write a short paragraph about being polite at a friend's house."],
       trim: {
         "Knock, knock chant": 3,
         "Mystery bag: what do you notice?": 5,
@@ -87,29 +87,36 @@ export const odL2U10Lab: UnitLab = {
           after: "Which animal is rude? (SB 97 D)",
           slide: {
             kind: "writing",
-            title: "Grow my polite sentence",
-            routine: "expand it",
+            title: "My polite visit: plan, write, check",
+            routine: "paragraph",
+            genre: "all about me",
             mode: "solo",
-            minutes: 5,
+            minutes: 8,
             steps: [
-              "Read the small sentence with the teacher.",
-              "Make it bigger: add the words in the brackets.",
-              "Write your big sentence. Read it to your partner.",
+              "Read the model with the teacher. Point to First, Then and At the end.",
+              "Plan: in each box draw one thing you do at a friend's house, or write a few words. Tell your partner.",
+              "Write: five short sentences, one for each part of your plan. Use First, Then, because and At the end.",
+              "Check: tick the checklist. Your partner points to every capital letter and every full stop.",
+              "Teacher: look only at \"I don't\" and the full stops. Put a dot next to a line with a mistake; the child finds it and fixes it."
             ],
-            items: [
-              { q: "I knock. (add: before I come in)", answer: "I knock before I come in." },
-              { q: "I share. (add: my toys)", answer: "I share my toys." },
-              { q: "I wash my hands. (add: before lunch)", answer: "I wash my hands before lunch." },
-              { q: "I don't push. (add: because it is rude)", answer: "I don't push because it is rude." },
+            text: {
+              title: "Model: my polite visit",
+              text: "I am polite at my friend's house. First, I knock before I come in. Then I wash my hands and share my toys. I don't shout because it is rude. At the end, I say thank you and goodbye.",
+            },
+            organiser: [
+              { label: "First", prompt: "Draw the door. What do I do before I come in?" },
+              { label: "Then", prompt: "Draw inside the house. What do I do? What do I share?" },
+              { label: "I don't", prompt: "Draw one rude thing. Why is it rude?" },
+              { label: "At the end", prompt: "Draw saying goodbye. What do I say?" },
             ],
-            frames: ["I ___ before I ___.", "I don't ___ because it is rude."],
-            checklist: ["A capital letter at the start", "A full stop at the end", "'before' or 'because' is in my big sentence"],
-            sayIt: "Read your big sentence to your partner, then say it again without looking.",
-            teacherNote: "Expanding a short sentence step by step is a gentle way to write longer sentences. Do item 1 together on the board, adding the new words with a different color.",
+            frames: ["I am polite at my friend's house.","First, I ___ before I come in.","Then I ___ and I ___.","I don't ___ because it is rude.","At the end, I say ___."],
+            checklist: ["A capital letter at the start and a full stop at the end of every sentence","After I don't comes a plain action word (I don't shout)","I used First, Then or because to join my ideas"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking, like a polite guest.",
+            teacherNote: "A first short paragraph for seven-year-olds: five sentences, each one planned in a box. The drawings or a few words are the plan, so no full sentences are written until the Write step. The joining words First, Then and because give the paragraph its shape. Mark only two things (I don't + plain verb, and full stops); the dot tells the child where to look and the child finds the mistake. This replaces the single-sentence expand task: the best sentence, 'I don't ___ because it is rude', is now the fourth frame.",
             tiers: [
-              { level: "Support", task: "Copy the big sentence from the board for items 1 and 2, and draw it." },
-              { level: "Core", task: "Write all four big sentences." },
-              { level: "Stretch", task: "Write two of your own with 'before' or 'because'.", },
+              { level: "Support", task: "Copy the five frames and fill in one word in each. Draw your plan first.", frames: ["First, I ___ before I come in.","I don't ___ because it is rude."] },
+              { level: "Core", task: "Write four or five sentences with First, Then, because and At the end." },
+              { level: "Stretch", task: "Write five sentences and add a sixth with 'but': 'I want the toy, but my friend is using it.'" },
             ],
           },
         },
@@ -118,7 +125,8 @@ export const odL2U10Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 2
     "od2e-l2-u10-l2": {
-      objectives: ["I can tell a polite animal story three times, faster each time."],
+      objectives: ["I can tell a polite animal story three times, faster each time.", "I can write a short story paragraph: the polite animal, the rude animal and the theme."],
+      trim: { "Animal action chant": 3 },
       add: [
         {
           after: "Same as me, different from me",
@@ -163,28 +171,36 @@ export const odL2U10Lab: UnitLab = {
           after: "What is the theme? (the four Think boxes)",
           slide: {
             kind: "writing",
-            title: "Listen and write: the polite bear",
-            routine: "dictogloss",
-            mode: "groups",
-            minutes: 6,
+            title: "My animal story: plan, write, check",
+            routine: "paragraph",
+            genre: "story retell",
+            mode: "solo",
+            minutes: 8,
             steps: [
-              "Listen to the teacher read a short story. Do not write yet.",
-              "Listen again. Write the key words you hear: bear, knocks, please, share, friends.",
-              "In your group, rebuild the story with the same meaning. It does not need to be the same words.",
-              "Compare with the story on the screen. What is the same? What is different?",
+              "Read the model with the teacher. Find the polite animal, the rude animal and the theme.",
+              "Plan: in each box draw or write a few words. Say your story to your partner, one box at a time.",
+              "Write: four or five sentences. Use because, but, First and That is why.",
+              "Check: tick the checklist. Your partner points to every -s in says, shouts and takes.",
+              "Teacher: look only at the -s on the verbs and the capital letters. Put a dot next to a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "The polite bear",
-              text: "The little bear is polite. He knocks on the door and says, 'Please let me in.' His friend smiles and says yes. They share the honey and the bear says thank you. That is why they are good friends.",
+              title: "Model: the polite rabbit",
+              text: "The rabbit is polite because he says please and thank you. First, he asks before he takes a turn. The monkey is rude, but he shouts and takes the toys. In the end, the other animals play with the rabbit. That is why everyone likes him.",
             },
-            frames: ["The bear ___.", "He ___ on the door.", "That is why ___."],
-            checklist: ["Every sentence starts with a capital letter and ends with a full stop", "The -s is on 'knocks', 'says' and 'smiles'", "The words 'That is why' are there"],
-            sayIt: "Read your group's story aloud, then say it again without looking.",
-            teacherNote: "A short rule reminder helps before the dictogloss: before you read, say once, 'He knocks, she smiles: one person, add -s.' Read at natural speed twice. Groups pool what they heard and rebuild; the talk between children is the learning. Do not read it a third time.",
+            organiser: [
+              { label: "Polite animal", prompt: "Draw the polite animal. What does he or she do?" },
+              { label: "Rude animal", prompt: "Draw the rude animal. What does he or she do?" },
+              { label: "What happens", prompt: "Draw the end of the story. Who plays with who?" },
+              { label: "Theme", prompt: "Draw a happy face. What is the theme? That is why ..." },
+            ],
+            frames: ["The ___ is polite because ___.","First, he / she ___ before ___.","The ___ is rude, but ___.","In the end, ___.","That is why ___."],
+            checklist: ["The -s is on the verbs: says, asks, shouts, takes","I used because or but at least once","A capital letter at the start and a full stop at the end of every sentence"],
+            sayIt: "Read your story to your partner. Then tell it again without looking, like a storyteller.",
+            teacherNote: "Children retell the animal poems as a paragraph: the polite animal, the rude animal, what happens and the theme. This paragraph is also the script for the recorded talk 'My polite animal story' at home: the child tells it three times, each time a little faster. It replaces the dictogloss 'The polite bear' because a retell in the child's own words does the same work (a story rebuilt from memory) and ends with a paragraph the child owns. Vietnamese has no verb endings, so mark only the -s on the third-person verbs and the capital letters.",
             tiers: [
-              { level: "Support", task: "Write the key words and finish three sentences with the frames." },
-              { level: "Core", task: "Rebuild the whole story with your group." },
-              { level: "Stretch", task: "Rebuild the story and add one sentence of your own about the theme." },
+              { level: "Support", task: "Copy the frames and fill in the animal names and one action in each.", frames: ["The ___ is polite because ___.","That is why ___."] },
+              { level: "Core", task: "Write four or five sentences with because, but and That is why." },
+              { level: "Stretch", task: "Add a sentence about you: 'I am like the rabbit because I say please.'", frames: ["I am like the ___ because I ___."] },
             ],
           },
         },
@@ -220,7 +236,8 @@ export const odL2U10Lab: UnitLab = {
 
     // ------------------------------------------------------------------ Lesson 3
     "od2e-l2-u10-l3": {
-      objectives: ["I can ask 'Can I ...?' and 'May I ...?' and answer fast, round the circle."],
+      objectives: ["I can ask 'Can I ...?' and 'May I ...?' and answer fast, round the circle.", "I can write a short paragraph about what I ask at school and at home."],
+      trim: { "Please-and-thank-you chant": 3 },
       add: [
         {
           after: "Role play: May I? Can I? (SB 101 E)",
@@ -265,27 +282,36 @@ export const odL2U10Lab: UnitLab = {
           after: "What do I need to ask at home? (SB 101 F)",
           slide: {
             kind: "writing",
-            title: "Write what I ask, at school and at home",
-            routine: "model, then write",
+            title: "Asking first: plan, write, check",
+            routine: "paragraph",
+            genre: "all about me",
             mode: "solo",
-            minutes: 6,
+            minutes: 8,
             steps: [
               "Read the model with the teacher. Find the two questions and the two answers.",
-              "Write one thing you ask at school and one thing you ask at home.",
-              "Swap with your partner. They write the answers.",
+              "Plan: in each box draw or write what you ask, and who answers. Tell your partner.",
+              "Write: four or five sentences. Say who you ask, what you ask and the answer.",
+              "Check: tick the checklist. Your partner checks every question mark.",
+              "Teacher: look only at the plain action word after Can I / May I and the word you in the answer. Put a dot next to a line with a mistake; the child finds it and fixes it."
             ],
             text: {
-              title: "Asking first",
-              text: "At school I say, 'May I go out, please?' to my teacher. She says, 'Yes, you may.' At home I say, 'Can I play?' to my brother. He says, 'No, you can't. It is my turn.' I ask first because it is polite.",
+              title: "Model: asking first",
+              text: "At school I say, 'May I go out, please?' to my teacher. She says, 'Yes, you may.' At home I say, 'Can I play?' to my brother, but he says, 'No, you can't. It is my turn.' I ask first because it is polite.",
             },
-            frames: ["At school I say, 'May I ___, please?'", "At home I say, 'Can I ___?'", "I ask first because ___."],
-            checklist: ["After Can I / May I comes a plain action word (play, go, sit)", "The answer says YOU: 'Yes, you can.'", "A question mark at the end of a question"],
-            sayIt: "Read your two questions to your partner, then say them again without looking.",
-            teacherNote: "A short model followed by the child's own version is a gentle routine for young writers: the child borrows the shape of the sentences, not the words. Point out that after 'May I' the action word has no ending: 'May I play', never 'May I plays'.",
+            organiser: [
+              { label: "At school", prompt: "Draw your teacher. What do you ask? May I ...?" },
+              { label: "The answer", prompt: "What does she say? Yes, you may. / No, you may not." },
+              { label: "At home", prompt: "Draw a person at home. What do you ask? Can I ...?" },
+              { label: "Why", prompt: "Draw a happy face. Why do you ask first?" },
+            ],
+            frames: ["At school I say, 'May I ___, please?' to my teacher.","She says, 'Yes, you ___.'","At home I say, 'Can I ___?' to my ___.","He / She says, 'No, you ___. It is ___.'","I ask first because ___."],
+            checklist: ["After Can I / May I comes a plain action word (play, go, sit)","The answer says YOU: 'Yes, you can.'","A question mark at the end of a question, a full stop at the end of a sentence"],
+            sayIt: "Read your paragraph to your partner. Then tell it again without looking.",
+            teacherNote: "Builds on the old 'write what I ask' task: the child still writes one school question and one home question, now inside a short paragraph with an answer and a reason. Point out that after 'May I' the action word has no ending ('May I play', never 'May I plays') and that the answer turns I into YOU. Mark only two targets.",
             tiers: [
-              { level: "Support", task: "Copy one question and one answer from the model, then change one word." },
-              { level: "Core", task: "Write your own school question and home question." },
-              { level: "Stretch", task: "Write two questions, two answers and a reason with 'because'." },
+              { level: "Support", task: "Copy the five frames and fill in one word in each.", frames: ["At school I say, 'May I ___, please?'","At home I say, 'Can I ___?'"] },
+              { level: "Core", task: "Write four or five sentences with a school question, a home question and a reason." },
+              { level: "Stretch", task: "Add what happens if the answer is no: 'No, you may not. It is ___.' and say what you do next.", frames: ["No, you may not. It is ___."] },
             ],
           },
         },
