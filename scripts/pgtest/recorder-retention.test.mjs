@@ -28,13 +28,55 @@ const eq = (n, got, want) => { const g = JSON.stringify(got), w = JSON.stringify
 const SERVICE_KEY = "service-role-key";
 let server = null;
 let ghostRemove = false;
+// R2 side (24 Nov 2026): file_objects rows (a row means the file is in R2) and
+// the hec-files Worker's objects. Reset by resetR2().
+const R2_BUCKET = "class-recorder-audio";
+let r2 = null;
+const resetR2 = () => { r2 = { rows: [], objects: new Set(), calls: [], failOn: null, ghostRows: false, failList: false }; };
+resetR2();
+const addR2 = (bucket, path, { object = true } = {}) => { r2.rows.push({ bucket_id: bucket, path }); if (object) r2.objects.add(`${bucket}/${path}`); };
+function r2Query() {
+  const q = { op: "select", eq: [], like: null, from: 0, to: 999, ins: null };
+  const rows = () => r2.rows.filter((r) => q.eq.every(([c, v]) => r[c] === v) && (q.like === null || r.path.startsWith(q.like)) && (q.ins === null || q.ins.includes(r.path)));
+  const run = () => {
+    if (q.op === "select") {
+      if (r2.failList) return { data: null, error: { message: "r2 list broke" } };
+      return { data: rows().sort((a, b) => (a.path < b.path ? -1 : 1)).slice(q.from, q.to + 1).map((r) => ({ path: r.path })), error: null };
+    }
+    if (!r2.ghostRows) { const gone = new Set(rows()); r2.rows = r2.rows.filter((r) => !gone.has(r)); }
+    return { data: null, error: null };
+  };
+  const b = {
+    select() { return b; }, eq(c, v) { q.eq.push([c, v]); return b; }, like(_c, pat) { q.like = pat.replace(/%$/, ""); return b; },
+    order() { return b; }, range(a, z) { q.from = a; q.to = z; return b; }, delete() { q.op = "delete"; return b; },
+    in(_c, vals) { q.ins = vals; return b; },
+    then(ok, no) { return Promise.resolve(run()).then(ok, no); },
+  };
+  return b;
+}
+// The Worker: deletes an object when asked as the service role, nobody else.
+const fakeWorker = async (url, init) => {
+  const h = init?.headers ?? {};
+  const body = JSON.parse(init?.body ?? "{}");
+  r2.calls.push({ url: String(url), auth: h.Authorization, as: h["x-hec-as"], body });
+  const reply = (status, j) => ({ ok: status < 400, status, json: async () => j });
+  if (h.Authorization !== `Bearer ${SERVICE_KEY}` || h["x-hec-as"] !== "service") return reply(401, { error: "Not the service key" });
+  if (body.op !== "delete" || body.bucket !== R2_BUCKET) return reply(400, { error: "bad request" });
+  if (r2.failOn !== null && r2.calls.length === r2.failOn) return reply(502, { error: "R2 is down" });
+  r2.objects.delete(`${body.bucket}/${body.path}`);
+  return reply(200, { deleted: true });
+};
 globalThis.__fakeCreateClient = (_url, key) => {
   const service = key === SERVICE_KEY;
-  return makeClient(async (q) => {
+  const c = makeClient(async (q) => {
     if (ghostRemove && q.op === "remove") return { data: q.paths.map((name) => ({ name })), error: null }; // says yes, removes nothing
     return server.handle(q, null, service);
   });
+  const realFrom = c.from;
+  c.from = (t) => (t === "file_objects" ? r2Query() : realFrom(t));
+  return c;
 };
+globalThis.fetch = fakeWorker;
 const env = { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY };
 let handler = null;
 globalThis.Deno = { serve: (h) => { handler = h; }, env: { get: (k) => env[k] } };
@@ -207,6 +249,63 @@ console.log("=== fails closed ===");
   server.handle = async (q, uid, service) => (q.op === "select" && q.table === "schedule_runner" ? { data: null, error: { message: "no table" } } : realHandle(q, uid, service));
   r = await call({ "x-schedule-runner-secret": "runner-secret-token" });
   eq("the token table cannot be read: the token is not accepted", r.status, 401);
+}
+
+console.log("=== two stores: files in R2 as well as in Supabase (24 Nov 2026) ===");
+{
+  const r2Of = (id) => r2.rows.filter((r) => r.bucket_id === R2_BUCKET && r.path.startsWith(`${CLASS}/${id}/`)).length;
+  const run = (id) => call({ "x-schedule-runner-secret": server.runnerToken }, { recording_id: id });
+  const DUE = "d0000000-0000-4000-8000-000000000001", NOT_DUE = "d0000000-0000-4000-8000-000000000002";
+
+  let s = seed(); resetR2();
+  for (const p of ["manifest.json", "teacher/000000.flac", "teacher/000001.flac"]) addR2(R2_BUCKET, `${CLASS}/${DUE}/${p}`);
+  addR2(R2_BUCKET, `${CLASS}/${NOT_DUE}/room/000000.flac`);
+  addR2("homework", `${CLASS}/${DUE}/lookalike.pdf`);
+  logs.length = 0;
+  let r = await call({ "x-schedule-runner-secret": server.runnerToken });
+  eq("a recording with files in both stores: removed from both, then marked deleted", [server.recordings.get(DUE).status, objectsOf(DUE), r2Of(DUE)], ["deleted", 0, 0]);
+  eq("the count says how many were in R2", [r.body.r2_objects_removed, r.body.objects_removed], [3, 236 + 3]);
+  ok("the R2 objects themselves are gone", ![...r2.objects].some((k) => k.startsWith(`${R2_BUCKET}/${CLASS}/${DUE}/`)));
+  ok("a recording not yet due keeps its R2 file (object and row)", r2Of(NOT_DUE) === 1 && r2.objects.has(`${R2_BUCKET}/${CLASS}/${NOT_DUE}/room/000000.flac`));
+  ok("another bucket's lookalike row and object are untouched", r2.rows.some((x) => x.bucket_id === "homework") && r2.objects.has(`homework/${CLASS}/${DUE}/lookalike.pdf`));
+  ok("the Worker is asked as the service role (its key, x-hec-as: service), once per object, only to delete", r2.calls.length === 3 && r2.calls.every((c) => c.auth === `Bearer ${SERVICE_KEY}` && c.as === "service" && c.body.op === "delete" && c.body.bucket === R2_BUCKET));
+  ok("logs carry no R2 path", !/\.flac|manifest\.json|lookalike/.test(logs.join("\n")));
+
+  s = seed(); resetR2();
+  for (const k of [...server.objects.keys()]) if (k.startsWith(`${FAKE_BUCKET}/${CLASS}/${DUE}/`)) server.objects.delete(k);
+  for (const p of ["manifest.json", "room/000000.flac"]) addR2(R2_BUCKET, `${CLASS}/${DUE}/${p}`);
+  r = await run(DUE);
+  eq("a recording that lives only in R2 is removed and marked deleted", [r.body.deleted, r.body.r2_objects_removed, server.recordings.get(DUE).status], [1, 2, "deleted"]);
+
+  s = seed(); resetR2();
+  for (const p of ["manifest.json", "teacher/000000.flac", "room/000000.flac"]) addR2(R2_BUCKET, `${CLASS}/${DUE}/${p}`);
+  r2.failOn = 2;
+  r = await run(DUE);
+  eq("the Worker fails on the second object: not marked deleted", [r.body.deleted, server.recordings.get(DUE).status], [0, "complete"]);
+  ok("and says why", /R2 delete failed/.test(r.body.skipped[0]?.reason ?? ""), r.body.skipped[0]?.reason);
+  eq("the first object's row is cleared, the others still name what is left", r2Of(DUE), 2);
+  r2.failOn = null;
+  r = await run(DUE);
+  eq("the next run finishes it", [r.body.deleted, r2Of(DUE), server.recordings.get(DUE).status], [1, 0, "deleted"]);
+
+  s = seed(); resetR2();
+  addR2(R2_BUCKET, `${CLASS}/${DUE}/manifest.json`, { object: false }); // a row whose upload was cut short
+  r = await run(DUE);
+  eq("a row with no object behind it (an upload cut short) goes too", [r.body.deleted, r2Of(DUE)], [1, 0]);
+
+  s = seed(); resetR2();
+  addR2(R2_BUCKET, `${CLASS}/${DUE}/manifest.json`);
+  r2.ghostRows = true;
+  r = await run(DUE);
+  eq("the rows are still listed after removal: not marked, in either store", [r.body.deleted, server.recordings.get(DUE).status], [0, "complete"]);
+  ok("reported as still listed", /still listed/.test(r.body.skipped[0]?.reason ?? ""), r.body.skipped[0]?.reason);
+
+  s = seed(); resetR2();
+  addR2(R2_BUCKET, `${CLASS}/${DUE}/manifest.json`);
+  r2.failList = true;
+  r = await run(DUE);
+  eq("R2 cannot be listed: nothing removed anywhere, nothing marked", [r.body.deleted, objectsOf(DUE), r2.calls.length, server.recordings.get(DUE).status], [0, 5, 0, "complete"]);
+  resetR2();
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

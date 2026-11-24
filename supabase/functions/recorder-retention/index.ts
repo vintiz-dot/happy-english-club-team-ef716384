@@ -16,15 +16,25 @@
 // remove objects under each recording's own prefix, and call the migration's
 // functions. It never downloads audio.
 //
+// TWO STORES (24 Nov 2026). The recorder's audio is moving from Supabase
+// Storage to the private R2 bucket (docs/RECORDER_R2_AND_COMPRESSION.md): a
+// recording can have files in either, or both while the move is on. A file in
+// R2 is a `file_objects` row (supabase/functions/_lib/file-store.ts: a row
+// means R2). This function lists and removes under the prefix in BOTH: R2
+// objects through the hec-files Worker as the service role (the object first,
+// then its row, so a failure leaves a row that names what is left, never a
+// stray object), Supabase objects as before.
+//
 // FAILS CLOSED. A recording is marked deleted only after a SECOND listing of
-// its prefix comes back empty - and the database refuses the mark anyway
-// while it can still see an object. A prefix that is not exactly
+// its prefix comes back empty IN BOTH STORES - and the database refuses the
+// mark anyway while it can still see an object. A prefix that is not exactly
 // `{class_id}/{recording_id}/` for that row is skipped, never removed.
 //
 // LOGS IDS AND COUNTS ONLY: no names, no paths beyond ids, no audio.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { requireRole } from "../_lib/auth.ts";
+import { fileStoreEnvFromDeno, DEFAULT_FILES_WORKER, type FileStoreEnv } from "../_lib/file-store.ts";
 
 /** The recorder's own bucket. Must equal BUCKET in src/lib/recorder/backend.ts (asserted by the test). */
 export const BUCKET = "class-recorder-audio";
@@ -76,12 +86,66 @@ async function listAll(sb: any, prefix: string): Promise<string[]> {
   return out;
 }
 
+/** Every R2 file of a prefix: the `file_objects` rows under it (a row means R2). */
+async function listR2(sb: any, prefix: string): Promise<string[]> {
+  const out: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb.from("file_objects").select("path")
+      .eq("bucket_id", BUCKET).like("path", `${prefix}%`).order("path").range(from, from + 999);
+    if (error) throw new Error(`list (R2) failed: ${error.message ?? error}`);
+    const rows = (data ?? []) as { path: string }[];
+    for (const r of rows) out.push(r.path);
+    if (rows.length < 1000) break;
+  }
+  return out;
+}
+
+/**
+ * Remove files from R2: the object through the Worker (the service key with
+ * `x-hec-as: service`, as _lib/file-store.ts does; the Worker has the
+ * database confirm the key), THEN the row. Deleting a missing object is a
+ * no-op in R2, so a row whose object was never stored (an upload cut short)
+ * goes too. Throws on the first failure after clearing the rows already done.
+ */
+async function removeR2(sb: any, env: FileStoreEnv, paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+  if (!env.serviceKey) throw new Error("R2 files exist but the service key is not available");
+  const f = env.fetch ?? fetch;
+  const base = env.workerUrl ?? DEFAULT_FILES_WORKER;
+  const done: string[] = [];
+  const clearRows = async () => {
+    for (let i = 0; i < done.length; i += BATCH) {
+      const { error } = await sb.from("file_objects").delete().eq("bucket_id", BUCKET).in("path", done.slice(i, i + BATCH));
+      if (error) throw new Error(`file_objects delete failed: ${error.message ?? error}`);
+    }
+    done.length = 0;
+  };
+  try {
+    for (const path of paths) {
+      const r = await f(`${base}/v1/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.serviceKey}`, "x-hec-as": "service" },
+        body: JSON.stringify({ op: "delete", bucket: BUCKET, path }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j?.deleted !== true) throw new Error(`R2 delete failed: ${j?.error ?? r.status}`);
+      done.push(path);
+    }
+  } catch (e) {
+    await clearRows().catch(() => {});
+    throw e;
+  }
+  await clearRows();
+}
+
 export interface RetentionResult {
   expired_stale: number;
   due: number;
   deleted: number;
   deleted_ids: string[];
   objects_removed: number;
+  /** Of those, the ones that were in R2 (24 Nov 2026). */
+  r2_objects_removed: number;
   skipped: { recording_id: string; reason: string }[];
   /** C2 review m8: due recordings left for the next run (the run is capped in count and time). */
   remaining: number;
@@ -91,8 +155,8 @@ export interface RetentionResult {
 export const MAX_RECORDINGS_PER_RUN = 25;
 export const RUN_BUDGET_MS = 100_000;
 
-export async function runRetention(sb: any, opts: { recordingId?: string | null; maxRecordings?: number; budgetMs?: number; now?: () => number } = {}): Promise<RetentionResult> {
-  const result: RetentionResult = { expired_stale: 0, due: 0, deleted: 0, deleted_ids: [], objects_removed: 0, skipped: [], remaining: 0 };
+export async function runRetention(sb: any, opts: { recordingId?: string | null; maxRecordings?: number; budgetMs?: number; now?: () => number; env?: FileStoreEnv } = {}): Promise<RetentionResult> {
+  const result: RetentionResult = { expired_stale: 0, due: 0, deleted: 0, deleted_ids: [], objects_removed: 0, r2_objects_removed: 0, skipped: [], remaining: 0 };
   const now = opts.now ?? (() => Date.now());
   const startedAt = now();
   const max = opts.maxRecordings ?? MAX_RECORDINGS_PER_RUN;
@@ -122,15 +186,21 @@ export async function runRetention(sb: any, opts: { recordingId?: string | null;
       continue;
     }
     try {
-      // 3. List, remove in batches, list again.
+      // 3. List both stores, remove in batches, list both again.
       const names = await listAll(sb, expected);
-      if (names.some((n) => !n.startsWith(expected))) throw new Error("listing returned a path outside the prefix");
+      const inR2 = await listR2(sb, expected);
+      if ([...names, ...inR2].some((n) => !n.startsWith(expected))) throw new Error("listing returned a path outside the prefix");
       for (let i = 0; i < names.length; i += BATCH) {
         const { error } = await sb.storage.from(BUCKET).remove(names.slice(i, i + BATCH));
         if (error) throw new Error(`remove failed: ${error.message ?? error}`);
       }
       result.objects_removed += names.length;
-      const left = await listAll(sb, expected);
+      if (inR2.length) {
+        await removeR2(sb, opts.env ?? fileStoreEnvFromDeno(), inR2);
+        result.objects_removed += inR2.length;
+        result.r2_objects_removed += inR2.length;
+      }
+      const left = [...(await listAll(sb, expected)), ...(await listR2(sb, expected))];
       if (left.length) {
         result.skipped.push({ recording_id: r.recording_id, reason: `${left.length} object(s) still listed after removal` });
         continue;
@@ -173,7 +243,7 @@ Deno.serve(async (req) => {
     if (recordingId !== null && !UUID.test(recordingId)) return json(400, { error: "recording_id must be a uuid" });
 
     const result = await runRetention(sb, { recordingId });
-    console.log(JSON.stringify({ fn: "recorder-retention", by: who, expired_stale: result.expired_stale, due: result.due, deleted: result.deleted, deleted_ids: result.deleted_ids, objects_removed: result.objects_removed, remaining: result.remaining, skipped: result.skipped.map((s) => s.recording_id) }));
+    console.log(JSON.stringify({ fn: "recorder-retention", by: who, expired_stale: result.expired_stale, due: result.due, deleted: result.deleted, deleted_ids: result.deleted_ids, objects_removed: result.objects_removed, r2_objects_removed: result.r2_objects_removed, remaining: result.remaining, skipped: result.skipped.map((s) => s.recording_id) }));
     return json(200, result);
   } catch (e) {
     console.error(JSON.stringify({ fn: "recorder-retention", error: String((e as Error)?.message ?? e).slice(0, 200) }));
