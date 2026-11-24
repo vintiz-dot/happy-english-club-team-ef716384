@@ -778,8 +778,15 @@ console.log('\nR. refresh-month-bills');
   const realFetch = globalThis.fetch, realTimeout = globalThis.setTimeout;
   const calls = [];
   globalThis.setTimeout = (fn) => realTimeout(fn, 0);
+  const siblingChecks = [];
   globalThis.fetch = async (url, init) => {
     const body = JSON.parse(init.body);
+    // The hourly job also asks compute-sibling-discounts to move discounts the
+    // family paid for on another child (24 Nov 2026): nothing to move here.
+    if (String(url).endsWith('/functions/v1/compute-sibling-discounts')) {
+      siblingChecks.push(body);
+      return new Response(JSON.stringify({ success: true, swapByPayments: true, results: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
     calls.push(body.studentId);
     gate = CALLERS.service;
     return handlers['calculate-tuition'](new Request(url, { method: 'POST', headers: init.headers, body: init.body }));
@@ -811,6 +818,8 @@ console.log('\nR. refresh-month-bills');
     const again = await (await handlers['refresh-month-bills'](post({ month: PREV }))).json();
     ok('a second run still exits successfully and reports the held child again', again.ok === true && again.months[0].held.length === 1 && again.months[0].found === 2, again);
     ok('a bill known to be held goes after the bills that can be fixed', calls[0] === late && calls[calls.length - 1] === heldKid, calls);
+    ok('each run asks once for sibling discounts to be moved to fit the payments, for its month',
+      siblingChecks.length === 2 && siblingChecks.every((c) => c.month === PREV && c.swapByPayments === true), siblingChecks);
     ok('its bill row was not written again', writesFor(heldKid) === writesBefore && (await invoice(heldKid)).updated_at === stamp, { writesBefore });
   } finally {
     globalThis.fetch = realFetch;

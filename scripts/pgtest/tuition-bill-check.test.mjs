@@ -375,6 +375,8 @@ globalThis.fetch = async (url, init) => {
   const body = JSON.parse(init.body);
   calls.push({ url: String(url), studentId: body.studentId, month: body.month, auth: init.headers.Authorization });
   const reply = (status, b) => new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } });
+  // The sibling check the run also asks for (24 Nov 2026) is down here: the run must not fail over it.
+  if (String(url).endsWith('/functions/v1/compute-sibling-discounts')) return reply(500, { error: 'Failed to compute sibling discounts', success: false });
   if (!String(url).endsWith('/functions/v1/calculate-tuition')) return reply(404, { error: 'unexpected url' });
   if (body.studentId === K.K9 && !rateLimitedOnce) { rateLimitedOnce = true; return reply(429, { error: 'Rate limit exceeded.', retryAfter: 1 }); }
   if (body.studentId === K.K10) return reply(200, { invoiceSaved: false, siblingUnresolved: true, baseAmount: 260000 });
@@ -396,7 +398,10 @@ try {
   const run = body.months?.find((m) => m.month === MONTH);
   ok('the timer run answers', res.status === 200 && !!run, body);
   ok('it looked at the seven listed', run?.found === 7, run);
-  ok('every call went to calculate-tuition with the service key', calls.length > 0 && calls.every((c) => c.auth === 'Bearer service-key-test-only'), calls);
+  ok('every call went out with the service key', calls.length > 0 && calls.every((c) => c.auth === 'Bearer service-key-test-only'), calls);
+  const sib = calls.filter((c) => c.url.endsWith('/functions/v1/compute-sibling-discounts'));
+  ok('the run asked once per month for sibling discounts to be moved to fit the payments', sib.length === body.months.length && sib.some((c) => c.month === MONTH), sib);
+  ok('that check failing does not fail the run: it is reported on the run', res.status === 200 && run?.siblingSwaps?.error === 'Failed to compute sibling discounts' && run.failed.every((f) => !/compute-sibling-discounts/.test(f.error)), run?.siblingSwaps);
   ok('a 429 was retried once', calls.filter((c) => c.studentId === K.K9).length === 2, calls.filter((c) => c.studentId === K.K9));
   ok('five bills saved (Peter, Lạc, register moved, weekday-only, leaver)', run?.recalculated === 5, run?.recalculated);
   const failedBy = new Map((run?.failed ?? []).map((f) => [f.student_id, f]));
