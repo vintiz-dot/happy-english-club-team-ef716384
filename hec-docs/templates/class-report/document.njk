@@ -1,0 +1,137 @@
+{#
+  Class report: one child's copy of one approved lesson report. Content and
+  order follow the family screen (src/components/student/LessonReports.tsx),
+  except that the child's own part comes first: this copy is about them.
+  Every heading and label is English with its Vietnamese, as on the screen.
+  New document (no earlier generator), so no parity capture; the labels are
+  registered in template.json brandStrings.
+#}
+{% extends "layouts/page.njk" %}
+{% import "ui.njk" as ui %}
+{% import "ui/bilingual.njk" as b %}
+{% import "ui/photo-grid.njk" as pg %}
+{% set c = data.child %}
+{% set when = data.date ~ ((" · " ~ data.startTime) if data.startTime else "") %}
+{% set runningTitle = data.studentName ~ " · Class Report · " ~ data.date %}
+{% block body %}
+{{ ui.header(tenant, "Báo cáo buổi học", "Class Report", [data.className, when]) }}
+
+{{ ui.identity(data.studentName, [{ label: "Lesson", value: data.className ~ " · " ~ when }]) }}
+
+<section aria-label="Lesson">
+  <h1 class="doc-title">{{ data.title.en }}</h1>
+  {% if data.title.vi %}<p class="bilingual__sub" lang="vi">{{ data.title.vi }}</p>{% endif %}
+  {% if data.summary %}{{ b.bi(data.summary) }}{% endif %}
+</section>
+
+{% if c %}
+<section class="panel" aria-label="Your child today">
+  {{ b.bi_section("Your child today", "Con hôm nay", 3) }}
+  {% if c.attendance or (c.points and c.points != 0) %}
+  <ul class="chips">
+    {% if c.attendance %}<li class="chip">{{ c.attendance.en }}{% if c.attendance.vi %} · <span lang="vi">{{ c.attendance.vi }}</span>{% endif %}</li>{% endif %}
+    {% if c.points and c.points != 0 %}<li class="chip">{{ ("+" if c.points > 0 else "") ~ c.points }} points · <span lang="vi">điểm</span></li>{% endif %}
+  </ul>
+  {% endif %}
+  {% if c.highlight %}{{ b.bi(c.highlight) }}{% endif %}
+  {% if c.work and c.work | length %}
+    {{ pg.photo_grid(c.work, 4, "Their work") }}
+  {% endif %}
+  {% if c.teacherComment %}
+    {% call ui.callout("praise", "From the teacher · Lời cô/thầy") %}{{ b.bi(c.teacherComment) }}{% endcall %}
+  {% endif %}
+  {% if c.focusNext %}
+    <div class="eyebrow">Next focus · <span lang="vi">Cần chú ý</span></div>
+    {{ b.bi(c.focusNext) }}
+  {% endif %}
+</section>
+{% endif %}
+
+{% if data.objectives and data.objectives | length %}
+<section aria-label="Today's goals">
+  {{ b.bi_section("Today's goals", "Mục tiêu hôm nay") }}
+  <ul class="bullets">
+    {% for o in data.objectives %}
+    <li class="bullets__item">{{ b.bi(o.text) }}<ul class="chips"><li class="chip">{{ o.met.en }}{% if o.met.vi %} · <span lang="vi">{{ o.met.vi }}</span>{% endif %}</li></ul></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% set learned = (data.taught or []) | length + (data.words or []) | length + (data.structures or []) | length + (data.activities or []) | length %}
+{% if learned %}
+<section aria-label="What we learned">
+  {{ b.bi_section("What we learned", "Chúng con đã học") }}
+  {% if data.taught and data.taught | length %}
+  <ul class="bullets">
+    {% for t in data.taught %}<li class="bullets__item"><strong>{{ t.topic }}</strong>{% if t.detail %}{{ b.bi(t.detail) }}{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if data.words and data.words | length %}
+  {{ b.bi_section("Words", "Từ vựng", 3) }}
+  <ul class="chips">
+    {% for w in data.words %}<li class="chip"><strong>{{ w.en }}</strong>{% if w.vi %} · <span lang="vi">{{ w.vi }}</span>{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if data.structures and data.structures | length %}
+  {{ b.bi_section("Sentence patterns", "Mẫu câu", 3) }}
+  <ul class="bullets">
+    {% for s in data.structures %}<li class="bullets__item"><strong>{{ s.pattern }}</strong>{% if s.example %}<br><em>“{{ s.example }}”</em>{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if data.activities and data.activities | length %}
+  {{ b.bi_section("Activities", "Hoạt động", 3) }}
+  <ul class="bullets">
+    {% for a in data.activities %}<li class="bullets__item"><strong>{{ a.name }}</strong>{% if a.description %}{{ b.bi(a.description) }}{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if data.photos and data.photos | length %}
+<section aria-label="Photos from class">
+  {{ b.bi_section("Photos from class", "Hình ảnh buổi học") }}
+  {{ pg.photo_grid(data.photos, 3, "Class photo") }}
+</section>
+{% endif %}
+
+{% for block in [
+  { items: data.classFocus, en: "What the class is working on", vi: "Cả lớp đang luyện" },
+  { items: data.tips, en: "Tips for home", vi: "Gợi ý ở nhà" },
+  { items: data.askYourChild, en: "Ask your child", vi: "Hỏi con" }
+] %}
+{% if block.items and block.items | length %}
+<section aria-label="{{ block.en }}">
+  {{ b.bi_section(block.en, block.vi) }}
+  <ul class="bullets">
+    {% for t in block.items %}<li class="bullets__item">{{ b.bi(t) }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endfor %}
+
+{% if (data.homework and data.homework | length) or data.reviewQuiz %}
+<section aria-label="Homework">
+  {{ b.bi_section("Homework", "Bài tập về nhà") }}
+  <ul class="bullets">
+    {% for h in (data.homework or []) %}<li class="bullets__item">{{ h.title }}{% if h.dueDate %} <span class="muted">· due {{ h.dueDate }}</span>{% endif %}</li>{% endfor %}
+    {% if data.reviewQuiz %}<li class="bullets__item">Review quiz in the app · <span lang="vi">Bài ôn tập trong ứng dụng</span></li>{% endif %}
+  </ul>
+</section>
+{% endif %}
+
+{% if data.nextLesson %}
+<section aria-label="Next lesson">
+  {{ b.bi_section("Next lesson", "Buổi học tới") }}
+  {{ b.bi(data.nextLesson) }}
+</section>
+{% endif %}
+
+<div class="closing">
+  {{ ui.encourage(brand) }}
+  <div class="closing-row">
+    {{ ui.signature(tenant, true) }}
+    {{ ui.qr_footer(brand) }}
+  </div>
+</div>
+{% endblock %}

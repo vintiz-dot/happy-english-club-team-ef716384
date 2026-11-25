@@ -1,0 +1,15 @@
+{# bilingual: English with its Vietnamese beneath (bilingual.css).
+   bi(text)            text = {en, vi}; vi may be null. Nothing for a null text.
+   bi_section(en, vi)  a section heading with its Vietnamese after a gold dot. #}
+{% macro bi(text, cls="") %}
+{% if text and text.en %}
+<div class="bilingual{% if cls %} {{ cls }}{% endif %}">
+  <p class="bilingual__en">{{ text.en }}</p>
+  {% if text.vi %}<p class="bilingual__sub" lang="vi">{{ text.vi }}</p>{% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro bi_section(en, vi, level=2) %}
+<h{{ level }} class="sec sec--{{ level }}">{{ en }}{% if vi %} <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> {{ vi }}</span>{% endif %}</h{{ level }}>
+{% endmacro %}

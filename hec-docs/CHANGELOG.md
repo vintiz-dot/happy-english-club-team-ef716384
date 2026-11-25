@@ -5,6 +5,14 @@ All notable changes to HEC Docs: the engine, and each template with its own semv
 - **Minor:** new variant or optional field.
 - **Patch:** visual change with the same data.
 
+## 2026-11-25: class-report 1.0.0 (new type)
+
+- **New document type `class-report`**: one child's copy of one approved lesson report, made in bulk by the staff's "Download all children's reports" (one PDF per child, zipped). The child's own part comes first (attendance, points, highlight, their work, the teacher's comment, next focus), then the class part every family sees (goals with how far they were met, what was learned, words, sentence patterns, activities, photos, class focus, tips for home, questions to ask, homework, next lesson). English with the Vietnamese under it throughout. One variant, `family`.
+- Data contract `https://hec-docs.invalid/schemas/class-report/1.0.0`: the fields of the app's `LessonReportView`, with pictures inlined as data: URIs. Never the staff part or another child's part.
+- Filename: `<child> - <class> <date>.pdf`.
+- New components, token-only: `bilingual` macros (`bi`, `bi_section`, in `ui/bilingual.njk`, styled by the existing `bilingual.css`) and `photo-grid`. Every document now links `photo-grid.css`, so every HTML snapshot gained that link tag; nothing else in the other documents changed.
+- Two fixtures: a full report with photos and work, and a sparse one.
+
 ## 2026-11-22: lesson-material 1.0.0 (new type)
 
 - **New document type `lesson-material`** for the app's Lesson Decks: lesson decks, worksheets, checks/tests and homework sheets, in two variants:

@@ -1,0 +1,321 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Class Report</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/photo-grid.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Nguyễn Minh Anh · Class Report · 2026-11-24";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--class-report variant--family">
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+<div class="eyebrow">Báo cáo buổi học</div><div class="hdr__title">Class Report</div><div class="hdr__meta">Venus</div><div class="hdr__meta">2026-11-24 · 17:30</div>  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+
+<section class="ident" aria-label="Student">
+  <div class="ident__who">
+    <div class="ident__name">Nguyễn Minh Anh</div>
+  </div>
+  <dl class="ident__rows">
+<div class="kv"><dt>Lesson</dt><dd>Venus · 2026-11-24 · 17:30</dd></div>  </dl>
+</section>
+
+
+<section aria-label="Lesson">
+  <h1 class="doc-title">Farm animals</h1>
+<p class="bilingual__sub" lang="vi">Động vật nông trại</p><div class="bilingual">
+  <p class="bilingual__en">We named farm animals, described them with &quot;It has ...&quot; and played animal bingo.</p>
+<p class="bilingual__sub" lang="vi">Chúng con gọi tên các con vật nông trại, miêu tả bằng &quot;It has ...&quot; và chơi bingo con vật.</p></div>
+</section>
+
+<section class="panel" aria-label="Your child today">
+  <h3 class="sec sec--3">Your child today <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Con hôm nay</span></h3>
+
+  <ul class="chips">
+<li class="chip">In class · <span lang="vi">Có mặt</span></li><li class="chip">+3 points · <span lang="vi">điểm</span></li>  </ul>
+<div class="bilingual">
+  <p class="bilingual__en">Won the bingo round and helped a friend find the hen.</p>
+<p class="bilingual__sub" lang="vi">Thắng vòng bingo và giúp bạn tìm con gà mái.</p></div>
+    <div class="pgrid pgrid--4">
+  <div class="pgrid__item">
+    <img class="pgrid__img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=" alt="Their work">
+  </div>
+  <div class="pgrid__item">
+    <img class="pgrid__img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=" alt="Their work">
+  </div>
+</div>
+
+<aside class="callout callout--praise">
+<div class="callout__title">From the teacher · Lời cô/thầy</div>  <div class="callout__body"><div class="bilingual">
+  <p class="bilingual__en">Lovely clear voice today. Keep reading the word cards at home.</p>
+<p class="bilingual__sub" lang="vi">Hôm nay con nói rất rõ. Con tiếp tục đọc thẻ từ ở nhà nhé.</p></div>
+</div>
+</aside>
+    <div class="eyebrow">Next focus · <span lang="vi">Cần chú ý</span></div>
+    <div class="bilingual">
+  <p class="bilingual__en">Say the -s at the end of plurals clearly.</p>
+<p class="bilingual__sub" lang="vi">Đọc rõ âm -s ở cuối danh từ số nhiều.</p></div>
+
+</section>
+
+<section aria-label="Today's goals">
+  <h2 class="sec sec--2">Today&#39;s goals <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Mục tiêu hôm nay</span></h2>
+
+  <ul class="bullets">
+    <li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Name 5 farm animals</p>
+<p class="bilingual__sub" lang="vi">Gọi tên 5 con vật nông trại</p></div>
+<ul class="chips"><li class="chip">Achieved · <span lang="vi">Đã đạt</span></li></ul></li>
+    <li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Describe an animal with &quot;It has ...&quot;</p>
+</div>
+<ul class="chips"><li class="chip">Getting there · <span lang="vi">Đang tiến bộ</span></li></ul></li>
+  </ul>
+</section>
+
+<section aria-label="What we learned">
+  <h2 class="sec sec--2">What we learned <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Chúng con đã học</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><strong>Farm animals</strong><div class="bilingual">
+  <p class="bilingual__en">cow, pig, hen, sheep, goat</p>
+<p class="bilingual__sub" lang="vi">bò, lợn, gà mái, cừu, dê</p></div>
+</li>  </ul>
+  <h3 class="sec sec--3">Words <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Từ vựng</span></h3>
+
+  <ul class="chips">
+<li class="chip"><strong>cow</strong> · <span lang="vi">con bò</span></li><li class="chip"><strong>hen</strong> · <span lang="vi">con gà mái</span></li><li class="chip"><strong>sheep</strong> · <span lang="vi">con cừu</span></li>  </ul>
+  <h3 class="sec sec--3">Sentence patterns <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Mẫu câu</span></h3>
+
+  <ul class="bullets">
+<li class="bullets__item"><strong>It has ...</strong><br><em>“It has four legs.”</em></li>  </ul>
+  <h3 class="sec sec--3">Activities <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Hoạt động</span></h3>
+
+  <ul class="bullets">
+<li class="bullets__item"><strong>Animal bingo</strong><div class="bilingual">
+  <p class="bilingual__en">A listening game with picture cards.</p>
+<p class="bilingual__sub" lang="vi">Trò chơi nghe với thẻ tranh.</p></div>
+</li>  </ul>
+</section>
+
+<section aria-label="Photos from class">
+  <h2 class="sec sec--2">Photos from class <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Hình ảnh buổi học</span></h2>
+
+  <div class="pgrid pgrid--3">
+  <div class="pgrid__item">
+    <img class="pgrid__img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=" alt="Our board">
+<div class="bilingual pgrid__cap">
+  <p class="bilingual__en">Our board</p>
+<p class="bilingual__sub" lang="vi">Bảng của lớp</p></div>
+  </div>
+  <div class="pgrid__item">
+    <img class="pgrid__img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=" alt="Class photo">
+  </div>
+</div>
+
+</section>
+
+<section aria-label="What the class is working on">
+  <h2 class="sec sec--2">What the class is working on <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Cả lớp đang luyện</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Plural -s</p>
+<p class="bilingual__sub" lang="vi">Số nhiều -s</p></div>
+</li>  </ul>
+</section>
+<section aria-label="Tips for home">
+  <h2 class="sec sec--2">Tips for home <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Gợi ý ở nhà</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Name the animals in a picture book together.</p>
+<p class="bilingual__sub" lang="vi">Cùng con gọi tên các con vật trong sách tranh.</p></div>
+</li>  </ul>
+</section>
+<section aria-label="Ask your child">
+  <h2 class="sec sec--2">Ask your child <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Hỏi con</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">What has four legs and says moo?</p>
+<p class="bilingual__sub" lang="vi">Con gì có bốn chân và kêu ò ò?</p></div>
+</li>  </ul>
+</section>
+
+<section aria-label="Homework">
+  <h2 class="sec sec--2">Homework <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Bài tập về nhà</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item">Workbook page 12 <span class="muted">· due 2026-11-27</span></li><li class="bullets__item">Review quiz in the app · <span lang="vi">Bài ôn tập trong ứng dụng</span></li>  </ul>
+</section>
+
+<section aria-label="Next lesson">
+  <h2 class="sec sec--2">Next lesson <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Buổi học tới</span></h2>
+
+  <div class="bilingual">
+  <p class="bilingual__en">Food we like</p>
+<p class="bilingual__sub" lang="vi">Món ăn chúng con thích</p></div>
+
+</section>
+
+<div class="closing">
+  <p class="encourage">Mistakes are how good English is made.</p>
+
+  <div class="closing-row">
+    <div class="sign">
+  <div class="sign__closing">With warm regards, <span lang="vi">/ Thân mến,</span></div>
+  <div class="sign__name">Teacher Victor</div>
+  <div class="sign__role">Happy English Club</div>
+</div>
+
+    <footer class="qrf">
+  <div class="qrf__code"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path stroke="#14213D" d="M0 0.5h7m2 0h2m1 0h2m2 0h1m1 0h7M0 1.5h1m5 0h1m3 0h3m2 0h1m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h4m2 0h3m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m1 0h5m3 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m1 0h1m1 0h1m1 0h2m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h5m1 0h1m1 0h1M0 8.5h1m1 0h5m6 0h3m2 0h5M0 9.5h5m4 0h3m1 0h1m2 0h1m2 0h1m3 0h1M0 10.5h2m2 0h1m1 0h3m1 0h2m3 0h1m2 0h1m2 0h1m1 0h2M2 11.5h4m1 0h2m7 0h3m1 0h1m3 0h1M0 12.5h1m2 0h2m1 0h1m1 0h1m4 0h1m3 0h2m1 0h1m1 0h3M0 13.5h3m4 0h1m1 0h1m2 0h2m2 0h1m2 0h1m1 0h1m1 0h1M0 14.5h1m1 0h7m4 0h5m1 0h3m1 0h2M0 15.5h1m1 0h1m1 0h1m7 0h1m2 0h2m2 0h2m3 0h1M0 16.5h1m2 0h1m1 0h6m1 0h9m1 0h1M8 17.5h2m5 0h2m3 0h2M0 18.5h7m2 0h1m1 0h3m2 0h1m1 0h1m1 0h1m1 0h3M0 19.5h1m5 0h1m1 0h2m1 0h1m2 0h1m1 0h1m3 0h2m2 0h1M0 20.5h1m1 0h3m1 0h1m1 0h1m2 0h10m1 0h1M0 21.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h2m3 0h2m1 0h5M0 22.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h2m1 0h1M0 23.5h1m5 0h1m2 0h1m4 0h4m1 0h3m2 0h1M0 24.5h7m1 0h7m2 0h1m1 0h6"/></svg>
+</div>
+  <div class="qrf__text">
+    <div class="qrf__site">hanoienglish.com</div>
+  </div>
+</footer>
+
+  </div>
+</div>
+</body>
+</html>

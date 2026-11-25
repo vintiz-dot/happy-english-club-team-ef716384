@@ -14,7 +14,7 @@ const out = await build({
 });
 const file = join(mkdtempSync(join(tmpdir(), "lesson-report-batch-")), "module.mjs");
 writeFileSync(file, out.outputFiles[0].text);
-const { childReports, reportFileNames, zipName, fileSafe } = await import(pathToFileURL(file).href);
+const { childReports, reportFileNames, zipName, fileSafe, classReportDocData } = await import(pathToFileURL(file).href);
 
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
@@ -55,6 +55,44 @@ eq("file names safe and unique", reportFileNames(
   ["An Nguyễn - Venus-Mars 2026-11-20.pdf", "An Nguyễn - Venus-Mars 2026-11-20 (2).pdf", "Bình - Venus-Mars 2026-11-20.pdf"]);
 eq("zip name", zipName(lesson), "Venus-Mars - Class reports 2026-11-20.zip");
 eq("fileSafe strips Windows characters", fileSafe('a:b*c?"d<e>f|g\\h'), "a-b-c--d-e-f-g-h");
+
+// The PDF goes through HEC Docs' class-report template first. Data its schema
+// refuses would silently fall back to the old rasteriser, so the mapping goes
+// through the real engine here.
+const E = await import(pathToFileURL(resolve(repo, "src/lib/hecDocs/engine.generated.js")).href);
+const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+const richReport = {
+  ...report,
+  photo_ids: [ID(3), ID(8)],
+  class_part: {
+    ...report.class_part,
+    objectives: [{ text: "Name 5 animals", text_vi: "Gọi tên 5 con vật", met: "yes" }, { text: "Spell", met: "maybe" }],
+    taught: [{ topic: "Animals", detail: "Farm animals", detail_vi: "Động vật nông trại" }],
+    words: [{ en: "cat", vi: "con mèo" }], structures: [{ pattern: "It has ...", example: "It has four legs." }],
+    activities: [{ name: "Bingo" }], class_focus: [{ en: "Plural -s", vi: "Số nhiều -s" }],
+    parents: { tips: ["Read together"], ask_your_child: [{ en: "What has four legs?" }], next_lesson: { en: "Food", vi: "Đồ ăn" } },
+    homework: [{ title: "Workbook p.12", due_date: "2026-11-27" }],
+  },
+};
+const rich = childReports(richReport, parts, names, lesson);
+const viaEngine = async (label, data) => {
+  try { return await E.prepare("class-report", JSON.parse(JSON.stringify(data)), { sanitiseRich: (x) => x, generatedAt: "2026-11-25T00:00:00Z" }); }
+  catch (e) { ok(`${label}: valid class-report data`, false, String(e.message || e).slice(0, 300)); return null; }
+};
+const pics = { [ID(3)]: PNG, [ID(7)]: PNG, [ID(8)]: null };
+for (const r of [...rich, ...childReports(report, parts, names, lesson)]) {
+  const out = await viaEngine(r.name, classReportDocData(r, pics));
+  if (out) ok(`${r.name}: valid class-report data, named after child, class and date`, out.filename === `${fileSafe(r.name)} - Venus-Mars 2026-11-20.pdf`, out.filename);
+}
+const an = classReportDocData(rich[0], pics);
+eq("a picture that could not be read is left out", an.photos.map((p) => p.caption?.en ?? null), ["Our board"]);
+eq("the child's own work pictures", an.child.work.length, 1);
+eq("met state worded as the family screen", an.objectives.map((o) => o.met.en), ["Achieved", "Practised"]);
+eq("attendance worded in both languages", an.child.attendance, { en: "Came a little late", vi: "Đến muộn một chút" });
+eq("review quiz flagged", an.reviewQuiz, true);
+const html = (await viaEngine("html", an))?.html ?? "";
+ok("the staff part never reaches the PDF", !html.includes("secret"));
+ok("another child's part never reaches the PDF", !html.includes("Great bingo") && html.includes("Spelled cat"));
 
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

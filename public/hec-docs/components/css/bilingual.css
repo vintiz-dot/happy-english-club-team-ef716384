@@ -19,3 +19,7 @@
 }
 .bilingual__lead { display: flex; gap: var(--space-1); align-items: flex-start; }
 .bilingual__lead > p { margin: 0; }
+/* ui/bilingual.njk: the English line, and a heading's Vietnamese after a gold dot. */
+.bilingual__en { margin: 0; line-height: var(--leading-body); }
+.sec__vi { font-family: var(--font-family-body); font-weight: var(--font-weight-regular); font-size: var(--size-sm); color: var(--color-ink-soft); }
+.sec__vi .ornament { padding: 0 2pt; }

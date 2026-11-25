@@ -181,6 +181,7 @@ Every button tries this first and **falls back to its old generator** on any fai
 | Bulk invoices ZIP (`TuitionBulkDownload.tsx`) | invoice |
 | Access card "Print card (PDF)" (`StudentAccessManager.tsx`) | access-card |
 | "Share Profile Card" (`ProfileShareCard.tsx`) | profile-card (PNG) |
+| Class reports "Download all children's reports", also right after approval (`ClassReportDownload.tsx`) | class-report (one per child, zipped; the in-browser rasteriser is the fallback) |
 
 **Free-plan limits and how the Worker lives within them:**
 

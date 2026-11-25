@@ -1,0 +1,41 @@
+{
+  "$comment": "Made-up. A child the teacher wrote only a line for, and a short class part: no photos, no words, no homework. Proves the optional blocks disappear cleanly.",
+  "generatedAt": "2026-11-25T18:00:00+07:00",
+  "data": {
+    "studentName": "Trần Bảo Ngọc",
+    "className": "Jupiter",
+    "date": "2026-11-24",
+    "startTime": null,
+    "title": {
+      "en": "Unit Launch",
+      "vi": null
+    },
+    "summary": null,
+    "child": {
+      "attendance": {
+        "en": "Came a little late",
+        "vi": "Đến muộn một chút"
+      },
+      "points": 0,
+      "highlight": {
+        "en": "Spelled hen on the board.",
+        "vi": null
+      },
+      "teacherComment": null,
+      "focusNext": null,
+      "work": []
+    },
+    "objectives": [],
+    "taught": [],
+    "words": [],
+    "structures": [],
+    "activities": [],
+    "photos": [],
+    "classFocus": [],
+    "tips": [],
+    "askYourChild": [],
+    "homework": [],
+    "reviewQuiz": false,
+    "nextLesson": null
+  }
+}

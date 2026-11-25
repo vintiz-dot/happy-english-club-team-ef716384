@@ -1,0 +1,17 @@
+/* photo-grid (ui/photo-grid.njk): pictures in an even grid with small captions. */
+.pgrid { display: grid; gap: var(--space-2); margin: 0 0 var(--space-2); }
+.pgrid--3 { grid-template-columns: 1fr 1fr 1fr; }
+.pgrid--4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.pgrid__item { break-inside: avoid; min-width: 0; }
+.pgrid__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  border: var(--border-hairline) solid var(--color-rule);
+  background: var(--color-surface);
+}
+.pgrid--4 .pgrid__img { aspect-ratio: 1 / 1; }
+.pgrid__cap { margin-top: var(--space-0-5); font-size: var(--size-sm); }
+.pgrid__cap .bilingual__sub { font-size: var(--size-xs); }

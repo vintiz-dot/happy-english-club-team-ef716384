@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hec-docs.invalid/schemas/class-report/1.0.0",
+  "title": "Class report document input",
+  "description": "One child's view of one approved lesson report, as src/lib/lessonReportView.ts reads it (class_part + that child's part). Never staff_part, never another child's part. Plain text only; pictures are inlined data: URIs because the printer has no network.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["studentName", "className", "date", "title"],
+  "properties": {
+    "variant": { "enum": ["family"] },
+    "studentName": { "type": "string", "minLength": 1, "maxLength": 200, "description": "students.full_name; printed and used for the filename." },
+    "className": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "The lesson's date, YYYY-MM-DD." },
+    "startTime": { "type": ["string", "null"], "pattern": "^[0-9]{2}:[0-9]{2}$" },
+    "title": { "$ref": "#/$defs/bi" },
+    "summary": { "$ref": "#/$defs/biOrNull" },
+    "child": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "This child's own part; null when the teacher wrote none.",
+      "properties": {
+        "attendance": { "$ref": "#/$defs/biOrNull" },
+        "points": { "type": ["integer", "null"], "minimum": -1000, "maximum": 1000, "description": "Printed when not 0, signed (+3)." },
+        "highlight": { "$ref": "#/$defs/biOrNull" },
+        "teacherComment": { "$ref": "#/$defs/biOrNull" },
+        "focusNext": { "$ref": "#/$defs/biOrNull" },
+        "work": { "type": "array", "maxItems": 12, "items": { "$ref": "#/$defs/image" }, "description": "The child's own work from the lesson, as pictures." }
+      }
+    },
+    "objectives": {
+      "type": "array", "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["text", "met"],
+        "properties": { "text": { "$ref": "#/$defs/bi" }, "met": { "$ref": "#/$defs/bi" } }
+      }
+    },
+    "taught": {
+      "type": "array", "maxItems": 30,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["topic"],
+        "properties": { "topic": { "$ref": "#/$defs/text" }, "detail": { "$ref": "#/$defs/biOrNull" } }
+      }
+    },
+    "words": {
+      "type": "array", "maxItems": 60,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["en"],
+        "properties": { "en": { "$ref": "#/$defs/text" }, "vi": { "$ref": "#/$defs/textOrNull" }, "example": { "$ref": "#/$defs/textOrNull" } }
+      }
+    },
+    "structures": {
+      "type": "array", "maxItems": 30,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["pattern"],
+        "properties": { "pattern": { "$ref": "#/$defs/text" }, "example": { "$ref": "#/$defs/textOrNull" } }
+      }
+    },
+    "activities": {
+      "type": "array", "maxItems": 30,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["name"],
+        "properties": { "name": { "$ref": "#/$defs/text" }, "description": { "$ref": "#/$defs/biOrNull" } }
+      }
+    },
+    "photos": {
+      "type": "array", "maxItems": 12,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["src"],
+        "properties": { "src": { "$ref": "#/$defs/image" }, "caption": { "$ref": "#/$defs/biOrNull" } }
+      }
+    },
+    "classFocus": { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/bi" } },
+    "tips": { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/bi" } },
+    "askYourChild": { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/bi" } },
+    "homework": {
+      "type": "array", "maxItems": 20,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["title"],
+        "properties": { "title": { "$ref": "#/$defs/text" }, "dueDate": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" } }
+      }
+    },
+    "reviewQuiz": { "type": "boolean", "description": "The approval set a review quiz as homework in the app." },
+    "nextLesson": { "$ref": "#/$defs/biOrNull" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "textOrNull": { "type": ["string", "null"], "maxLength": 2000 },
+    "bi": {
+      "type": "object", "additionalProperties": false, "required": ["en"],
+      "description": "English, with the Vietnamese printed under it (null when there is none).",
+      "properties": { "en": { "$ref": "#/$defs/text" }, "vi": { "$ref": "#/$defs/textOrNull" } }
+    },
+    "biOrNull": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/bi" }] },
+    "image": { "type": "string", "maxLength": 3000000, "pattern": "^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$" }
+  }
+}

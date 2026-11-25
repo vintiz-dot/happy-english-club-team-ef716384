@@ -36,6 +36,8 @@ export const FILENAME_STRATEGIES: Record<string, (d: Data, variant?: string) => 
   // Print-only documents had no filename (the browser's "Save as PDF" names
   // them from the page title). We use a safeFileName of the title.
   statement: (d) => `${safeFileName(d.audit.student.name)} - Account Statement.pdf`,
+  // Class reports (new; no earlier generator): ClassReportDownload.tsx zips one per child.
+  "class-report": (d) => `${safeFileName(d.studentName)} - ${safeFileName(d.className)} ${d.date}.pdf`,
   // Lesson Decks exports (new; no earlier generator). The variant decides the
   // suffix; a sheet made for one child leads with the child's name.
   "lesson-material": (d, variant) => {

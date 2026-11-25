@@ -9,8 +9,10 @@
  * the caller. staff_part is never read. Each child is fault-isolated: one
  * picture or one PDF failing never drops the others, and the toast says who.
  *
- * Rendering: the browser rasteriser (src/lib/reportPdf.ts) keeps Vietnamese
- * exact. There is no HEC Docs template for this document yet.
+ * Rendering: HEC Docs first (the `class-report` template, the school's own
+ * PDF design, real text), with pictures shrunk and inlined because the printer
+ * has no network and takes at most 2 MB. Any failure there (offline, the free
+ * allowance used up) falls back to the browser rasteriser below, per child.
  */
 import { useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -21,12 +23,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { attendanceLabel, hasLearned, metChip, type Bilingual, type LessonReportView } from "@/lib/lessonReportView";
-import { childReports, reportFileNames, zipName, type ChildReport, type LessonMeta } from "@/lib/lessonReportBatch";
+import { childReports, classReportDocData, reportFileNames, zipName, type ChildReport, type LessonMeta } from "@/lib/lessonReportBatch";
+import { tryMakeDocument } from "@/lib/hecDocs";
 import { A4_CONTENT_WIDTH_PX, downloadBlob, nodeToPdfBlob } from "@/lib/reportPdf";
 
 const db = supabase as any;
 
-async function fileDataUrl(kind: "photo" | "work", id: string, studentId: string | null): Promise<string | null> {
+async function fileBlob(kind: "photo" | "work", id: string, studentId: string | null): Promise<Blob | null> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lesson-report-file`, {
@@ -38,18 +41,36 @@ async function fileDataUrl(kind: "photo" | "work", id: string, studentId: string
       },
       body: JSON.stringify(studentId ? { kind, id, student_id: studentId } : { kind, id }),
     });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return await new Promise<string | null>((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(typeof r.result === "string" ? r.result : null);
-      r.onerror = () => resolve(null);
-      r.readAsDataURL(blob);
-    });
+    return res.ok ? await res.blob() : null;
   } catch {
     return null;
   }
 }
+
+/** A picture as a JPEG data: URI no longer than `edge` px on its long side. */
+async function jpegDataUrl(blob: Blob, edge: number, quality: number): Promise<string | null> {
+  try {
+    const bmp = await createImageBitmap(blob);
+    const k = Math.min(1, edge / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bmp.width * k));
+    canvas.height = Math.max(1, Math.round(bmp.height * k));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    bmp.close?.();
+    return canvas.toDataURL("image/jpeg", quality);
+  } catch {
+    return null;
+  }
+}
+
+/** Picture sizes, largest first: a report whose data is over the budget is remade with the next. */
+const PICTURE_SIZES = [{ edge: 900, q: 0.72 }, { edge: 560, q: 0.6 }, { edge: 360, q: 0.55 }] as const;
+/** The printer takes at most 2 MB of HTML; leave room for the page itself. */
+const DOC_BUDGET = 1_600_000;
 
 /** Everything the batch needs, read as the caller. Null when the lesson has no approved report. */
 async function loadBatch(sessionId: string): Promise<{ lesson: LessonMeta; reports: ChildReport[] } | null> {
@@ -234,9 +255,24 @@ export async function downloadClassReports(
   if (!reports.length) throw new Error("The approved report has no child parts");
 
   // Class photos are the same for every child: fetch each once.
-  const pictures: Record<string, string | null> = {};
+  const blobs: Record<string, Blob | null> = {};
   const photoIds = [...new Set(reports.flatMap((r) => r.view.photos.map((p) => p.id)))];
-  await Promise.all(photoIds.map(async (id) => { pictures[id] = await fileDataUrl("photo", id, null); }));
+  await Promise.all(photoIds.map(async (id) => { blobs[id] = await fileBlob("photo", id, null); }));
+  const sized = new Map<string, Promise<string | null>>();
+  const picture = (id: string, size: number) => {
+    const key = `${id}@${size}`;
+    if (!sized.has(key)) {
+      const b = blobs[id];
+      const { edge, q } = PICTURE_SIZES[size];
+      sized.set(key, b ? jpegDataUrl(b, edge, q) : Promise.resolve(null));
+    }
+    return sized.get(key)!;
+  };
+  const picturesFor = async (ids: string[], size: number) => {
+    const out: Record<string, string | null> = {};
+    await Promise.all(ids.map(async (id) => { out[id] = await picture(id, size); }));
+    return out;
+  };
 
   const names = reportFileNames(reports, lesson);
   const files: { name: string; blob: Blob }[] = [];
@@ -244,8 +280,23 @@ export async function downloadClassReports(
   for (let i = 0; i < reports.length; i++) {
     const r = reports[i];
     onProgress?.({ done: i, total: reports.length, current: r.name });
-    const own: Record<string, string | null> = { ...pictures };
-    await Promise.all((r.view.child?.workIds ?? []).map(async (id) => { own[id] = await fileDataUrl("work", id, r.studentId); }));
+    const workIds = r.view.child?.workIds ?? [];
+    await Promise.all(workIds.filter((id) => !(id in blobs)).map(async (id) => { blobs[id] = await fileBlob("work", id, r.studentId); }));
+    const ids = [...r.view.photos.map((p) => p.id), ...workIds];
+
+    // HEC Docs: the school's own PDF design. Smaller pictures until the data fits.
+    let made: Blob | null = null;
+    let own: Record<string, string | null> = {};
+    for (let size = 0; size < PICTURE_SIZES.length && !made; size++) {
+      own = await picturesFor(ids, size);
+      const data = classReportDocData(r, own);
+      if (JSON.stringify(data).length > DOC_BUDGET && size < PICTURE_SIZES.length - 1) continue;
+      made = (await tryMakeDocument("class-report", data, { bulk: reports.length > 1 }))?.blob ?? null;
+      break;
+    }
+    if (made) { files.push({ name: names[i], blob: made }); continue; }
+
+    // Fallback: the browser rasteriser.
     const host = document.createElement("div");
     stage.appendChild(host);
     const root = createRoot(host);

@@ -1,0 +1,16 @@
+{# photo-grid: pictures in an even grid, each with an optional bilingual caption.
+   items: [{src, caption: {en, vi} | null}] or plain src strings; cols 3 (class photos) or 4 (a child's work).
+   A div, not <figure>: a tagged PDF treats a figure as needing alt text, which the
+   image carries itself. #}
+{% import "ui/bilingual.njk" as b %}
+{% macro photo_grid(items, cols=3, alt="Photo") %}
+<div class="pgrid pgrid--{{ cols }}">
+  {% for p in items %}
+  <div class="pgrid__item">
+    {% set src = p.src if p.src else p %}
+    <img class="pgrid__img" src="{{ src }}" alt="{{ p.caption.en if (p.caption and p.caption.en) else alt }}">
+    {% if p.caption %}{{ b.bi(p.caption, "pgrid__cap") }}{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}

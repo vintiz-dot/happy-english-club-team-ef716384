@@ -1,0 +1,147 @@
+{
+  "$comment": "Made-up children. A full lesson report: every section, class photos with captions and two pieces of the child's own work.",
+  "generatedAt": "2026-11-25T18:00:00+07:00",
+  "data": {
+    "variant": "family",
+    "studentName": "Nguyễn Minh Anh",
+    "className": "Venus",
+    "date": "2026-11-24",
+    "startTime": "17:30",
+    "title": {
+      "en": "Farm animals",
+      "vi": "Động vật nông trại"
+    },
+    "summary": {
+      "en": "We named farm animals, described them with \"It has ...\" and played animal bingo.",
+      "vi": "Chúng con gọi tên các con vật nông trại, miêu tả bằng \"It has ...\" và chơi bingo con vật."
+    },
+    "child": {
+      "attendance": {
+        "en": "In class",
+        "vi": "Có mặt"
+      },
+      "points": 3,
+      "highlight": {
+        "en": "Won the bingo round and helped a friend find the hen.",
+        "vi": "Thắng vòng bingo và giúp bạn tìm con gà mái."
+      },
+      "teacherComment": {
+        "en": "Lovely clear voice today. Keep reading the word cards at home.",
+        "vi": "Hôm nay con nói rất rõ. Con tiếp tục đọc thẻ từ ở nhà nhé."
+      },
+      "focusNext": {
+        "en": "Say the -s at the end of plurals clearly.",
+        "vi": "Đọc rõ âm -s ở cuối danh từ số nhiều."
+      },
+      "work": [
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=",
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII="
+      ]
+    },
+    "objectives": [
+      {
+        "text": {
+          "en": "Name 5 farm animals",
+          "vi": "Gọi tên 5 con vật nông trại"
+        },
+        "met": {
+          "en": "Achieved",
+          "vi": "Đã đạt"
+        }
+      },
+      {
+        "text": {
+          "en": "Describe an animal with \"It has ...\"",
+          "vi": null
+        },
+        "met": {
+          "en": "Getting there",
+          "vi": "Đang tiến bộ"
+        }
+      }
+    ],
+    "taught": [
+      {
+        "topic": "Farm animals",
+        "detail": {
+          "en": "cow, pig, hen, sheep, goat",
+          "vi": "bò, lợn, gà mái, cừu, dê"
+        }
+      }
+    ],
+    "words": [
+      {
+        "en": "cow",
+        "vi": "con bò",
+        "example": "The cow is big."
+      },
+      {
+        "en": "hen",
+        "vi": "con gà mái",
+        "example": null
+      },
+      {
+        "en": "sheep",
+        "vi": "con cừu",
+        "example": null
+      }
+    ],
+    "structures": [
+      {
+        "pattern": "It has ...",
+        "example": "It has four legs."
+      }
+    ],
+    "activities": [
+      {
+        "name": "Animal bingo",
+        "description": {
+          "en": "A listening game with picture cards.",
+          "vi": "Trò chơi nghe với thẻ tranh."
+        }
+      }
+    ],
+    "photos": [
+      {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=",
+        "caption": {
+          "en": "Our board",
+          "vi": "Bảng của lớp"
+        }
+      },
+      {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAADIElEQVR4Ae3BPY4iSRCA0W9DJZy4QUq0zxU4CU67e4g8QByi3XE4Cea6+IuU1rrh4OwKYzSjHraHn8qKAuK9P/45/PUvKYyQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKZSQQgkplJBCCSmUkEIJKdTAjGmrjMWLMUcDM6Kt0ou2ys+8GHMwMAPaKlPTVjnxYkQaCKKtMgfaKt95MaY2MDFtlbnSVjnxYkxlYCLaKo9CW+XEi9GbMAFtlUekrdLbQEfaKo9OW+XEi9GD0Im2yjPRVulB6EBb5Rlpq4xNGJm2yjPTVhmTMCJtlVegrTIWYSTaKq9EW2UMwgi0VV6Rtsq9hDtpq7wybZV7CHfQVkmgrXIrIYUSbqStkn7QVrmFcANtlfQrbZVrCSmUcCVtlfT/tFWuIaRQwhW0VdLvaatcSkihhAtpq6TLaatcQkihhBRKSKEGLqCt0sty43x22Cq9LDfOZ4et0oO2ihfjK0Kg5cY5Z7lxelhunHOWGyeKkEIJKZSQQgkplBDosFXOOWyVHg5b5ZzDVokyEOywVaZ02CpzIqRQQgolpFADnR33az5brHbM1XG/5rPFakcvQkfH/Zpzjvs1c3TcrznnuF/Ti9DJcb/mK8f9mjk57td85bhf04OQQgkX8GKk63kxfmdghr79+Te9vH+8MSdCCiV0sljt+MpitWNOFqsdX1msdvQgXMiLca3Fasc5i9WOOVqsdpyzWO24lhfjEgOdLVY7HslitWNKwhW8GOn3vBiXEmbo/eONHt4/3pibgSt5MbRVenv/eOMReTGuIaRQwg28GOlXXoxrCTfyYqQfvBi3EFIo4Q5ejARejFsJd/JivDIvxj2EEXgxXpEX417CSLwYr8SLMQZhRF6MV+DFGIswMi/GM/NijEnowIvxjLwYYxM68WI8Ey9GDwMdeTFOtFUelRejJ2ECXoxH5MXobWAiXowTbZW582JMZWBiXowTbZW58WJMbSCIF+M7bZUoXoxIAzPgxTjRVpmKF2MOBmbEi/EzbZWxeDHmaGDGvBjPTkihhBRKSKGEFEpIof4DXYnXbiF52mwAAAAASUVORK5CYII=",
+        "caption": null
+      }
+    ],
+    "classFocus": [
+      {
+        "en": "Plural -s",
+        "vi": "Số nhiều -s"
+      }
+    ],
+    "tips": [
+      {
+        "en": "Name the animals in a picture book together.",
+        "vi": "Cùng con gọi tên các con vật trong sách tranh."
+      }
+    ],
+    "askYourChild": [
+      {
+        "en": "What has four legs and says moo?",
+        "vi": "Con gì có bốn chân và kêu ò ò?"
+      }
+    ],
+    "homework": [
+      {
+        "title": "Workbook page 12",
+        "dueDate": "2026-11-27"
+      }
+    ],
+    "reviewQuiz": true,
+    "nextLesson": {
+      "en": "Food we like",
+      "vi": "Món ăn chúng con thích"
+    }
+  }
+}

@@ -10,9 +10,13 @@
  * staff_part, never a classmate's part. A child the teacher left out of the
  * approval (no lesson_report_students row) gets no file.
  *
+ * classReportDocData turns one child's view into the HEC Docs `class-report`
+ * data (hec-docs/templates/class-report/schema.json); the PDF is made there,
+ * the browser rasteriser only as the fallback.
+ *
  * Pure. Tested by scripts/pgtest/lesson-report-batch.test.mjs.
  */
-import { toLessonReportView, type LessonReportView } from "./lessonReportView";
+import { attendanceLabel, metChip, toLessonReportView, type LessonReportView } from "./lessonReportView";
 
 export interface ApprovedReportRow {
   id: string;
@@ -74,4 +78,50 @@ export function reportFileNames(reports: ChildReport[], lesson: LessonMeta): str
 
 export function zipName(lesson: LessonMeta): string {
   return `${fileSafe(lesson.class_name || "Class")} - Class reports ${lesson.date}.zip`;
+}
+
+/**
+ * The HEC Docs `class-report` data for one child. `pictures` maps a photo or
+ * work id to an inlined image (data: URI); one that could not be read is left
+ * out rather than printed as a broken box.
+ */
+export function classReportDocData(r: ChildReport, pictures: Record<string, string | null | undefined>): Record<string, unknown> {
+  const v = r.view;
+  const c = v.child;
+  const pic = (id: string) => {
+    const u = pictures[id];
+    return typeof u === "string" && /^data:image\/(png|jpeg|webp);base64,/.test(u) ? u : null;
+  };
+  return {
+    variant: "family",
+    studentName: r.name,
+    className: v.className || "Class",
+    date: v.date,
+    startTime: v.startTime && /^\d{2}:\d{2}$/.test(v.startTime) ? v.startTime : null,
+    title: v.title,
+    summary: v.summary,
+    child: c ? {
+      attendance: c.attendance ? attendanceLabel(c.attendance) : null,
+      points: c.points === null ? null : Math.round(c.points),
+      highlight: c.highlight,
+      teacherComment: c.teacherComment,
+      focusNext: c.focusNext,
+      work: c.workIds.map(pic).filter((u): u is string => !!u),
+    } : null,
+    objectives: v.objectives.map((o) => ({ text: o.text, met: metChip(o.met).label })),
+    taught: v.taught,
+    words: v.words,
+    structures: v.structures,
+    activities: v.activities,
+    photos: v.photos.flatMap((p) => {
+      const src = pic(p.id);
+      return src ? [{ src, caption: p.caption }] : [];
+    }),
+    classFocus: v.classFocus,
+    tips: v.tips,
+    askYourChild: v.askYourChild,
+    homework: v.homework.map((h) => ({ title: h.title, dueDate: h.dueDate })),
+    reviewQuiz: !!v.reviewHomeworkId,
+    nextLesson: v.nextLesson,
+  };
 }

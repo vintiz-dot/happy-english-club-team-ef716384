@@ -26,7 +26,7 @@ import { cleanRichHtml } from "@/lib/richText";
 const DEFAULT_PRINTER = "https://hec-docs-printer.vintizfjes.workers.dev";
 const PRINTER: string = (import.meta.env.VITE_HEC_DOCS_PRINTER_URL as string | undefined) ?? DEFAULT_PRINTER;
 
-export type HecDocType = "homework" | "progress-report" | "statement" | "invoice" | "access-card" | "profile-card" | "lesson-material";
+export type HecDocType = "homework" | "progress-report" | "statement" | "invoice" | "access-card" | "profile-card" | "lesson-material" | "class-report";
 
 export interface HecDocument {
   blob: Blob;
