@@ -202,6 +202,16 @@ function cleanQuestion(q: QuizQuestion, i: number) {
   };
 }
 
+/** The questions as readable text for the assignment's description (never the answers). */
+export function quizBodyText(questions: QuizQuestion[]): string {
+  return questions.map((q, i) => {
+    const lines = [`${i + 1}. ${q.prompt}${q.prompt_vi ? ` (${q.prompt_vi})` : ""}`];
+    if (q.kind === "choice" && q.options?.length) q.options.forEach((o, j) => lines.push(`   ${String.fromCharCode(65 + j)}. ${o}`));
+    if (q.kind === "order" && q.options?.length) lines.push(`   Put in order: ${q.options.join(" / ")}`);
+    return lines.join("\n");
+  }).join("\n");
+}
+
 /** approve_lesson_report's arguments, exactly as docs/LESSON_REPORTS.md says. */
 export function buildApproval(d: Draft, r: Review, rec: ApprovalRecords): ApprovalArgs {
   const enrolled = new Set(rec.enrolled);
@@ -245,7 +255,7 @@ export function buildApproval(d: Draft, r: Review, rec: ApprovalRecords): Approv
   const p_quiz = r.quiz.include && d.quiz.questions.length
     ? {
       title: d.quiz.title.trim() || "Lesson review",
-      ...(r.quiz.body ? { body: r.quiz.body } : {}),
+      body: r.quiz.body?.trim() ? r.quiz.body : quizBodyText(d.quiz.questions),
       ...(r.quiz.due_date ? { due_date: r.quiz.due_date } : {}),
       ...(r.quiz.points !== null && r.quiz.points !== undefined ? { points: r.quiz.points } : {}),
       questions: d.quiz.questions.map(cleanQuestion),

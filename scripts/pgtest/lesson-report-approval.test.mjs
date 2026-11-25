@@ -122,7 +122,8 @@ eq("staff_part: gaps, accepted name moments, sources, model",
   [["gaps", "model", "name_moments_accepted", "sources"], [{ student_id: K1, t: 90, quote: "Well done, Bee" }]]);
 eq("shared photos: ticked and this lesson's only", args.p_photo_ids, ["p1"]);
 eq("captions only for shared photos", Object.keys(args.p_class_part.photo_captions), ["p1"]);
-eq("the quiz carries title, due date, points and questions", Object.keys(args.p_quiz), ["title", "due_date", "points", "questions"]);
+eq("the quiz carries title, body (the questions as text), due date, points and questions", Object.keys(args.p_quiz), ["title", "body", "due_date", "points", "questions"]);
+ok("the body lists the questions and never an answer", /1. /.test(args.p_quiz.body) && !args.p_quiz.questions.some((q) => q.answer && args.p_quiz.body.includes(q.answer) && !(q.options || []).includes(q.answer)));
 {
   const d2 = A.readDraft(body);
   d2.students[0].name_moments[0].decision = "deleted";
