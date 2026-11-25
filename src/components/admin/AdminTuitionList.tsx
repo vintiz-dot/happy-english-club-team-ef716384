@@ -20,6 +20,7 @@ import {
   carriedOut,
   figurePlaceholder,
   largestFirst,
+  owedFirst,
   tuitionFigures,
   tuitionRowCells,
   tuitionStatusInput,
@@ -192,7 +193,7 @@ export const AdminTuitionList = ({ month, filter, onFilterChange, confirmation, 
         case "name":
           return ((a.students as any)?.full_name || "").localeCompare((b.students as any)?.full_name || "");
         case "balance":
-          return largestFirst(carriedOut(a.figures).amount, carriedOut(b.figures).amount);
+          return owedFirst(carriedOut(a.figures), carriedOut(b.figures));
         case "total":
           return largestFirst(a.figures.charge, b.figures.charge);
         case "class":
@@ -284,7 +285,7 @@ export const AdminTuitionList = ({ month, filter, onFilterChange, confirmation, 
                 <SelectContent>
                   <SelectItem value="name">Name</SelectItem>
                   <SelectItem value="class">Class</SelectItem>
-                  <SelectItem value="balance">Balance</SelectItem>
+                  <SelectItem value="balance">Owes most first</SelectItem>
                   <SelectItem value="total">Total Amount</SelectItem>
                 </SelectContent>
               </Select>

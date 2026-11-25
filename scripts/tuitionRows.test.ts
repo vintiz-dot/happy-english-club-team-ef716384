@@ -7,6 +7,7 @@ import {
   carriedOut,
   figureText,
   largestFirst,
+  owedFirst,
   payableFromFunction,
   tuitionFigures,
   tuitionRowCells,
@@ -311,5 +312,19 @@ describe("sorting compares, it does not subtract", () => {
   test("largest first, rows without a figure last", () => {
     expect([500, null, 2000, 0, null, 1500].sort(largestFirst)).toEqual([2000, 1500, 500, 0, null, null]);
     expect(largestFirst(7, 7)).toBe(0);
+  });
+
+  test("balance order follows the sign: the most owed first, credit last, the largest credit very last", () => {
+    const rows = [
+      { name: "credit 5m", c: { kind: "credit", amount: 5_000_000 } },
+      { name: "owes 1m", c: { kind: "owed", amount: 1_000_000 } },
+      { name: "nothing", c: { kind: "none", amount: null } },
+      { name: "credit 200k", c: { kind: "credit", amount: 200_000 } },
+      { name: "owes 3m", c: { kind: "owed", amount: 3_000_000 } },
+      { name: "pending", c: { kind: "pending", amount: null } },
+    ] as const;
+    expect([...rows].sort((a, b) => owedFirst(a.c, b.c)).map((r) => r.name)).toEqual([
+      "owes 3m", "owes 1m", "nothing", "credit 200k", "credit 5m", "pending",
+    ]);
   });
 });

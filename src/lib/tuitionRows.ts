@@ -203,6 +203,23 @@ export function largestFirst(a: number | null, b: number | null): number {
 }
 
 /**
+ * Balance order, as a signed balance would sort: who OWES comes first (the
+ * most owed at the top), then families with nothing carried, then families
+ * in CREDIT (the smallest credit first, the largest last), and rows without
+ * a figure at the very end. A credit is never ranked by its size among the
+ * debts: 5,000,000 in credit is not "more balance" than 1,000,000 owed.
+ */
+export function owedFirst(a: CarriedAmount, b: CarriedAmount): number {
+  const rank = (c: CarriedAmount) => (c.kind === "owed" ? 0 : c.kind === "none" ? 1 : c.kind === "credit" ? 2 : 3);
+  const ra = rank(a);
+  const rb = rank(b);
+  if (ra !== rb) return ra < rb ? -1 : 1;
+  if (a.kind === "owed" && b.kind === "owed") return largestFirst(a.amount, b.amount);
+  if (a.kind === "credit" && b.kind === "credit") return largestFirst(b.amount, a.amount);
+  return 0;
+}
+
+/**
  * The function's own `carry.payable`, whatever else the answer says, or null
  * when the function (one deployed before 12 Nov 2026) did not send it.
  */

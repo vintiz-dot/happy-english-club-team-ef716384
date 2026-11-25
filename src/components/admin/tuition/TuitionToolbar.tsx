@@ -125,14 +125,14 @@ export function TuitionToolbar({
 
           {/* Sort Dropdown */}
           <Select value={sortBy} onValueChange={onSortChange}>
-            <SelectTrigger className="w-[140px] gap-2">
+            <SelectTrigger className="w-[170px] gap-2">
               <ArrowUpDown className="h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="name">Name</SelectItem>
               <SelectItem value="class">Class</SelectItem>
-              <SelectItem value="balance">Balance</SelectItem>
+              <SelectItem value="balance">Owes most first</SelectItem>
               <SelectItem value="total">Total</SelectItem>
             </SelectContent>
           </Select>

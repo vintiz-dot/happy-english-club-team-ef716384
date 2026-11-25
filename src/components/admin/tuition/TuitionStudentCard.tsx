@@ -99,6 +99,16 @@ export function TuitionStudentCard({
                   </Badge>
                 )}
                 {getTuitionStatusBadge(status, item.settled_in_month)}
+                {(item.carry_in_debt ?? 0) > 0 && (
+                  <Badge variant="warning" title="Unpaid balance from earlier months, added to this month's bill">
+                    Carried in · {formatVND(item.carry_in_debt)}
+                  </Badge>
+                )}
+                {(item.carry_in_credit ?? 0) > 0 && (
+                  <Badge variant="secondary" title="Credit from earlier months, taken off this month's bill">
+                    Credit in · {formatVND(item.carry_in_credit)}
+                  </Badge>
+                )}
                 {item.hasDiscount && (
                   <Badge variant="secondary" className="">
                     <Percent className="h-2.5 w-2.5" /> Disc

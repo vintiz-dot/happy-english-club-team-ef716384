@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { TuitionSummaryCards } from "@/components/admin/tuition/TuitionSummaryCards";
 import { TuitionToolbar } from "@/components/admin/tuition/TuitionToolbar";
 import { TuitionStudentCard } from "@/components/admin/tuition/TuitionStudentCard";
 import { TuitionStudentTable } from "@/components/admin/tuition/TuitionStudentTable";
 import { dayjs } from "@/lib/date";
 import { getPaymentStatus } from "@/lib/tuitionStatus";
+import { largestFirst } from "@/lib/tuitionRows";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileSearch, CheckSquare, X, CreditCard, LayoutGrid, Rows } from "lucide-react";
 import { useLiveTuitionData } from "@/hooks/useLiveTuitionData";
@@ -17,6 +18,10 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type Density = "card" | "table";
 const DENSITY_KEY = "admin-tuition-density";
+
+// A bill carries a balance in from earlier months: unpaid debt or credit.
+const hasCarryIn = (item: { carry_in_debt?: number; carry_in_credit?: number }) =>
+  (item.carry_in_debt ?? 0) > 0 || (item.carry_in_credit ?? 0) > 0;
 
 interface AdminTuitionListEnhancedProps {
   month: string;
@@ -31,6 +36,8 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
   const [density, setDensity] = useState<Density>(() => {
     if (typeof window === "undefined") return "card";
     const saved = localStorage.getItem(DENSITY_KEY) as Density | null;
@@ -62,6 +69,12 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
     const unpaidCount = tuitionData.filter((i) => getStatus(i) === 'unpaid').length;
     
     const totalBilled = tuitionData.reduce((sum, i) => sum + i.finalPayable, 0);
+    // This month's own charges, and what the bills carry in on top of them.
+    const monthCharges = tuitionData.reduce((sum, i) => sum + (i.total_amount ?? 0), 0);
+    const withDebt = tuitionData.filter((i) => (i.carry_in_debt ?? 0) > 0);
+    const withCredit = tuitionData.filter((i) => (i.carry_in_credit ?? 0) > 0);
+    const carryInDebt = withDebt.reduce((sum, i) => sum + (i.carry_in_debt ?? 0), 0);
+    const carryInCredit = withCredit.reduce((sum, i) => sum + (i.carry_in_credit ?? 0), 0);
     const totalCollected = tuitionData.reduce((sum, i) => sum + (i.recorded_payment ?? 0), 0);
     const totalOutstanding = tuitionData.reduce((sum, i) => sum + Math.max(0, i.balance), 0);
     const collectionRate = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
@@ -73,6 +86,11 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       underpaidCount,
       unpaidCount,
       totalBilled,
+      monthCharges,
+      carryInDebt,
+      carryDebtStudents: withDebt.length,
+      carryInCredit,
+      carryCreditStudents: withCredit.length,
       totalCollected,
       totalOutstanding,
       collectionRate,
@@ -105,6 +123,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       { key: "overpaid", label: "Overpaid", count: overpaid },
       { key: "underpaid", label: "Underpaid", count: underpaid },
       { key: "settled", label: "Settled", count: settled },
+      { key: "carried", label: "Carried over", count: tuitionData.filter(hasCarryIn).length },
       { key: "discount", label: "Discount", count: tuitionData.filter((i) => i.hasDiscount).length },
       { key: "siblings", label: "Siblings", count: tuitionData.filter((i) => i.hasSiblings).length },
     ];
@@ -137,6 +156,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       filtered = filtered.filter((item) => {
         const status = getStatus(item);
         switch (activeFilter) {
+          case "carried": return hasCarryIn(item);
           case "discount": return item.hasDiscount;
           case "siblings": return item.hasSiblings;
           case "paid": return status === 'settled' || status === 'overpaid';
@@ -159,7 +179,10 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
         case "name":
           return ((a.students as any)?.full_name || "").localeCompare((b.students as any)?.full_name || "");
         case "balance":
-          return Math.abs(b.balance) - Math.abs(a.balance);
+          // Signed: balance is debt less credit, so the largest debt comes
+          // first and the largest credit last. Ties keep the name order.
+          return largestFirst(a.balance, b.balance)
+            || ((a.students as any)?.full_name || "").localeCompare((b.students as any)?.full_name || "");
         case "total":
           return b.total_amount - a.total_amount;
         case "class":
@@ -173,6 +196,23 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
 
     return sorted;
   }, [tuitionData, sortBy, activeFilter, confirmationFilter, searchQuery]);
+
+  // The summary card's "Carried over" link: show those students, or go back
+  // to everyone when it is already showing them.
+  const showCarriedOver = useCallback(() => {
+    if (activeFilter === "carried") {
+      setActiveFilter("all");
+      return;
+    }
+    setActiveFilter("carried");
+    setSortBy("balance");
+    // Land with the toolbar just under the sticky summary strip, not behind it.
+    const toolbar = toolbarRef.current;
+    if (toolbar) {
+      const strip = summaryRef.current?.getBoundingClientRect().bottom ?? 0;
+      window.scrollTo({ top: toolbar.getBoundingClientRect().top + window.scrollY - strip - 8, behavior: "smooth" });
+    }
+  }, [activeFilter]);
 
   const reviewQueueCount = useMemo(() => {
     return tuitionData?.filter((i) => i.confirmation_status === 'needs_review').length || 0;
@@ -257,13 +297,19 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
       )}
 
       {/* Summary Cards — sticky compact strip when scrolled */}
-      <div className="sticky top-[72px] md:top-[64px] z-30 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div ref={summaryRef} className="sticky top-[72px] md:top-[64px] z-30 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="rounded-hec-lg bg-hec-paper">
-          <TuitionSummaryCards stats={stats} isLoading={isLoading} />
+          <TuitionSummaryCards
+            stats={stats}
+            isLoading={isLoading}
+            onShowCarriedOver={showCarriedOver}
+            carriedOverActive={activeFilter === "carried"}
+          />
         </div>
       </div>
 
       {/* Toolbar */}
+      <div ref={toolbarRef}>
       <TuitionToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -279,6 +325,7 @@ export const AdminTuitionListEnhanced = ({ month }: AdminTuitionListEnhancedProp
         onRefresh={() => refetch()}
         isRefreshing={isRefetching}
       />
+      </div>
 
       {/* Student List */}
       {isLoading ? (

@@ -59,6 +59,7 @@ export function TuitionStudentTable({
               <TableHead className="w-[260px]">Student</TableHead>
               <TableHead>Class</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Carried in</TableHead>
               <TableHead className="text-right">Payable</TableHead>
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
@@ -136,6 +137,13 @@ export function TuitionStudentTable({
                     {classNames}
                   </TableCell>
                   <TableCell>{getTuitionStatusBadge(status, item.settled_in_month)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right font-sans text-hec-small tabular-nums text-hec-ink">
+                    {(item.carry_in_debt ?? 0) > 0
+                      ? <>{formatVND(item.carry_in_debt)}<span className="block text-hec-caption text-hec-ink-soft">unpaid</span></>
+                      : (item.carry_in_credit ?? 0) > 0
+                        ? <>−{formatVND(item.carry_in_credit)}<span className="block text-hec-caption text-hec-ink-soft">credit</span></>
+                        : <span className="text-hec-ink-soft">—</span>}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-right font-sans font-medium tabular-nums text-hec-ink">
                     {formatVND(item.finalPayable)}
                   </TableCell>
