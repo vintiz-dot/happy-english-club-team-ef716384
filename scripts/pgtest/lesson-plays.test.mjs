@@ -17,7 +17,7 @@ let pass = 0, fail = 0;
 // Courses still written before the charter are listed here: their charter failures are
 // reported as PENDING, counted, and do not fail the run. Take a course off the list when
 // its plays are rewritten; never add one back.
-const CHARTER_PENDING = new Set(["oxford-discover-2e", "reach-higher", "hec-ielts-sl"]);
+const CHARTER_PENDING = new Set([]);
 let pending = 0;
 const charter = (p, n, c, x = "") => { if (c || !CHARTER_PENDING.has(p.course)) return ok(n, c, x); console.log(`  PENDING  ${n} :: ${x}`); pending++; };
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
@@ -140,6 +140,7 @@ const selfTalk = (cst, narrators = new Set()) => {
   const voiced = { ...sample, id: "t-p6", roles: [{ id: "n", name: "Narrator", teacher: true }, ...sample.roles.map((r) => (r.id === "dog" ? { ...r, optional: { give: "n" } } : r))], scenes: [{ title: "One", lines: [{ stage: "{@dog} hides." }, { role: "n", text: "Look!" }, ...sample.scenes[0].lines] }] };
   eq("a mention of a character the teacher plays keeps its name", P.castPlay(voiced, 3).scenes[0].lines[0].text, "Dog hides.");
 }
+eq("a group's chorus label is real English", ["Mouse", "Family", "Bee", "Class Rep", "Bus", "Audience", "Firework"].map((name) => P.pluralOf({ name })).concat(P.pluralOf({ name: "Relative on Screen", group: { max: 3, plural: "Relatives on Screen" } })), ["Mice", "Families", "Bees", "Class Reps", "Buses", "Audience", "Fireworks", "Relatives on Screen"]);
 eq("enough children: the teacher reads nothing", P.castPlay(talk, 4).byActor.map((a) => a.actor), [0, 1, 2, 3]);
 const st = P.studentPlay(sample);
 ok("the student copy has no fixes and no teacher note", st.focusOnForm.length === 0 && !("teacherNote" in st) && sample.focusOnForm.length === 1);
@@ -219,6 +220,17 @@ for (const p of PLAYS) {
   const talking = [];
   for (let n = 2; n <= 16 && !talking.length; n++) talking.push(...selfTalk(P.castPlay(p, n), new Set(p.roles.filter((r) => r.teacher).map((r) => r.name))).map((x) => `n=${n}: ${x}`));
   charter(p, `${tag}: from 2 children to 16 nobody talks to themself`, talking.length === 0, talking[0]);
+  // A chorus straight after a child's question has that child answering it too.
+  const chorusAnswer = [];
+  for (let n = 2; n <= 16 && !chorusAnswer.length; n++) for (const sc of P.castPlay(p, n).scenes) {
+    let prev = null;
+    for (const l of sc.lines) {
+      if (l.kind === "stage") continue;
+      if (prev && !prev.together && prev.actors[0] >= 0 && l.together && l.actors.includes(prev.actors[0]) && /\?["')]?$/.test(prev.text.trim()) && !/\?["')]?$/.test(l.text.trim())) chorusAnswer.push(`n=${n}: ${prev.labels[0]} asks "${prev.text}" and joins the answer "${l.text}"`);
+      prev = l;
+    }
+  }
+  charter(p, `${tag}: nobody joins the chorus that answers their own question`, chorusAnswer.length === 0, chorusAnswer[0]);
   const mute = [];
   for (let n = 1; n <= Math.min(16, P.maxCast(p)); n++) {
     const cst = P.castPlay(p, n);

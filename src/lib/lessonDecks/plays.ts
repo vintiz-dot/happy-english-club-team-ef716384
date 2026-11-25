@@ -39,7 +39,7 @@ export type PlayRole = {
   // role. `cut`: when no child is left for it, its lines are left out.
   optional?: { give: string } | { cut: true };
   // Several children can share it ("Bee 1", "Bee 2"), up to max.
-  group?: { max: number };
+  group?: { max: number; plural?: string }; // plural: the label for the whole group ("Relatives on Screen") when the rule gets it wrong
   // Always the teacher's part (the Narrator for the youngest classes): no child is
   // cast in it and it counts for no child. Never optional, never a group.
   teacher?: boolean;
@@ -105,6 +105,20 @@ export function minCast(play: Play): number {
 }
 
 /** The play fitted to n children. Pure: same play and n, same cast. */
+// "All Mice", "All Families", "All Audience": English plurals for a group's chorus label.
+const IRREGULAR: Record<string, string> = { mouse: "mice", child: "children", person: "people", man: "men", woman: "women", sheep: "sheep", fish: "fish", deer: "deer", audience: "audience", family: "families", panel: "panel", crew: "crew", team: "team", rainforest: "rainforest" };
+export function pluralOf(r: { name: string; group?: { plural?: string } }): string {
+  if (r.group?.plural) return r.group.plural;
+  const m = /^(.*?)(\S+)$/.exec(r.name)!;
+  const [head, last] = [m[1], m[2]];
+  const keep = (w: string) => (last[0] === last[0].toUpperCase() ? w[0].toUpperCase() + w.slice(1) : w);
+  const low = last.toLowerCase();
+  if (IRREGULAR[low]) return head + keep(IRREGULAR[low]);
+  if (/[^aeiou]y$/i.test(last)) return head + last.slice(0, -1) + "ies";
+  if (/(s|x|z|ch|sh)$/i.test(last)) return head + last + "es";
+  return head + last + "s";
+}
+
 export function castPlay(play: Play, nIn: number): Cast {
   const n = Math.max(1, Math.floor(Number.isFinite(nIn) ? nIn : 1));
   const byId = new Map(play.roles.map((r) => [r.id, r]));
@@ -258,7 +272,7 @@ export function castPlay(play: Play, nIn: number): Cast {
       const ps = partsOf.get(to)!;
       const r = byId.get(to)!;
       if (ps.length > 1 && l.all) {
-        return [{ kind: "line", labels: [`All ${r.name}s`], actors: ps.map((p) => p.actor), text: fill(l.text), do: l.do && fill(l.do), together: true, ...(to !== l.role ? { as: byId.get(l.role)!.name } : {}) }];
+        return [{ kind: "line", labels: [`All ${pluralOf(r)}`], actors: ps.map((p) => p.actor), text: fill(l.text), do: l.do && fill(l.do), together: true, ...(to !== l.role ? { as: byId.get(l.role)!.name } : {}) }];
       }
       let p: CastPart;
       if (l.member && to === l.role) p = ps[(l.member - 1) % ps.length];

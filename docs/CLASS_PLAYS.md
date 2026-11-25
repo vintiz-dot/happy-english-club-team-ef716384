@@ -154,6 +154,7 @@ rules come from a second research pass, checked on 25 Nov 2026.
 The suite enforces what it can:
 - no line asks a question and answers it;
 - from 2 children up, nobody talks to themself at any size;
+- nobody joins a chorus (`everyone`, or `all` of their group) that answers the question they just asked;
 - up to the play's size, every child has a line of their own.
 
 The rest is checked by a table read: a reviewer casts the play at several sizes and
@@ -189,8 +190,9 @@ reads it as the children would.
 
 ## Which courses follow the charter yet
 
-Mars (Look 1) was rewritten to the charter on 25 Nov 2026. 25 plays were written by
-Opus playwrights, then each was table-read at 2-14 children by an independent reviewer
-and revised. Venus, SKY 1, Jupiter and Sun Class still carry the first plays. The
-suite reports their charter failures as PENDING (`CHARTER_PENDING` in the test), and
-a course leaves that list when its plays are rewritten the same way.
+All five courses follow it (25 Nov 2026). Mars (Look 1) came first, then Venus (36),
+SKY 1 (36), Jupiter (15) and Sun Class (24). Every play was written by an Opus
+playwright, table-read at 2-14 children by an independent reviewer, and revised.
+`CHARTER_PENDING` in the test is now empty: a charter check fails for every course,
+and no course goes back on that list. The plays are as written: no teacher has
+staged them in class yet.
