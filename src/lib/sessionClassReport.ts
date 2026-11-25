@@ -134,6 +134,9 @@ export interface TranscriptRow {
   transcript_date: string; // YYYY-MM-DD
   status: string;
   raw_text: string | null;
+  /** The old analysis JSON; carries a person's decision under `session_match`. */
+  analysis?: unknown;
+  audio_duration_seconds?: number | string | null;
 }
 export interface SessionRef { id: string; date: string; start_time: string | null; status?: string }
 
@@ -164,33 +167,82 @@ const minutesOf = (hhmm: string | null | undefined) => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 };
 
+/** A person's own decision about a transcript, kept in `analysis.session_match` (see matchPatch). `sessionId: null` = "not one of this class's lessons". */
+export interface ChosenMatch { sessionId: string | null; by: string | null; at: string | null }
+export function chosenMatch(t: Pick<TranscriptRow, "analysis">): ChosenMatch | null {
+  const a = t.analysis && typeof t.analysis === "object" ? (t.analysis as Record<string, any>) : null;
+  const m = a?.session_match;
+  if (!m || typeof m !== "object" || !("session_id" in m)) return null;
+  return { sessionId: typeof m.session_id === "string" ? m.session_id : null, by: typeof m.by === "string" ? m.by : null, at: typeof m.at === "string" ? m.at : null };
+}
+
+/** The `analysis` to save for a decision: everything already in it, plus the decision. `sessionId` null = "not a lesson of this class"; `undefined` removes the decision. */
+export function matchPatch(analysis: unknown, sessionId: string | null | undefined, by: string, at: string): Record<string, unknown> {
+  const next: Record<string, unknown> = analysis && typeof analysis === "object" && !Array.isArray(analysis) ? { ...(analysis as Record<string, unknown>) } : {};
+  if (sessionId === undefined) delete next.session_match;
+  else next.session_match = { session_id: sessionId, by, at };
+  return next;
+}
+
+export type MatchHow = "stored" | "chosen" | "meeting" | "date";
+
 /**
- * Which of `classSessions` (this class's lessons, any status) a transcript is
- * about, or null. A stored session_id always wins. Otherwise:
- *  - a pasted meeting says when it started: that date;
- *  - else the transcript's own date, and if the class had no lesson that day, the
- *    day before (transcripts are filed the morning after: 17 of the 36 in the table);
- *  - a cancelled lesson never matches;
- *  - two lessons on that day and nothing to tell them apart -> null (left empty).
+ * Audio uploaded twice: two transcripts with the same recording length (to a
+ * hundredth of a second) but in DIFFERENT classes. Live data had one: the same
+ * 5150.65-second file in two classes. At least one is filed under the wrong class,
+ * so neither is matched to a lesson until a person decides.
  */
-export function resolveTranscriptSession(t: TranscriptRow, classSessions: SessionRef[]): string | null {
-  if (t.session_id) return t.session_id;
+export function audioTwinIds(rows: Pick<TranscriptRow, "id" | "class_id" | "audio_duration_seconds">[]): Set<string> {
+  const by = new Map<string, typeof rows>();
+  for (const r of rows) {
+    const d = r.audio_duration_seconds == null ? NaN : Number(r.audio_duration_seconds);
+    if (!Number.isFinite(d) || d <= 0) continue;
+    const k = d.toFixed(2);
+    by.set(k, [...(by.get(k) ?? []), r]);
+  }
+  const out = new Set<string>();
+  for (const group of by.values()) {
+    if (new Set(group.map((g) => g.class_id)).size > 1) for (const g of group) out.add(g.id);
+  }
+  return out;
+}
+
+/**
+ * Which of `classSessions` (this class's lessons) a transcript is CONFIRMED to be
+ * about, or null. Only what can be shown from the record itself counts:
+ *  1. a stored session_id;
+ *  2. a person's decision (`analysis.session_match`), including "none of them";
+ *  3. a pasted meeting's own date (and its start time when that day has two lessons);
+ *  4. the transcript's own date, when the class had exactly one lesson that day.
+ * A cancelled lesson never matches, and two lessons on that day with nothing to
+ * tell them apart is null. The softer guess ("filed the morning after") is NOT here:
+ * see suggestTranscriptSession, which only proposes it to a person.
+ */
+export function confirmedMatch(t: TranscriptRow, classSessions: SessionRef[]): { sessionId: string; how: MatchHow } | null {
+  if (t.session_id) return { sessionId: t.session_id, how: "stored" };
+  const chosen = chosenMatch(t);
+  if (chosen) return chosen.sessionId ? { sessionId: chosen.sessionId, how: "chosen" } : null;
   const live = classSessions.filter((s) => s.status !== "Canceled");
   const stamp = meetingStamp(t.raw_text);
-  const dates = stamp ? [stamp.date] : [t.transcript_date, addDays(t.transcript_date, -1)];
-  for (const d of dates) {
-    const day = live.filter((s) => s.date === d);
-    if (day.length === 1) return day[0].id;
-    if (day.length > 1) {
-      if (stamp?.minutes == null) return null;
-      const close = day
-        .map((s) => ({ s, gap: Math.abs((minutesOf(s.start_time) ?? 1e9) - stamp.minutes!) }))
-        .sort((a, b) => a.gap - b.gap);
-      // Within an hour of one lesson's start and clearly closer than the other.
-      return close[0].gap <= 60 && close[0].gap + 30 <= close[1].gap ? close[0].s.id : null;
-    }
+  const day = live.filter((s) => s.date === (stamp ? stamp.date : t.transcript_date));
+  if (day.length === 1) return { sessionId: day[0].id, how: stamp ? "meeting" : "date" };
+  if (day.length > 1 && stamp?.minutes != null) {
+    const close = day
+      .map((s) => ({ s, gap: Math.abs((minutesOf(s.start_time) ?? 1e9) - stamp.minutes!) }))
+      .sort((a, b) => a.gap - b.gap);
+    // Within an hour of one lesson's start and clearly closer than the other.
+    if (close[0].gap <= 60 && close[0].gap + 30 <= close[1].gap) return { sessionId: close[0].s.id, how: "meeting" };
   }
   return null;
+}
+
+export const resolveTranscriptSession = (t: TranscriptRow, classSessions: SessionRef[]): string | null => confirmedMatch(t, classSessions)?.sessionId ?? null;
+
+/** The lesson a person should be offered for a transcript that is not confirmed: the one the day before it was filed ("filed the morning after"), when that day has exactly one. */
+export function suggestTranscriptSession(t: TranscriptRow, classSessions: SessionRef[]): string | null {
+  if (t.session_id || chosenMatch(t) || confirmedMatch(t, classSessions)) return null;
+  const day = classSessions.filter((s) => s.status !== "Canceled" && s.date === addDays(t.transcript_date, -1));
+  return meetingStamp(t.raw_text) === null && day.length === 1 ? day[0].id : null;
 }
 
 /** The best transcript among those that resolve to one lesson: analysed first, then the fullest text. A placeholder ("processing") is not a transcript. */

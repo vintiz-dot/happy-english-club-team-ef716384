@@ -67,6 +67,7 @@ const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport
 const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
 const TeacherLessonReportReview = lazy(() => import("./pages/TeacherLessonReportReview"));
 const SessionClassReport = lazy(() => import("./pages/SessionClassReport"));
+const TranscriptMatching = lazy(() => import("./pages/TranscriptMatching"));
 const TeacherClassReports = lazy(() => import("./pages/TeacherClassReports"));
 const TeacherLessons = lazy(() => import("./pages/TeacherLessons"));
 const TeacherPhoneMic = lazy(() => import("./pages/TeacherPhoneMic"));
@@ -180,6 +181,7 @@ function AppContent() {
                   <Route path="/teacher/class-reports" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherClassReports /></ProtectedRoute>} />
                   <Route path="/teacher/lesson-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessonReportReview /></ProtectedRoute>} />
                   <Route path="/class-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><SessionClassReport /></ProtectedRoute>} />
+                  <Route path="/transcript-matching" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TranscriptMatching /></ProtectedRoute>} />
                   <Route path="/teacher/speakers" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/speakers/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/recorder"element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessons /></ProtectedRoute>} />

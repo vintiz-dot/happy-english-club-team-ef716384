@@ -64,6 +64,7 @@ export default function SessionClassReport() {
               {L ? `${L.date} · ${String(L.start_time).slice(0, 5)}-${String(L.end_time).slice(0, 5)}${L.teacher_names.length ? ` · ${L.teacher_names.join(", ")}` : ""}${L.status === "Canceled" ? " · Cancelled" : ""}` : q.isLoading ? "Loading…" : "Lesson not found"}
             </p>
           </div>
+          <Button asChild variant="ghost" size="sm"><Link to="/transcript-matching">Match transcripts</Link></Button>
           {L && (
             <Button asChild variant="outline" size="sm">
               <Link to={`/teacher/lesson-report/${L.id}`}><FileText className="h-4 w-4 mr-2" /> {d?.sources.approved ? "Open the report" : "Build or edit the report"}</Link>

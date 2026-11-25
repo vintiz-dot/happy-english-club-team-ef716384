@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toReportView, type ReportView } from "@/lib/lessonMonitor";
 import {
-  addDays, bestTranscript, buildStudentRows, markShare, noteFromAnalysisStudent, noteFromReportPart, parseSpokenTranscript,
-  resolveTranscriptSession, talkShare, viewFromReportBody, viewFromTranscriptAnalysis,
+  addDays, audioTwinIds, bestTranscript, buildStudentRows, markShare, noteFromAnalysisStudent, noteFromReportPart, parseSpokenTranscript,
+  chosenMatch, resolveTranscriptSession, talkShare, viewFromReportBody, viewFromTranscriptAnalysis,
   type ClassReportView, type MarkShare, type SessionRef, type StudentNote, type StudentRow, type TalkShare, type Turn,
 } from "@/lib/sessionClassReport";
 import type { CurriculumLesson } from "@/lib/curriculumLessons";
@@ -66,13 +66,23 @@ export function useSessionClassReport(sessionId: string | undefined) {
         // The class's lessons around the date: a transcript is matched to one of them (resolveTranscriptSession).
         soft<any[]>(db.from("sessions").select("id, date, start_time, status").eq("class_id", s.class_id)
           .gte("date", addDays(s.date, -3)).lte("date", addDays(s.date, 3))),
-        // Older transcripts have no session_id: the same class, filed on the day or up to five days after.
-        soft<any[]>(db.from("class_transcripts").select("id, class_id, session_id, transcript_date, status, raw_text, title, summary, analysis")
-          .eq("class_id", s.class_id).gte("transcript_date", s.date).lte("transcript_date", addDays(s.date, 5))),
+        // Older transcripts have no session_id: the same class, filed from a day before to six days after (a person may match a lesson to a transcript filed the day after it).
+        soft<any[]>(db.from("class_transcripts").select("id, class_id, session_id, transcript_date, status, raw_text, title, summary, analysis, audio_duration_seconds")
+          .eq("class_id", s.class_id).gte("transcript_date", addDays(s.date, -1)).lte("transcript_date", addDays(s.date, 6))),
       ]);
 
       const classSessions: SessionRef[] = sessions ?? [{ id: sid, date: s.date, start_time: s.start_time, status: s.status }];
-      const mine = (transcripts ?? []).filter((t) => resolveTranscriptSession(t, classSessions) === sid);
+      const matched = (transcripts ?? []).filter((t) => resolveTranscriptSession(t, classSessions) === sid);
+      // The same recording filed under two classes is filed wrongly under at least one of them:
+      // such a transcript is shown only once a person has chosen its lesson (the matching screen).
+      const withAudio = matched.filter((t) => t.audio_duration_seconds != null && !t.session_id && !chosenMatch(t));
+      let twins = new Set<string>();
+      if (withAudio.length) {
+        const others = await soft<any[]>(db.from("class_transcripts").select("id, class_id, audio_duration_seconds")
+          .in("audio_duration_seconds", withAudio.map((t) => t.audio_duration_seconds)));
+        twins = audioTwinIds([...(others ?? []), ...withAudio]);
+      }
+      const mine = matched.filter((t) => !twins.has(t.id));
       const transcript = bestTranscript(mine);
 
       const teacherNames = [s.teachers?.full_name].filter(Boolean) as string[];

@@ -31,7 +31,28 @@ const T = (over) => ({ id: "t", class_id: "c", session_id: null, transcript_date
 
 eq("a stored session id always wins", M.resolveTranscriptSession(T({ session_id: "stored" }), [S("a", "2026-08-28")]), "stored");
 eq("the lesson on the transcript's own date", M.resolveTranscriptSession(T({}), [S("a", "2026-08-28"), S("b", "2026-08-27")]), "a");
-eq("filed the morning after: the day before", M.resolveTranscriptSession(T({}), [S("b", "2026-08-27")]), "b");
+eq("filed the morning after is NOT confirmed (the day-before guess is only offered to a person)", M.resolveTranscriptSession(T({}), [S("b", "2026-08-27")]), null);
+eq("...but it is the lesson suggested to the person", M.suggestTranscriptSession(T({}), [S("b", "2026-08-27")]), "b");
+eq("no suggestion when the filing day has its own lesson", M.suggestTranscriptSession(T({}), [S("a", "2026-08-28"), S("b", "2026-08-27")]), null);
+eq("no suggestion for a pasted meeting that names its own day", M.suggestTranscriptSession(T({ raw_text: "Aug 20, 2026\nMeeting Aug 20, 2026 at 17:26 GMT+07:00\n" + "x".repeat(300) }), [S("b", "2026-08-27")]), null);
+eq("confirmedMatch says how: meeting / date",
+  [M.confirmedMatch(T({}), [S("a", "2026-08-28")]).how, M.confirmedMatch(T({ raw_text: "Aug 27, 2026\nMeeting Aug 27, 2026 at 17:26 GMT+07:00\n" + "x".repeat(300) }), [S("b", "2026-08-27")]).how], ["date", "meeting"]);
+// A person's decision lives in analysis.session_match and beats every rule, including "none".
+const chose = (id) => T({ analysis: { summary: "kept", session_match: { session_id: id, by: "u", at: "2026-11-25T00:00:00Z" } } });
+eq("a person's choice is used", M.resolveTranscriptSession(chose("pick"), [S("a", "2026-08-28")]), "pick");
+eq("a person saying 'none' beats the date rule", M.resolveTranscriptSession(chose(null), [S("a", "2026-08-28")]), null);
+eq("'none' is a decision, so nothing is suggested either", M.suggestTranscriptSession(chose(null), [S("b", "2026-08-27")]), null);
+eq("a stored session id beats a person's choice", M.resolveTranscriptSession(T({ session_id: "stored", analysis: chose("pick").analysis }), []), "stored");
+const kept = M.matchPatch({ summary: "kept", students: [1] }, "pick", "u1", "2026-11-25T00:00:00Z");
+eq("saving a choice keeps the rest of the analysis", [kept.summary, kept.students, kept.session_match.session_id, kept.session_match.by], ["kept", [1], "pick", "u1"]);
+eq("taking a choice back removes only it", Object.keys(M.matchPatch(kept, undefined, "u1", "x")), ["summary", "students"]);
+eq("a null analysis can take a choice", M.matchPatch(null, null, "u1", "t").session_match.session_id, null);
+eq("chosenMatch on a plain analysis is nothing", M.chosenMatch({ analysis: { summary: "x" } }), null);
+// The same recording filed under two classes (seen in the live data) is wrong under at least one.
+const A = (id, cls, d) => ({ id, class_id: cls, audio_duration_seconds: d });
+eq("same length in two classes: both are twins", [...M.audioTwinIds([A("1", "c1", "5150.64990234375"), A("2", "c2", 5150.6499), A("3", "c1", 100)])].sort(), ["1", "2"]);
+eq("same length in one class is not a twin (a re-upload there is harmless)", [...M.audioTwinIds([A("1", "c1", 60), A("2", "c1", 60)])], []);
+eq("no audio length, no twin", [...M.audioTwinIds([A("1", "c1", null), A("2", "c2", null)])], []);
 eq("a meeting names its own day, which beats the filing date",
   M.resolveTranscriptSession(T({ transcript_date: "2026-08-12", raw_text: "Aug 9, 2026\nMeeting Aug 9, 2026 at 18:57 GMT+07:00 - Transcript\n" + "x".repeat(300) }),
     [S("sun", "2026-08-09", "19:00:00"), S("wed", "2026-08-12")]), "sun");
