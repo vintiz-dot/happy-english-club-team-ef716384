@@ -50,8 +50,7 @@ export const TEACHER_GROUPS: NavGroup[] = [{
       id: "class-notes", label: "Class notes & reports", icon: "NotebookPen",
       members: [
         { label: "Journal", path: "/teacher/journal", icon: "NotebookPen" },
-        { label: "Class reports", path: "/teacher/class-reports", icon: "ClipboardList" },
-        { label: "Lesson reports", path: "/teacher/lesson-reports", icon: "FileAudio", pilotOnly: true },
+        { label: "Lesson reports", path: "/teacher/class-reports", icon: "ClipboardList" },
         { label: "Exam reports", path: "/teacher/exam-reports", icon: "FileBarChart2" },
       ],
     },
@@ -90,7 +89,7 @@ export const ADMIN_GROUPS: NavGroup[] = [
     one("Assignments", "/admin?tab=assignments", "ListTodo"),
     one("Journal", "/admin?tab=journal", "NotebookPen"),
     one("Exam Reports", "/admin?tab=exam-reports", "FileBarChart2"),
-    one("Class reports", "/teacher/class-reports", "ClipboardList"),
+    one("Lesson reports", "/teacher/class-reports", "ClipboardList"),
     one("Student Work", "/admin/student-work", "Images"),
     one("Smart Upload", "/teacher/smart-upload", "ScanText", OCR),
     one("Record & transcripts", "/teacher/recorder", "Mic", REC),

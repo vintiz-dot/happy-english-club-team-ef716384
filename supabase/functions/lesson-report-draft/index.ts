@@ -35,7 +35,9 @@ import {
   DRAFT_JSON_SCHEMA,
   DRAFT_SYSTEM,
   lessonWindow,
+  pickPastedTranscript,
   plannedLessons,
+  readPastedTranscript,
   readTranscript,
   transcriptText,
   type DraftContext,
@@ -92,6 +94,7 @@ async function readWorkFile(asCaller: SupabaseClient, token: string, path: strin
   return data ?? null;
 }
 
+const addDaysIso = (d: string, n: number) => new Date(new Date(`${d}T00:00:00Z`).getTime() + n * 86400_000).toISOString().slice(0, 10);
 const hanoiDate = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
 
 async function build(asCaller: SupabaseClient, token: string, session: any, isAdminOnly: boolean, fromMonitor = false) {
@@ -171,9 +174,27 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
       .order("made_at", { ascending: false }).limit(1);
     monitorBody = viaService?.[0]?.body ?? null;
   }
-  const lines = monitorBody ? readTranscript(monitorBody) : null;
+  let lines = monitorBody ? readTranscript(monitorBody) : null;
+  // Owner, 25 Nov 2026: no monitor transcript, but the teacher pasted one for this lesson (Record & transcripts):
+  // it is read as the caller (RLS) into the same lines, so the draft consumes it exactly as it does the monitor's.
+  let pasted = false;
+  if (!lines || !lines.length) {
+    try {
+      const [{ data: rows }, { data: sameDay }, { data: tch }] = await Promise.all([
+        asCaller.from("class_transcripts").select("id, session_id, transcript_date, status, raw_text, analysis")
+          .eq("class_id", cls).gte("transcript_date", addDaysIso(date, -1)).lte("transcript_date", addDaysIso(date, 6)),
+        asCaller.from("sessions").select("id").eq("class_id", cls).eq("date", date).neq("status", "Canceled"),
+        session.teacher_id ? asCaller.from("teachers").select("full_name").eq("id", session.teacher_id).maybeSingle() : Promise.resolve({ data: null }),
+      ]);
+      const hit = pickPastedTranscript(rows ?? [], sid, date, (sameDay ?? []).length);
+      if (hit) {
+        const own = readPastedTranscript(hit.raw_text, [(tch as any)?.full_name ?? ""].filter(Boolean));
+        if (own.length) { lines = own; pasted = true; }
+      }
+    } catch { /* a transcript table that cannot be read leaves the draft as it was */ }
+  }
   const transcript = lines && lines.length ? lines : null;
-  const transcriptNote = transcript ? null
+  const transcriptNote = transcript ? (pasted ? "Pasted transcript (the teacher's own text; may have errors)." : null)
     : monitor.error || (!monitorBody && isAdminOnly)
       ? "Not read: only the lesson's own teacher can read the lesson monitor transcript."
       : "No lesson monitor transcript for this lesson.";

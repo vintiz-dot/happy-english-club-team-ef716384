@@ -138,5 +138,30 @@ ok("the body lists the questions and never an answer", /1. /.test(args.p_quiz.bo
   ok("one objective is not enough", A.approvalProblems(d2, review).includes("Keep 2 to 4 objectives."));
 }
 
+// ---------------------------------------------------------------- a pasted transcript feeds the draft like the monitor's
+{
+  const meet = ["Victor Moronu: Good morning everyone", "Anna: Good morning teacher", "Victor Moronu: Open your books", "Anna: Page ten", "Victor Moronu: Read it", "Anna: Okay"].join("\n");
+  const l = D.readPastedTranscript(meet, ["Victor Moronu"]);
+  eq("a labelled paste is read line by line", l.length, 6);
+  eq("the teacher's lines are the teacher's, nobody else's", l.map((x) => x.teacher), [true, false, true, false, true, false]);
+  ok("no speaker name rides along", !l.some((x) => "speaker" in x || "who" in x));
+  const vtt = "WEBVTT\n\n00:00:05.000 --> 00:00:08.000\n<v Teacher>Hello class</v>\n\n00:00:09.000 --> 00:00:12.000\n<v Mai>Hello</v>";
+  eq("WebVTT keeps its clock", D.readPastedTranscript(vtt).map((x) => [x.t, x.text, x.teacher]), [[5, "Hello class", true], [9, "Hello", false]]);
+  eq("plain text is read line by line, in order", D.readPastedTranscript("one two\nthree four").map((x) => [x.t, x.text]), [[0, "one two"], [1, "three four"]]);
+  eq("a summary of 'Heading: text' lines is not a conversation", D.readPastedTranscript("Lesson Review: Day and Night\nClass type: Young learners").every((x) => !x.teacher), true);
+  const long = "x".repeat(250);
+  const rows = [
+    { id: "a", transcript_date: "2026-11-20", raw_text: long, analysis: {} },
+    { id: "b", transcript_date: "2026-11-20", raw_text: long, session_id: "S2", analysis: {} },
+    { id: "c", transcript_date: "2026-11-21", raw_text: long, analysis: { session_match: { session_id: "S1" } } },
+    { id: "d", transcript_date: "2026-11-20", raw_text: "short", analysis: {} },
+  ];
+  eq("filed under another lesson is not this lesson's", D.pickPastedTranscript([rows[1]], "S1", "2026-11-20", 1), null);
+  eq("a person's choice wins over the date", D.pickPastedTranscript([rows[2]], "S1", "2026-11-20", 2)?.id, "c");
+  eq("the same day with one lesson matches", D.pickPastedTranscript([rows[0]], "S1", "2026-11-20", 1)?.id, "a");
+  eq("two lessons that day and no choice: nothing is guessed", D.pickPastedTranscript([rows[0]], "S1", "2026-11-20", 2), null);
+  eq("a stub is not a transcript", D.pickPastedTranscript([rows[3]], "S1", "2026-11-20", 1), null);
+}
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

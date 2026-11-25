@@ -368,6 +368,7 @@ const SUITES = [
   // Who's speaking (21 Nov 2026): staff tap who talks during a recorded lesson.
   { name: "lesson monitor voiceprints", file: "lesson-monitor-voiceprints.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261124120000_lesson_monitor_voiceprints.sql"] },
   { name: "recorder delete after transcribed", file: "recorder-delete-after-transcribed.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261124120000_lesson_monitor_voiceprints.sql", "20261124140000_recorder_delete_after_transcribed.sql"] },
+  { name: "recorder audio grace 3h", file: "recorder-audio-grace-3h.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261124120000_lesson_monitor_voiceprints.sql", "20261124140000_recorder_delete_after_transcribed.sql", "20261125120000_recorder_audio_grace_3h.sql"] },
   // Importing a lesson recorded outside the app (owner, 25 Nov 2026): admin only, consent as in the app, never evidence.
   { name: "recorder import", file: "recorder-import.test.mjs", migrations: ["20260717090000_audio_transcript_pipeline.sql", "20261111110000_ta_standing_assignments_and_homework_upload.sql", "20261112100000_class_recorder.sql", "20261117090000_lesson_monitor_pilot.sql", "20261120090000_lesson_monitor_cover_earlier.sql", "20261124120000_lesson_monitor_voiceprints.sql", "20261124140000_recorder_delete_after_transcribed.sql", "20261124150000_recorder_byte_floor_16khz.sql", "20261125090000_recorder_import_recording.sql"] },
   { name: "recorder R2 upload", file: "recorder-r2-upload.test.mjs", migrations: [] },
@@ -407,6 +408,7 @@ const SUITES = [
   { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
   // Schedule -> class report page: which transcript belongs to a lesson, talk-time share, per-child rows.
   { name: "session class report", file: "session-class-report.test.mjs", migrations: [] },
+  { name: "recorded lesson state", file: "recorded-lesson-state.test.mjs", migrations: [] },
   {
     name: "assistant absence",
     file: "assistant-absence.test.mjs",

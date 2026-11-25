@@ -1,20 +1,19 @@
 import { useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, FileText, Loader2, Lock, Mic } from "lucide-react";
-import Layout from "@/components/Layout";
+import { Link } from "react-router-dom";
+import { Loader2, Lock, Mic } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionClassReport } from "@/hooks/useSessionClassReport";
-import { lessonLabel } from "@/lib/curriculumLessons";
 import { duration, mmss } from "@/lib/lessonMonitor";
 
 /**
- * /class-report/:sessionId - opened from a lesson on the Schedule. Read-only: the
- * lesson's report, the plan, the talk-time split, a row for each child and the
- * transcript, for staff. Each part shows only what exists for THIS lesson and is
- * otherwise left empty; nothing is made up (see src/lib/sessionClassReport.ts).
- * Editing, building a report and approving stay on /teacher/lesson-report/:id.
+ * What was recorded for a lesson, read-only, on the one lesson report page
+ * (owner, 25 Nov 2026: the class report and the lesson report are one page):
+ * talk-time split, a row for each child, and the transcript, whichever way it
+ * arrived - the recorder's, or one the teacher pasted under Record & transcripts.
+ * Each part shows only what exists for THIS lesson and is otherwise left
+ * empty; nothing is made up (see src/lib/sessionClassReport.ts).
  */
 const card = "rounded-hec-md border border-hec-line bg-hec-surface p-4 space-y-3";
 const EMPTY = <p className="text-sm text-hec-ink-soft">Nothing recorded for this lesson.</p>;
@@ -41,82 +40,26 @@ const Bar = ({ pct, tone = "bg-hec-ink" }: { pct: number; tone?: string }) => (
 
 const List = ({ items }: { items: ReactNode[] }) => (items.length ? <ul className="list-disc pl-5 text-sm space-y-1">{items.map((x, i) => <li key={i}>{x}</li>)}</ul> : null);
 
-export default function SessionClassReport() {
-  const { sessionId } = useParams<{ sessionId: string }>();
+
+export default function LessonRecord({ sessionId, classId }: { sessionId: string; classId?: string | null }) {
   const { role } = useAuth() as any;
   const q = useSessionClassReport(sessionId);
   const [all, setAll] = useState(false);
   const d = q.data;
   const L = d?.lesson;
   const r = d?.report;
+  const paste = `/teacher/recorder?tab=transcripts&lesson=${sessionId}${classId ?? L?.class_id ? `&class=${classId ?? L?.class_id}` : ""}`;
 
   return (
-    <Layout title="Class report">
-      <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4">
-        <Link to="/schedule" className="inline-flex items-center gap-1 text-sm text-hec-ink-soft hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Schedule
-        </Link>
-
-        <header className="flex flex-wrap items-center gap-3">
-          <div className="min-w-0 flex-1 basis-56">
-            <h1 className="text-2xl font-semibold">{L?.class_name || "Class report"}</h1>
-            <p className="text-sm text-hec-ink-soft">
-              {L ? `${L.date} · ${String(L.start_time).slice(0, 5)}-${String(L.end_time).slice(0, 5)}${L.teacher_names.length ? ` · ${L.teacher_names.join(", ")}` : ""}${L.status === "Canceled" ? " · Cancelled" : ""}` : q.isLoading ? "Loading…" : "Lesson not found"}
-            </p>
+    <div className="space-y-4">
+      {q.isLoading && <p className="flex items-center gap-2 text-hec-ink-soft"><Loader2 className="h-4 w-4 animate-spin" /> Loading what was recorded…</p>}
+      {q.error && <p className="text-hec-danger text-sm">What was recorded for this lesson could not be loaded. Reload the page to try again.</p>}
+      {d && L && (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" size="sm"><Link to={paste}>{d.transcript.kind === null ? "Paste a transcript" : "Paste another transcript"}</Link></Button>
+            <Button asChild variant="ghost" size="sm"><Link to="/transcript-matching">Match transcripts</Link></Button>
           </div>
-          <Button asChild variant="ghost" size="sm"><Link to="/transcript-matching">Match transcripts</Link></Button>
-          {L && (
-            <Button asChild variant="outline" size="sm">
-              <Link to={`/teacher/lesson-report/${L.id}`}><FileText className="h-4 w-4 mr-2" /> {d?.sources.approved ? "Open the report" : "Build or edit the report"}</Link>
-            </Button>
-          )}
-        </header>
-
-        {q.isLoading && <p className="flex items-center gap-2 text-hec-ink-soft"><Loader2 className="h-4 w-4 animate-spin" /> Loading the report…</p>}
-        {q.error && <p className="text-hec-danger text-sm">This lesson's report could not be loaded. Reload the page to try again.</p>}
-
-        {d && L && (
-          <>
-            <Section title="Lesson plan" note={d.plan.length ? "Course book lessons chosen for this lesson" : undefined}>
-              {d.plan.length === 0 && !r?.materials.length && EMPTY}
-              {d.plan.map((p) => (
-                <div key={p.id} className="rounded-hec-md border p-3 space-y-1">
-                  <p className="font-medium flex items-center gap-2"><BookOpen className="h-4 w-4 shrink-0" />Level {p.level} · {lessonLabel(p)}</p>
-                  {p.big_question && <p className="text-xs text-hec-ink-soft">Big Question: {p.big_question}</p>}
-                  <List items={p.objectives} />
-                  {(p.grammar || p.vocabulary?.length > 0) && (
-                    <p className="text-xs text-hec-ink-soft">{p.grammar ? `Grammar: ${p.grammar}. ` : ""}{p.vocabulary?.length ? `Words: ${p.vocabulary.join(", ")}` : ""}</p>
-                  )}
-                </div>
-              ))}
-              {r && r.materials.length > 0 && (
-                <div><h3 className="text-sm font-medium">Materials used</h3><List items={r.materials} /></div>
-              )}
-            </Section>
-
-            <Section title="Class report" note={d.reportNote}>
-              {!r ? EMPTY : (
-                <div className="space-y-3">
-                  {(r.title || r.summary) && (
-                    <div className="space-y-1">
-                      {r.title && <p className="font-medium">{r.title}</p>}
-                      {r.summary && <p className="text-sm whitespace-pre-line">{r.summary}</p>}
-                    </div>
-                  )}
-                  {r.objectives.length > 0 && <div><h3 className="text-sm font-medium">Objectives</h3><List items={r.objectives.map((o) => (o.met ? `${o.text} (${o.met})` : o.text))} /></div>}
-                  {r.chronology.length > 0 && <div><h3 className="text-sm font-medium">How the lesson went</h3><List items={r.chronology.map((c) => <span key={c.detail}><b>{c.phase}</b>{c.phase ? ": " : ""}{c.detail}</span>)} /></div>}
-                  {r.taught.length > 0 && <div><h3 className="text-sm font-medium">What was taught</h3><List items={r.taught.map((t) => `${t.topic}${t.detail ? `: ${t.detail}` : ""}`)} /></div>}
-                  {r.words.length > 0 && <div><h3 className="text-sm font-medium">Words</h3><p className="text-sm">{r.words.map((w) => (w.vi ? `${w.en} (${w.vi})` : w.en)).join(" · ")}</p></div>}
-                  {r.structures.length > 0 && <div><h3 className="text-sm font-medium">Structures</h3><List items={r.structures.map((s) => `${s.pattern}${s.example ? ` - ${s.example}` : ""}`)} /></div>}
-                  {r.activities.length > 0 && <div><h3 className="text-sm font-medium">Activities</h3><List items={r.activities.map((a) => `${a.name}${a.description ? `: ${a.description}` : ""}`)} /></div>}
-                  {r.understanding && <div><h3 className="text-sm font-medium">Understanding</h3><p className="text-sm">{r.understanding}</p></div>}
-                  {r.misconceptions.length > 0 && <div><h3 className="text-sm font-medium">Misconceptions</h3><List items={r.misconceptions} /></div>}
-                  {r.homework.length > 0 && <div><h3 className="text-sm font-medium">Homework</h3><List items={r.homework} /></div>}
-                  {r.nextSteps.length > 0 && <div><h3 className="text-sm font-medium">Next</h3><List items={r.nextSteps} /></div>}
-                </div>
-              )}
-            </Section>
-
             <Section title="Share of talk time" staff
               note={d.talk.monitor ? "From the lesson monitor" : d.talk.share ? "Share of words, from the transcript" : d.talk.marks ? "From who's-speaking taps" : undefined}>
               {!d.talk.monitor && !d.talk.share && !d.talk.marks && EMPTY}
@@ -210,14 +153,15 @@ export default function SessionClassReport() {
               )}
             </Section>
 
+
             {role === "admin" && (
               <p className="text-xs text-hec-ink-soft">
                 Sources found for this lesson: approved report {d.sources.approved ? "yes" : "no"} · draft {d.sources.draft ? "yes" : "no"} · lesson monitor {d.sources.monitor ? "yes" : "no"} · saved transcript {d.sources.transcript ? "yes" : "no"} · who's-speaking taps {d.sources.taps ? "yes" : "no"}.
               </p>
             )}
-          </>
-        )}
-      </div>
-    </Layout>
+
+        </>
+      )}
+    </div>
   );
 }

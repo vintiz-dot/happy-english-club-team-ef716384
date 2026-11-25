@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { StudentProfileProvider } from "./contexts/StudentProfileContext";
 import { AgeBandRoot } from "@/hooks/useAgeBand";
 import { TimerProvider } from "./contexts/TimerContext";
@@ -66,7 +66,8 @@ const TeacherBooks = lazy(() => import("./pages/TeacherBooks"));
 const TeacherLanguageSupport = lazy(() => import("./pages/TeacherLanguageSupport"));
 const TeacherLessonReports = lazy(() => import("./pages/TeacherLessonReports"));
 const TeacherLessonReportReview = lazy(() => import("./pages/TeacherLessonReportReview"));
-const SessionClassReport = lazy(() => import("./pages/SessionClassReport"));
+// The class report and the lesson report are one page now (25 Nov 2026).
+const ClassReportRedirect = () => { const { sessionId } = useParams(); return <Navigate to={`/teacher/lesson-report/${sessionId}`} replace />; };
 const TranscriptMatching = lazy(() => import("./pages/TranscriptMatching"));
 const TeacherClassReports = lazy(() => import("./pages/TeacherClassReports"));
 const TeacherLessons = lazy(() => import("./pages/TeacherLessons"));
@@ -180,7 +181,7 @@ function AppContent() {
                   <Route path="/teacher/lesson-reports" element={<ProtectedRoute allowedRole={["teacher"]}><TeacherLessonReports /></ProtectedRoute>} />
                   <Route path="/teacher/class-reports" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherClassReports /></ProtectedRoute>} />
                   <Route path="/teacher/lesson-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLessonReportReview /></ProtectedRoute>} />
-                  <Route path="/class-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><SessionClassReport /></ProtectedRoute>} />
+                  <Route path="/class-report/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><ClassReportRedirect /></ProtectedRoute>} />
                   <Route path="/transcript-matching" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TranscriptMatching /></ProtectedRoute>} />
                   <Route path="/teacher/speakers" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />
                   <Route path="/teacher/speakers/:sessionId" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><LessonSpeakers /></ProtectedRoute>} />

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import LessonPhotoCapture from "@/components/lessonReports/LessonPhotoCapture";
 import LessonPlanPicker from "@/components/lessonReports/LessonPlanPicker";
+import LessonRecord from "@/components/lessonReports/LessonRecord";
 import { ReportStage, useClassReportDownload } from "@/components/lessonReports/ClassReportDownload";
 import { Download } from "lucide-react";
 import { mmss } from "@/lib/lessonMonitor";
@@ -390,6 +391,13 @@ export default function TeacherLessonReportReview() {
               </section>
             )}
           </fieldset>
+        )}
+
+        {sessionId && (
+          <section aria-label="What was recorded" className="space-y-3 pt-2">
+            <h2 className="text-lg font-semibold">What was recorded</h2>
+            <LessonRecord sessionId={sessionId} />
+          </section>
         )}
       </div>
     </Layout>

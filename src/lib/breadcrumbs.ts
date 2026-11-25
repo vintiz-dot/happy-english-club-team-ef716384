@@ -19,7 +19,7 @@ export const APP_ROUTES: string[] = [
   "/admin", "/admin/classes/:id", "/admin/tuition-review", "/students/:id/tuition", "/teacher/dashboard", "/board-window/:classId",
   "/teacher/classes/:id", "/teacher/payroll", "/teacher/attendance", "/teacher/assignments", "/teacher/journal",
   "/teacher/exam-reports", "/teacher/leaderboards", "/teacher/resources", "/teacher/vocabulary-audit", "/teacher/books",
-  "/teacher/language-support", "/teacher/lesson-reports", "/teacher/class-reports", "/teacher/lesson-report/:sessionId",
+  "/teacher/language-support", "/teacher/lesson-reports", "/teacher/class-reports", "/teacher/lesson-report/:sessionId", "/class-report/:sessionId", "/transcript-matching",
   "/teacher/speakers", "/teacher/speakers/:sessionId", "/teacher/recorder", "/teacher/recorder/phone", "/admin/student-work",
   "/teacher/my-student-works", "/teacher/smart-upload", "/teacher/transcripts", "/student/dashboard", "/student/assignments",
   "/student/journal", "/student/resources", "/student/my-work", "/student/class-gallery", "/student/videos", "/student/record",

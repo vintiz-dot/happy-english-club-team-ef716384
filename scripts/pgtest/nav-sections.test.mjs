@@ -18,7 +18,7 @@ const nav = await import(pathToFileURL(f).href);
 
 const TEACHER_BEFORE = ['/dashboard', '/schedule', '/teacher/leaderboards', '/teacher/payroll', '/teacher/assignments', '/teacher/attendance',
   '/teacher/journal', '/teacher/exam-reports', '/teacher/vocabulary-audit', '/teacher/smart-upload', '/teacher/my-student-works',
-  '/teacher/recorder', '/teacher/resources', '/teacher/books', '/teacher/language-support', '/teacher/class-reports', '/teacher/lesson-reports'];
+  '/teacher/recorder', '/teacher/resources', '/teacher/books', '/teacher/language-support', '/teacher/class-reports'];
 const ADMIN_BEFORE = ['/admin', '/students', '/teachers', '/admin?tab=classes', '/families', '/schedule', '/admin?tab=assignments', '/admin?tab=journal',
   '/admin?tab=exam-reports', '/admin?tab=finance', '/admin?tab=payroll', '/admin?tab=reports', '/admin?tab=automation', '/admin?tab=activity',
   '/admin?tab=ai-actions', '/admin?tab=data', '/admin?tab=stars-sync', '/admin?tab=audit-clips', '/admin?tab=announcements', '/admin?tab=reception',
@@ -32,8 +32,8 @@ const tNo = nav.navGroupsFor('teacher', { pilot: false });
 ok('teacher: every old route is reachable (pilot on)', TEACHER_BEFORE.every((p) => paths(t).includes(p)), TEACHER_BEFORE.filter((p) => !paths(t).includes(p)));
 ok('teacher: no route listed twice', dups(paths(t)).length === 0, dups(paths(t)));
 ok('teacher: nine sidebar entries instead of seventeen', t.flatMap((g) => g.sections).length === 9);
-ok('teacher: lesson reports only with the pilot flag', paths(t).includes('/teacher/lesson-reports') && !paths(tNo).includes('/teacher/lesson-reports'));
-ok('teacher: without the pilot flag everything else is still there', TEACHER_BEFORE.filter((p) => p !== '/teacher/lesson-reports').every((p) => paths(tNo).includes(p)));
+ok('teacher: one Lesson reports entry (class and lesson reports merged, 25 Nov 2026), no separate pilot entry', paths(t).includes('/teacher/class-reports') && !paths(t).includes('/teacher/lesson-reports') && !paths(tNo).includes('/teacher/lesson-reports'));
+ok('teacher: without the pilot flag everything else is still there', TEACHER_BEFORE.every((p) => paths(tNo).includes(p)));
 
 const a = nav.navGroupsFor('admin');
 ok('admin: every old route is reachable', ADMIN_BEFORE.every((p) => paths(a).includes(p)), ADMIN_BEFORE.filter((p) => !paths(a).includes(p)));
@@ -44,10 +44,9 @@ ok('other roles get no menu', nav.navGroupsFor('student').length === 0 && nav.na
 
 const sec = (p, s = '') => nav.sectionOfPath(t, p, s)?.id;
 ok('sectionOfPath: attendance is in schedule & attendance', sec('/teacher/attendance') === 'schedule-attendance' && sec('/schedule') === 'schedule-attendance');
-ok('sectionOfPath: each member finds its section', sec('/teacher/exam-reports') === 'class-notes' && sec('/teacher/lesson-reports') === 'class-notes' &&
+ok('sectionOfPath: each member finds its section', sec('/teacher/exam-reports') === 'class-notes' && sec('/teacher/class-reports') === 'class-notes' &&
   sec('/teacher/vocabulary-audit') === 'student-work' && sec('/teacher/books') === 'materials' && sec('/teacher/resources') === 'materials');
 ok('sectionOfPath: a stray query on a plain path is not a match, an unknown page has no section', sec('/teacher/journal', '?x=1') === undefined && sec('/nowhere') === undefined);
-ok('sectionOfPath: lesson reports belong to no section when the flag is off', nav.sectionOfPath(tNo, '/teacher/lesson-reports') === undefined);
 ok('admin ?tab= paths match page and query', nav.sectionOfPath(a, '/admin', '?tab=finance')?.label === 'Finance' && nav.sectionOfPath(a, '/admin')?.label === 'Dashboard');
 ok('groupOfPath finds the heading holding the page', nav.groupOfPath(a, '/admin', '?tab=payroll')?.id === 'money' && nav.groupOfPath(a, '/teachers')?.id === 'people');
 

@@ -330,3 +330,92 @@ export function lessonWindow(date: string, start: string, end: string, afterMinu
   const from = at(start), to = at(end);
   return { from: from.toISOString(), to: new Date(to.getTime() + afterMinutes * 60_000).toISOString() };
 }
+
+/* ------------------------------------------------------------------ a transcript the teacher pasted
+ * Owner, 25 Nov 2026: a transcript pasted into Record & transcripts feeds the report exactly as the
+ * lesson monitor's does: the same TranscriptLine[], the same prompt, the same quote checks. No name
+ * rides along: a line is the teacher's ("T") or someone else's. Mirrors parseSpokenTranscript in
+ * src/lib/sessionClassReport.ts (the browser's reading of the same text); this file imports nothing. */
+
+const PT_TIME = /^\d{1,2}:\d{2}(?::\d{2})?(?:[.,]\d+)?$/;
+const PT_CUE = /^(\d{1,2}:)?\d{2}:\d{2}(?:[.,]\d+)?\s*-->\s*(\d{1,2}:)?\d{2}:\d{2}(?:[.,]\d+)?/;
+const PT_LABELLED = /^([A-Za-z\u00C0-\u1EF9][^:\n]{0,39}?):\s+(.*)$/;
+const ptSeconds = (stamp: string): number | null => {
+  const m = /^(?:(\d{1,2}):)?(\d{2}):(\d{2})(?:[.,](\d+))?/.exec(stamp.trim());
+  return m ? Number(m[1] ?? 0) * 3600 + Number(m[2]) * 60 + Number(m[3]) + (m[4] ? Number(`0.${m[4]}`) : 0) : null;
+};
+const ptFold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+
+/** Is this speaker label the lesson's teacher? "Teacher", or the teacher's own name (full, or two parts of it). */
+export function pastedLabelIsTeacher(label: string, teacherNames: string[]): boolean {
+  const a = ptFold(label);
+  if (!a) return false;
+  if (a === "teacher") return true;
+  for (const n of teacherNames) {
+    const b = ptFold(n);
+    if (!b) continue;
+    if (a === b) return true;
+    const ap = a.split(" "), bp = b.split(" ");
+    const shared = ap.filter((p) => bp.includes(p)).length;
+    if (shared >= 2 || (ap.length === 1 && shared === 1 && bp.length >= 2)) return true;
+  }
+  return false;
+}
+
+/**
+ * The lines of a pasted transcript (WebVTT, SRT, "Name: text" from Meet/Zoom, Otter, or plain text).
+ * A line with no clock time gets its position as its time, so order is kept and a quote can still be found.
+ * Plain text with no speaker labels is read line by line, every line someone else's.
+ */
+export function readPastedTranscript(raw: unknown, teacherNames: string[] = [], maxLines = 2500): TranscriptLine[] {
+  const lines = String(typeof raw === "string" ? raw : "").split(/\r?\n/).map((l) => l.trim());
+  const seen = new Map<string, number>();
+  for (const line of lines) {
+    const l = PT_LABELLED.exec(line);
+    if (l && !/^https?$/i.test(l[1]) && !/\d{1,2}:\d{2}/.test(l[1])) seen.set(l[1].trim(), (seen.get(l[1].trim()) ?? 0) + 1);
+  }
+  const speakers = new Set([...seen].filter(([, n]) => n >= 3).map(([k]) => k));
+
+  type Turn = { speaker: string | null; text: string; t: number | null };
+  const turns: Turn[] = [];
+  let clock: number | null = null;
+  let last: Turn | null = null;
+  let labelled = false;
+  const start = (speaker: string | null, text: string) => { last = { speaker, text, t: clock }; if (speaker) labelled = true; if (text || speaker) turns.push(last); };
+  for (const line of lines) {
+    if (!line || line === "WEBVTT" || /^NOTE\b/.test(line) || /^\d+$/.test(line)) continue;
+    if (PT_CUE.test(line)) { clock = ptSeconds(line); continue; }
+    if (PT_TIME.test(line)) { clock = ptSeconds(line) ?? clock; continue; }
+    const v = /^<v\s+([^>]+)>(.*?)(?:<\/v>)?$/.exec(line);
+    if (v) { start(v[1].trim(), v[2].trim()); continue; }
+    const o = /^([A-Za-z][\w .'-]{0,30}?)\s{2,}(\d{1,2}:\d{2}(?::\d{2})?)$/.exec(line);
+    if (o) { clock = ptSeconds(o[2]); labelled = true; last = { speaker: o[1].trim(), text: "", t: clock }; turns.push(last); continue; }
+    const l = PT_LABELLED.exec(line);
+    if (l && speakers.has(l[1].trim())) { start(l[1].trim(), l[2].trim()); continue; }
+    if (last && labelled) { (last as Turn).text = `${(last as Turn).text} ${line}`.trim(); continue; }
+    start(null, line); // plain text: one line, one turn
+  }
+  return turns
+    .filter((t) => t.text)
+    .slice(0, maxLines)
+    .map((t, i) => ({ t: t.t ?? i, text: t.text.slice(0, 500), teacher: t.speaker ? pastedLabelIsTeacher(t.speaker, teacherNames) : false }));
+}
+
+export interface PastedRow { id: string; session_id?: string | null; transcript_date?: string | null; status?: string | null; raw_text?: string | null; analysis?: unknown }
+
+/**
+ * Which pasted transcript belongs to a lesson: one a person filed under it (stored session_id, or the
+ * choice kept in analysis.session_match), else one dated that day when the class had exactly ONE lesson that
+ * day and the transcript is not filed anywhere else. The fullest analysed text wins.
+ */
+export function pickPastedTranscript(rows: PastedRow[], sessionId: string, sessionDate: string, lessonsThatDay: number): PastedRow | null {
+  const usable = rows.filter((r) => String(r.raw_text ?? "").trim().length >= 200).filter((r) => {
+    const m = obj(obj(r.analysis).session_match);
+    const chosen = "session_id" in m ? (typeof m.session_id === "string" ? m.session_id : null) : undefined;
+    if (r.session_id) return r.session_id === sessionId;
+    if (chosen !== undefined) return chosen === sessionId;
+    return lessonsThatDay === 1 && r.transcript_date === sessionDate;
+  });
+  usable.sort((a, b) => (Number(b.status === "analyzed") - Number(a.status === "analyzed")) || (String(b.raw_text).length - String(a.raw_text).length));
+  return usable[0] ?? null;
+}

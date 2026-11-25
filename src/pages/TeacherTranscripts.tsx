@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import TranscriptApprovalPanel from "@/components/teacher/TranscriptApprovalPanel";
 import { reviewState } from "@/lib/transcriptReview";
+import { matchPatch } from "@/lib/sessionClassReport";
 import {
   AudioLines, Loader2, UploadCloud, Sparkles, MessageSquareText,
   HelpCircle, AlertTriangle, Star, FileText, TrendingUp,
@@ -108,7 +109,7 @@ function Shell({ embedded, children }: { embedded?: boolean; children: ReactNode
   return embedded ? <>{children}</> : <Layout title="Transcript Insights">{children}</Layout>;
 }
 
-export default function TeacherTranscripts({ embedded = false, focusClass }: { embedded?: boolean; focusClass?: { classId: string; n: number } } = {}) {
+export default function TeacherTranscripts({ embedded = false, focusClass }: { embedded?: boolean; focusClass?: { classId: string; sessionId?: string | null; n: number } } = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [classId, setClassId] = useState("");
@@ -116,19 +117,39 @@ export default function TeacherTranscripts({ embedded = false, focusClass }: { e
   // "Add draft transcript" on a recorded lesson picks its class and brings the upload panel into view.
   useEffect(() => {
     if (!focusClass) return;
+    pendingLesson.current = focusClass.sessionId ?? null;
     setClassId(focusClass.classId);
+    setLessonId(focusClass.sessionId ?? "");
     setSelectedId(null);
     uploadPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [focusClass]);
+  const pendingLesson = useRef<string | null>(null);
   const [title, setTitle] = useState("");
   const [rawText, setRawText] = useState("");
   const [lessonContext, setLessonContext] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The lesson a pasted transcript belongs to. It is what lets the lesson report read this text the way it reads the
+  // recorder's (owner, 25 Nov 2026). Saved as the person's own choice (analysis.session_match), never as session_id.
+  const [lessonId, setLessonId] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
   const [audioProgress, setAudioProgress] = useState<{ stage: "uploading" | "transcribing" | "diarizing" | "analyzing"; fileName: string } | null>(null);
 
   const { data: classes = [] } = useMyClasses(user?.id);
+
+  const { data: classLessons = [] } = useQuery<{ id: string; date: string; start_time: string; end_time: string }[]>({
+    queryKey: ["transcript-paste-lessons", classId],
+    enabled: !!classId,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const day = (n: number) => new Date(Date.now() + 7 * 3600_000 + n * 86400_000).toISOString().slice(0, 10);
+      const { data } = await (supabase as any).from("sessions").select("id, date, start_time, end_time")
+        .eq("class_id", classId).neq("status", "Canceled").gte("date", day(-45)).lte("date", day(1))
+        .order("date", { ascending: false }).order("start_time", { ascending: false }).limit(40);
+      return data ?? [];
+    },
+  });
+  useEffect(() => { setLessonId(pendingLesson.current ?? ""); pendingLesson.current = null; }, [classId]);
 
   const { data: transcripts = [] } = useQuery<any[]>({
     queryKey: ["class-transcripts", classId],
@@ -332,6 +353,7 @@ export default function TeacherTranscripts({ embedded = false, focusClass }: { e
           uploaded_by: user.id,
           title: title.trim() || `Lesson ${new Date().toLocaleDateString()}`,
           lesson_context: lessonContext.trim() || null,
+          ...(lessonId ? { transcript_date: classLessons.find((l) => l.id === lessonId)?.date } : {}),
           source_format: format,
           raw_text: text,
           status: "processing",
@@ -347,6 +369,15 @@ export default function TeacherTranscripts({ embedded = false, focusClass }: { e
       if (fnErr) throw new Error(await describeFnError(fnErr));
       if (result?.success === false) throw new Error(result.error || "analysis failed");
       await pollTranscript(row.id);
+      // The analysis rewrites `analysis`, so the lesson choice is saved after it, on top of what it wrote.
+      if (lessonId) {
+        const { data: done } = await (supabase as any).from("class_transcripts").select("analysis").eq("id", row.id).maybeSingle();
+        const { error: mErr } = await (supabase as any).from("class_transcripts")
+          .update({ analysis: matchPatch(done?.analysis, lessonId, user.id, new Date().toISOString()) }).eq("id", row.id);
+        if (mErr) toast.error("The transcript is saved, but its lesson could not be set", { description: "Pick it again on Match transcripts." });
+        queryClient.invalidateQueries({ queryKey: ["session-class-report"] });
+        queryClient.invalidateQueries({ queryKey: ["transcript-matching"] });
+      }
       const counts = await fetchAnalyzedCounts(row.id);
       return { id: row.id, counts };
     },
@@ -354,6 +385,7 @@ export default function TeacherTranscripts({ embedded = false, focusClass }: { e
       toast.success("Draft ready", { description: draftReadyText(counts) });
       setRawText("");
       setTitle("");
+      setLessonId("");
       setSelectedId(id);
       queryClient.invalidateQueries({ queryKey: ["class-transcripts", classId] });
     },
@@ -760,6 +792,17 @@ export default function TeacherTranscripts({ embedded = false, focusClass }: { e
                   {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Select value={lessonId || "none"} onValueChange={(v) => setLessonId(v === "none" ? "" : v)} disabled={!classId}>
+                <SelectTrigger className="md:w-64" aria-label="Which lesson is it">
+                  <SelectValue placeholder="Which lesson?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Which lesson? (not set)</SelectItem>
+                  {classLessons.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>{l.date} · {String(l.start_time).slice(0, 5)}-{String(l.end_time).slice(0, 5)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 placeholder="Lesson title (optional)"
                 value={title}
@@ -825,7 +868,8 @@ export default function TeacherTranscripts({ embedded = false, focusClass }: { e
               <p className="text-hec-caption text-hec-ink-soft -mt-1">
                 Lesson audio is transcribed on the school laptop and never leaves it. Upload or paste the draft transcript it
                 produces (read it through first and fix anything wrong). "Analyze transcript" then sends only that text, not the audio,
-                to the analysis service, and makes a draft that only the class's staff can see.
+                to the analysis service, and makes a draft that only the class's staff can see. Pick the lesson it belongs to and
+                the lesson report reads this text exactly as it reads the recorder's transcript.
               </p>
             ) : (
               <p className="text-hec-caption text-hec-ink-soft -mt-1">

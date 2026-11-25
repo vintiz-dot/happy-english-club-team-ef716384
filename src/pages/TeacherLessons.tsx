@@ -25,7 +25,9 @@ export default function TeacherLessons() {
   const [params, setParams] = useSearchParams();
   const tab: Tab = params.get("tab") === "transcripts" ? "transcripts" : "record";
   const [recording, setRecording] = useState(false);
-  const [focusClass, setFocusClass] = useState<{ classId: string; n: number } | undefined>();
+  // A link from a lesson report ("Paste a transcript") opens this tab with that lesson chosen.
+  const [focusClass, setFocusClass] = useState<{ classId: string; sessionId: string | null; n: number } | undefined>(() =>
+    params.get("class") ? { classId: params.get("class")!, sessionId: params.get("lesson"), n: 1 } : undefined);
   if (!user) return null;
   const pick = (t: Tab) => setParams(t === "record" ? {} : { tab: t }, { replace: true });
 
@@ -49,7 +51,7 @@ export default function TeacherLessons() {
         </div>
         <div hidden={tab !== "record"}><RecorderView onActiveChange={setRecording} /></div>
         <div hidden={tab !== "transcripts"} className="space-y-6">
-          <RecordedInClass userId={user.id} onAddTranscript={(classId) => setFocusClass((f) => ({ classId, n: (f?.n ?? 0) + 1 }))} />
+          <RecordedInClass userId={user.id} onAddTranscript={(classId, sessionId) => setFocusClass((f) => ({ classId, sessionId, n: (f?.n ?? 0) + 1 }))} />
           <TeacherTranscripts embedded focusClass={focusClass} />
         </div>
       </div>
