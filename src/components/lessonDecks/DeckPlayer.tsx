@@ -13,7 +13,7 @@ import { SlideView, SlideContext, WorksheetView, AssessmentView, type SlideCtx }
 import { useSpeech } from "./speech";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Shuffle, X, Timer, Pause, Play, Printer, Volume2, Turtle, ExternalLink, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Shuffle, X, Timer, Pause, Play, Printer, Volume2, Turtle, ExternalLink, BookOpen, Drama } from "lucide-react";
 
 /** What a slide is called in the pager tooltip: its title, else its kind. */
 const slideLabel = (s: Slide) => ("title" in s && s.title ? s.title : s.kind);
@@ -282,9 +282,12 @@ type PlayerProps = {
   flipbook?: ClassFlipbook | null;
   onBookPage?: (index: number) => void;
   onWorksheet?: (ws: Worksheet, audience: Audience) => void;
+  // Class plays that extend this lesson (the Plays tab): a button for each, on top of the lesson's minutes.
+  plays?: { id: string; title: string; minutes: number }[];
+  onPlay?: (id: string) => void;
 };
 
-export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 0, onSlide, flipbook, onBookPage, onWorksheet }: PlayerProps) {
+export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 0, onSlide, flipbook, onBookPage, onWorksheet, plays, onPlay }: PlayerProps) {
   const [i, setI] = useState(() => Math.min(Math.max(0, startAt), deck.slides.length - 1));
   const [shuffle, setShuffle] = useState<number[]>([]);
   const [book, setBook] = useState<{ url: string; label: string; note?: string } | null>(null);
@@ -368,6 +371,11 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
               </Button>
             )
           )}
+          {onPlay && plays?.map((p) => (
+            <Button key={p.id} variant="outline" size="sm" className="border-amber-400" onClick={() => onPlay(p.id)} title={`Class play "${p.title}": opens the Plays tab; ${p.minutes} minutes on top of the lesson`}>
+              <Drama className="h-4 w-4" />Play +{p.minutes} min
+            </Button>
+          ))}
           <Button variant="outline" size="sm" onClick={reshuffle} title="New names (N)"><Shuffle className="h-4 w-4" />New names</Button>
           <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "teacher")} title="Teacher copy: with answers, scripts and teacher notes"><Printer className="h-4 w-4" />Teacher</Button>
           <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "student")} title="Student copy: no answers, scripts or teacher notes"><Printer className="h-4 w-4" />Student</Button>

@@ -1,0 +1,162 @@
+// Oxford Discover 1, Unit 13 (Where Do We Live?): class plays for Venus (grades 2-4).
+// Original scripts by the school; no book text. Invented characters and streets only:
+// no child's real address is ever said in a play.
+import type { Play } from "@/lib/lessonDecks/plays";
+
+export const od1U13Plays: Play[] = [
+  {
+    id: "od2e-l1-u13-p1",
+    course: "oxford-discover-2e",
+    level: 1,
+    unit: 13,
+    afterLesson: 3,
+    title: "Whose Hat Is It? Mystery on Maple Street",
+    minutes: 18,
+    band: "7-9",
+    summary: "A strange hat sits in the middle of Maple Street. A Detective knocks on every door of the neighborhood: \"Is this Bear's hat?\" \"No, it isn't!\" Whose hat is it? The answer is a big surprise.",
+    targets: {
+      words: ["street", "neighborhood", "building", "apartment", "noisy", "quiet", "town", "city"],
+      grammar: ["Whose hat is it?", "It's + Name's + thing (It's Bear's hat).", "Is this + Name's + thing? Yes, it is. / No, it isn't."],
+    },
+    roles: [
+      { id: "detective", name: "Detective", who: "a confident child: the most lines" },
+      { id: "narrator", name: "Narrator", who: "a good reader; the teacher can take this part" },
+      { id: "bear", name: "Bear", who: "a short, funny part", optional: { give: "neighbors" } },
+      { id: "fox", name: "Fox", optional: { give: "neighbors" } },
+      { id: "mouse", name: "Mouse", optional: { give: "neighbors" } },
+      { id: "neighbors", name: "Neighbor", who: "children who like to act; short lines", group: { max: 7 } },
+    ],
+    scenes: [
+      {
+        title: "Scene 1: A hat on the street",
+        lines: [
+          { stage: "Put a big hat on the floor. The Detective walks around it. The Neighbors stand in doorways (chairs in a row)." },
+          { role: "narrator", text: "This is quiet Maple Street. But today, there is a hat!", do: "Point at the hat and gasp." },
+          { role: "detective", text: "A hat! Whose hat is it?", do: "Look at the hat through a magnifying glass." },
+          { everyone: "Whose is it? Whose is it? Knock, knock, knock!", do: "Knock three times on an imaginary door." },
+          { role: "neighbors", text: "It's a big hat. It's not my hat!", do: "Hold your arms wide, then shake your head." },
+          { role: "neighbors", text: "It's red and yellow. Whose hat is it?", do: "Point at each color on the hat." },
+        ],
+      },
+      {
+        title: "Scene 2: Knock, knock, knock",
+        lines: [
+          { role: "narrator", text: "The Detective goes to the first building.", do: "Walk with big steps." },
+          { role: "detective", text: "Bear, is this Bear's hat?", do: "Hold the hat up." },
+          { role: "bear", text: "No, it isn't. It's not Bear's hat. It's too small!", do: "Try the hat on your fist and shake your head." },
+          { role: "neighbors", text: "It's Fox's hat! Fox has a red hat.", do: "Point at Fox and nod." },
+          { role: "detective", text: "Fox, is this Fox's hat?", do: "Hold the hat up again." },
+          { role: "fox", text: "No, it isn't. Fox's hat is blue. It's in my apartment!", do: "Hold up a blue hat and point at your building." },
+          { role: "neighbors", text: "Is this Mouse's hat? Mouse is noisy!", do: "Squeak and run in a circle." },
+          { role: "mouse", text: "No, it isn't! It's too big for me!", do: "Put the hat over your whole body." },
+          { everyone: "Whose is it? Whose is it? Knock, knock, knock!", do: "Knock three times on an imaginary door." },
+        ],
+      },
+      {
+        title: "Scene 3: The big surprise",
+        lines: [
+          { role: "narrator", text: "A big shadow comes down the street. It is the Mayor!", do: "Stand tall and make a big shadow." },
+          { role: "neighbors", text: "Is this the Mayor's hat? Our neighborhood is the best in town!", do: "Point at the hat, then the Mayor." },
+          { role: "detective", text: "Yes, it is! It's the Mayor's hat!", do: "Hold the hat high and cheer." },
+          { role: "neighbors", text: "Thank you, Detective! You're the best in the city!", do: "Clap your hands." },
+          { role: "detective", text: "Case closed! It's the Mayor's hat!", do: "Take a bow and tip your hat." },
+          { role: "neighbors", text: "Quiet Maple Street is safe and happy!", do: "Put your hands on your hearts." },
+          { everyone: "Whose is it? We know now! It's the Mayor's! Hooray!", do: "Throw your arms up and cheer." },
+        ],
+      },
+    ],
+    rehearsal: [
+      { round: "Listen and do", minutes: 4, how: "Read the play aloud. The class acts: knock, shake heads, tip hats. Only the refrain is spoken." },
+      { round: "Echo the lines", minutes: 5, how: "Say each line; the part echoes it with the action. Then the one-minute fix." },
+      { round: "Key words round", minutes: 5, how: "Perform with picture cards only (hat, bear, fox, mouse, building). Children say the lines from the pictures." },
+      { round: "Own words round", minutes: 4, how: "Children choose a new thing on the street (a bag, a bike) and new owners. They ask \"Is this ...'s ...?\"" },
+    ],
+    focusOnForm: [
+      "The owner's 's: \"Bear's hat\", not \"Bear hat\". Draw a tiny comma in the air for the 's.",
+      "Short answers: \"Yes, it is. / No, it isn't.\", not \"Yes, is.\" or \"No, isn't it.\"",
+      "Say the final /s/ or /z/ in \"Bear's\", \"Fox's\" (Fox-iz) and \"Mouse's\".",
+    ],
+    props: ["a big hat", "a toy magnifying glass", "picture cards: bear, fox, mouse, building", "chairs for doorways"],
+    teacherNote: "Only invented characters and streets are used. Never ask a child to say a real address. The Neighbors can answer together first, then one by one.",
+    encore: "Next lesson, perform it as a warm-up with a new thing (a bag, a bike) and a different owner at the end.",
+  },
+  {
+    id: "od2e-l1-u13-p2",
+    course: "oxford-discover-2e",
+    level: 1,
+    unit: 13,
+    afterLesson: 5,
+    title: "Town Mouse and Country Fox Swap Homes",
+    minutes: 18,
+    band: "7-9",
+    summary: "A Mouse who lives in a noisy city and a Fox who lives in the quiet country swap homes for a day. The Mouse can't sleep in the quiet. The Fox can't sleep in the noise. Which home is best?",
+    targets: {
+      words: ["city", "the country", "noisy", "quiet", "boring", "interesting", "apartment", "building"],
+      grammar: ["Is this Name's ...? Yes, it is. / No, it isn't.", "It's + Name's + thing.", "Whose ... is it?"],
+    },
+    roles: [
+      { id: "mouse", name: "City Mouse", who: "a lively child: lots of lines" },
+      { id: "fox", name: "Country Fox", who: "a calm child: lots of lines" },
+      { id: "owl", name: "Night Owl", who: "a short, funny part", optional: { give: "animals" } },
+      { id: "cow", name: "Cow", who: "a short, funny part", optional: { give: "animals" } },
+      { id: "animals", name: "Neighbor", who: "children who like to act; short lines", group: { max: 8 } },
+    ],
+    scenes: [
+      {
+        title: "Scene 1: The swap",
+        lines: [
+          { stage: "Two sides of the room: the city (a building of chairs, a car horn) and the country (a green mat, a tree)." },
+          { role: "mouse", text: "I live in the city. It is noisy and exciting.", do: "Cover your ears, then jump around." },
+          { role: "fox", text: "I live in the country. It is quiet and calm.", do: "Sit still, close your eyes and smile." },
+          { everyone: "City, country, swap! City, country, swap!", do: "Cross your arms, then swap places with a partner." },
+          { role: "mouse", text: "Let's swap homes for a day!", do: "Hold out your hand." },
+          { role: "fox", text: "Okay! Is this Mouse's apartment?", do: "Look at the building and knock." },
+          { role: "animals", text: "Yes, it is! It's Mouse's apartment. It's on the fifth floor.", do: "Count five floors with your fingers." },
+        ],
+      },
+      {
+        title: "Scene 2: Too noisy, too quiet",
+        lines: [
+          { role: "animals", text: "Beep! Beep! The city is noisy!", do: "Cover your ears and honk." },
+          { role: "fox", text: "I can't sleep. This building is too noisy!", do: "Put a pillow over your head." },
+          { role: "animals", text: "Whose car is it? It's the Mayor's car!", do: "Point at the car and honk." },
+          { role: "owl", text: "Hoo! Hoo! The country is quiet. It's boring!", do: "Hold your head and yawn." },
+          { role: "mouse", text: "Is this Fox's house? It's so quiet!", do: "Whisper and tiptoe." },
+          { role: "animals", text: "Yes, it is! It's Fox's house. It has a big garden.", do: "Draw a big garden in the air." },
+          { role: "cow", text: "Moo! There's nothing to do here!", do: "Chew grass and look bored." },
+          { role: "mouse", text: "I can't sleep! It's too quiet!", do: "Sit up in bed and look at everyone." },
+          { everyone: "City, country, swap! City, country, swap!", do: "Cross your arms, then swap places with a partner." },
+        ],
+      },
+      {
+        title: "Scene 3: Which home is best?",
+        lines: [
+          { role: "fox", text: "The city is interesting, but it's too noisy.", do: "Cover your ears and shake your head." },
+          { role: "mouse", text: "The country is nice, but it's boring.", do: "Yawn and stretch." },
+          { role: "animals", text: "Is this Fox's home? Is this Mouse's home?", do: "Point to each side of the room." },
+          { role: "animals", text: "Yes, it is! They are both good homes!", do: "Nod and smile." },
+          { role: "animals", text: "Whose street is noisy? Mouse's street!", do: "Cover your ears and laugh." },
+          { role: "animals", text: "Whose street is quiet? Fox's street!", do: "Put a finger on your lips." },
+          { role: "owl", text: "Hoo! Visit the country. Visit the city. Then go home!", do: "Fly around the room." },
+          { role: "mouse", text: "Thank you, Fox. I like my noisy home.", do: "Shake hands." },
+          { role: "fox", text: "Thank you, Mouse. I like my quiet home.", do: "Shake hands." },
+          { everyone: "City, country, swap! Every home is best!", do: "Hug yourself and smile." },
+        ],
+      },
+    ],
+    rehearsal: [
+      { round: "Listen and do", minutes: 4, how: "Read the play aloud. The class acts: cover ears for noisy, close eyes for quiet. Only the refrain is spoken." },
+      { round: "Script round", minutes: 5, how: "Say each line; the part echoes it with the action. Then the one-minute fix." },
+      { round: "Key words round", minutes: 5, how: "Perform with picture cards only (city, country, apartment, house, car). Children say the lines from the pictures." },
+      { round: "Own words round", minutes: 4, how: "Children choose new animals and new homes (a Bird in a tree, a Fish in a river) and ask \"Is this Bird's ...?\"" },
+    ],
+    focusOnForm: [
+      "The owner's 's: \"Mouse's apartment\", not \"Mouse apartment\". Tap the table at the 's.",
+      "\"Is this ...?\" needs \"Yes, it is.\" or \"No, it isn't.\", not \"Yes, it's.\"",
+      "Noisy and quiet: say the long /oi/ in noisy and the two sounds in qui-et.",
+    ],
+    props: ["chairs for a building", "a green mat", "a toy car", "picture cards: city, country, apartment, house"],
+    teacherNote: "Make the city side noisy with quiet voices only (cover ears, honk with whispers). The play is about places, so never ask for a child's real home.",
+    encore: "Next lesson, perform it with two new animals who swap places (a Fish and a Bird) and say which is noisy or quiet.",
+  },
+];

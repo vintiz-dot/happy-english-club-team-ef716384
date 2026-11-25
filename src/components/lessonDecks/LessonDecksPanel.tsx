@@ -24,6 +24,10 @@ import { toast } from "sonner";
 import { pickSession } from "@/lib/lessonDecks/covered";
 import { odCompanions } from "@/lib/lessonDecks/odCompanions";
 import { talkHomework, type TalkHomework } from "@/lib/lessonDecks/talk";
+import { PLAYS } from "@/content/lessonDecks/plays";
+import { playCourseOf, playsFor, type Play as ClassPlay } from "@/lib/lessonDecks/plays";
+import { PlaysTab, useLiveRoster } from "./PlaysTab";
+import { Drama } from "lucide-react";
 
 type ClassLite = { id: string; name: string };
 type FlipbookRow = ClassFlipbook & { class_id: string | null };
@@ -102,6 +106,10 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
   const [playing, setPlaying] = useState<{ deck: Deck; unit: Unit; at: number } | null>(null);
 
   const roster = useClassRoster(classId);
+  // Plays recast the moment the class changes (a child joins, leaves or is marked absent).
+  useLiveRoster(classId);
+  const [tab, setTab] = useState<"lessons" | "plays">("lessons");
+  const [playFocus, setPlayFocus] = useState<string | null>(null);
   const names = roster.data?.names ?? [];
   // Homework is for the children who were in the lesson: today's Present and Late marks.
   // Read today's attendance again at the click: it is often taken after the panel opened.
@@ -139,6 +147,11 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
   }, [classId, classLoading, cls?.curriculum, place.state?.deck_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const plan = useMemo(() => (unit ? unitPlan(unit) : []), [unit]);
+  // Class plays: the class's own book (Look has plays and no decks), else the unit being browsed.
+  const playCourse = classId ? (classLoading ? null : playCourseOf(cls?.curriculum)) : unit ? { course: unit.curriculum, level: unit.level } : null;
+  const classPlays: ClassPlay[] = playCourse ? playsFor(PLAYS, playCourse.course, playCourse.level) : [];
+  const playsAfter = (d: Deck) => classPlays.filter((p) => unit && p.unit === unit.unit && p.course === unit.curriculum && p.afterLesson === d.lesson);
+  const openPlay = (id: string | null) => { setPlayFocus(id); setTab("plays"); if (id) setTimeout(() => document.getElementById(`play-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
   const skip = holidays.split(/[\s,]+/).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
   const paced = useMemo(() => (unit && cls ? paceLessons(plan, cls.slots, start, skip) : []), [plan, cls, start, holidays]); // eslint-disable-line react-hooks/exhaustive-deps
   const rosterNote = !classId
@@ -193,7 +206,9 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
             <p className="text-xs text-hec-ink-soft">
               {courseOf(cls?.curriculum).curriculum
                 ? "No lesson decks have been written for this class's level yet."
-                : "This class's book is not set to a course we have decks for. Set it in Admin > class > Settings."}
+                : classPlays.length
+                  ? "No lesson decks for this book. Its class plays are in the Plays tab."
+                  : "This class's book is not set to a course we have decks for. Set it in Admin > class > Settings."}
             </p>
           )}
         </div>
@@ -217,7 +232,22 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
         </div>
       )}
 
-      {unit && (
+      {(classId || unit) && (
+        <div className="flex gap-1" role="tablist" aria-label="Lessons or class plays">
+          <Button role="tab" aria-selected={tab === "lessons"} variant={tab === "lessons" ? "default" : "outline"} onClick={() => setTab("lessons")}><CalendarDays className="h-4 w-4" />Lessons</Button>
+          <Button role="tab" aria-selected={tab === "plays"} variant={tab === "plays" ? "default" : "outline"} onClick={() => openPlay(null)} title="Class plays: an extension you add on top of a lesson">
+            <Drama className="h-4 w-4" />Plays{classPlays.length ? ` (${classPlays.length})` : ""}
+          </Button>
+        </div>
+      )}
+
+      {tab === "plays" && (classId || unit) && (
+        <PlaysTab plays={classPlays} roster={names} rosterNote={rosterNote}
+          unit={unit && playCourse && unit.curriculum === playCourse.course && unit.level === playCourse.level ? unit.unit : null}
+          focusId={playFocus} course={unit ? unitLabel(unit).replace(/:s[sS]*$/, "") : cls?.curriculum ?? undefined} />
+      )}
+
+      {tab === "lessons" && unit && (
         <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="font-display text-hec-h3 text-hec-ink flex items-center gap-2"><CalendarDays className="h-5 w-5" />Pacing guide · {unit.title}</h3>
@@ -278,6 +308,11 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
                     <TableCell className="text-right">
                       <div className="flex flex-wrap justify-end gap-1">
                         <Button size="sm" onClick={() => present(d, unit)}><Play className="h-4 w-4" />Present</Button>
+                        {playsAfter(d).map((p) => (
+                          <Button key={p.id} size="sm" variant="outline" className="border-amber-400" title={`Class play after this lesson: ${p.minutes} minutes on top of the lesson`} onClick={() => openPlay(p.id)}>
+                            <Drama className="h-4 w-4" />Play +{p.minutes} min
+                          </Button>
+                        ))}
                         {g && <Button size="sm" variant="outline" onClick={() => present(g, unit)} title="The grammar of this lesson on its own"><Lightbulb className="h-4 w-4" />Grammar only</Button>}
                         <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit, "teacher")} title="Teacher copy: answers, scripts and teacher notes printed open"><Printer className="h-4 w-4" />Teacher</Button>
                         <Button size="sm" variant="outline" onClick={() => printDeck(d, names, unit, "student")} title="Student copy: no answers, scripts or teacher notes"><Printer className="h-4 w-4" />Student</Button>
@@ -323,14 +358,14 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
         </div>
       )}
 
-      {unit && classId && <InterestGroups unit={unit} students={roster.data?.enrolled ?? []} interests={place.state?.interests ?? {}}
+      {tab === "lessons" && unit && classId && <InterestGroups unit={unit} students={roster.data?.enrolled ?? []} interests={place.state?.interests ?? {}}
         onSave={async (interests) => {
           const error = await place.save({ interests }, true);
           if (error) toast.error("Could not save the homework groups", { description: (error as any).message });
           else toast.success("Homework groups saved for this class");
         }} />}
 
-      {unit && (unit.worksheets?.length ?? 0) > 0 && (
+      {tab === "lessons" && unit && (unit.worksheets?.length ?? 0) > 0 && (
         <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
           <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><FileText className="h-5 w-5" />Grammar worksheets (ours, printable)</h3>
           <p className="mb-3 text-hec-small text-hec-ink-soft">Support ★, Core ★★ and Challenge ★★★ on one sheet. The teacher copy adds the answer key; the student copy has none.</p>
@@ -351,7 +386,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
         </div>
       )}
 
-      {unit && odCompanions(unit.curriculum, unit.level, unit.unit).length > 0 && (
+      {tab === "lessons" && unit && odCompanions(unit.curriculum, unit.level, unit.unit).length > 0 && (
         <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
           <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><BookOpen className="h-5 w-5" />Oxford Discover companion books</h3>
           <p className="mb-3 text-hec-small text-hec-ink-soft">Pages in the 2nd-edition books that go with this unit. Answers are in each book's answer key.</p>
@@ -366,7 +401,7 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
         </div>
       )}
 
-      {unit && unit.decks.some((d) => d.resources?.length) && (
+      {tab === "lessons" && unit && unit.decks.some((d) => d.resources?.length) && (
         <div className="rounded-hec-lg border border-hec-line bg-hec-surface p-4 shadow-hec-1">
           <h3 className="mb-1 font-display text-hec-h3 text-hec-ink flex items-center gap-2"><ExternalLink className="h-5 w-5" />Supplementary worksheets (Twinkl)</h3>
           <p className="mb-3 text-hec-small text-hec-ink-soft">Links open on Twinkl; sign in there with the school's account to download. Each one also shows on the slide it supports.</p>
@@ -408,6 +443,8 @@ export function LessonDecksPanel({ classes, flipbooks = [] }: { classes: ClassLi
           onSlide={(i) => { if (classId) void place.save({ deck_id: playing.deck.id, slide_index: i }); }}
           onBookPage={(index) => { if (classId) void place.save({ flipbook_page: index, flipbook_id: flipbook?.id ?? null }, true); }}
           onClose={() => setPlaying(null)}
+          plays={playsAfter(playing.deck).map((p) => ({ id: p.id, title: p.title, minutes: p.minutes }))}
+          onPlay={(id) => { setPlaying(null); openPlay(id); }}
         />
       )}
     </div>
