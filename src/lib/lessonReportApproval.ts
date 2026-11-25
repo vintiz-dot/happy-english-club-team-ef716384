@@ -202,14 +202,15 @@ function cleanQuestion(q: QuizQuestion, i: number) {
   };
 }
 
-/** The questions as readable text for the assignment's description (never the answers). */
+/** The questions as HTML for the assignment's description (never the answers): one paragraph per question, choices on their own lines. */
 export function quizBodyText(questions: QuizQuestion[]): string {
+  const esc = (t: string) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return questions.map((q, i) => {
-    const lines = [`${i + 1}. ${q.prompt}${q.prompt_vi ? ` (${q.prompt_vi})` : ""}`];
-    if (q.kind === "choice" && q.options?.length) q.options.forEach((o, j) => lines.push(`   ${String.fromCharCode(65 + j)}. ${o}`));
-    if (q.kind === "order" && q.options?.length) lines.push(`   Put in order: ${q.options.join(" / ")}`);
-    return lines.join("\n");
-  }).join("\n");
+    const lines = [`<strong>${i + 1}. ${esc(q.prompt)}</strong>${q.prompt_vi ? `<br>${esc(q.prompt_vi)}` : ""}`];
+    if (q.kind === "choice" && q.options?.length) q.options.forEach((o, j) => lines.push(`${String.fromCharCode(65 + j)}. ${esc(o)}`));
+    if (q.kind === "order" && q.options?.length) lines.push(`Put in order: ${q.options.map(esc).join(" / ")}`);
+    return `<p>${lines.join("<br>")}</p>`;
+  }).join("");
 }
 
 /** approve_lesson_report's arguments, exactly as docs/LESSON_REPORTS.md says. */
