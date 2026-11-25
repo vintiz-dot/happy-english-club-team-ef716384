@@ -310,6 +310,13 @@ const AttendanceDrawer = ({ session, onClose }: AttendanceDrawerProps) => {
           </SheetDescription>
         </SheetHeader>
 
+        {/* Schedule -> class report (25 Nov 2026): the lesson's report, plan, talk time, each child and the transcript. */}
+        {(role === "admin" || role === "teacher") && (
+          <Button asChild variant="outline" className="mt-4 w-full min-h-12 text-base">
+            <Link to={`/class-report/${session.id}`}><FileText className="h-5 w-5 mr-2" aria-hidden /> Class report: plan, talk time, each child, transcript</Link>
+          </Button>
+        )}
+
         {/* Who's speaking (21 Nov 2026): tap who talks while the lesson is recorded. Today's lessons only. */}
         {session.status !== 'Canceled' && (role === "admin" || role === "teacher")
           && session.date === dayjs().tz('Asia/Bangkok').format('YYYY-MM-DD') && (

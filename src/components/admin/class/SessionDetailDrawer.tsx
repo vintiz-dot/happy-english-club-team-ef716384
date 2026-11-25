@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
 import { Users, Save, Award, FileText, User, Clock, Edit2, Ban, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { dayjs } from "@/lib/date";
@@ -262,6 +263,11 @@ export default function SessionDetailDrawer({ session, onClose }: SessionDetailD
           )}
 
           <div className="space-y-6 mt-6">
+            {(role === "admin" || role === "teacher") && session.status !== "Canceled" && (
+              <Button asChild variant="outline" className="w-full">
+                <Link to={`/class-report/${session.id}`}><FileText className="h-4 w-4 mr-2" /> Class report: plan, talk time, each child, transcript</Link>
+              </Button>
+            )}
             {/* Teacher Info */}
             <Card>
               <CardHeader>
