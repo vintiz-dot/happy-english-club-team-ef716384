@@ -251,3 +251,16 @@ In the app, the voice groups are deleted with their report (30 days, a withdrawa
 - How well it recognises voices on real lessons with in-class enrolment. B2 measured made-up mixes, and real lessons then named 0 of 12 groups without enrolment. The first weeks' `accuracy` will tell.
 - The thresholds are B2's (0.70 for models B2 did not measure), not tuned on your classes; the accuracy sweep is what tunes them.
 - DPAPI was checked on this laptop's own account, not on `hec-pilot`.
+
+## 11. A lesson recorded outside the app (added 25 Nov 2026)
+
+When the app's recorder failed and the lesson was recorded on the laptop's Sound Recorder or a phone, import the file as that lesson's recording. It is then transcribed overnight and reviewed like any other.
+
+- Needs migration `20261125090000_recorder_import_recording.sql` pasted once.
+- `PY scripts\lesson-monitor\import_recording.py --file "<file>" --session-id <lesson id> --note "laptop Sound Recorder, the app recorder crashed"`. Add `--dry-run` first to see its times and size.
+- The file's start is its last write time minus its length. Check the printed times against the lesson. `--start` overrides it.
+- The class's recording switch and every child's recording consent are checked as in the app. A lesson from before the class's consent confirmation also needs `--consent-note` (how the parents had agreed by then). It is kept with the recording and in the audit log.
+- Only an admin can import. It is the room track only: no lapel track, so no teacher-speech labels and no taps.
+- An imported recording is never evidence that the lesson ran: the server saw none of it.
+- If the lesson is before the monitor's start date for the class, move the start back with `lesson_monitor_cover_from` after the import (it counts lesson days with a recording).
+- Run the same command again after a break: it resumes.
