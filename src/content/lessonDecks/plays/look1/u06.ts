@@ -3,454 +3,237 @@ import type { Play } from "@/lib/lessonDecks/plays";
 
 export const look1U6Plays: Play[] = [
   {
-    "id": "look1-u6-p1",
-    "course": "look",
-    "level": 1,
-    "unit": 6,
-    "afterLesson": 4,
-    "title": "Where's the Teddy Bear?",
-    "minutes": 16,
-    "band": "6-8",
-    "summary": "A child cannot find the teddy bear. \"Where's the teddy bear?\" \"It's in the kitchen.\" \"No, it isn't.\" It is hiding in the shower, wearing a hat!",
-    "targets": {
-      "words": [
-        "bathroom",
-        "bedroom",
-        "kitchen",
-        "living room",
-        "bed",
-        "shower",
-        "TV"
-      ],
-      "grammar": [
-        "Where's the ...? It's in the ...",
-        "The ... is on / under / next to the ..."
-      ]
+    id: "look1-u6-p1",
+    course: "look",
+    level: 1,
+    unit: 6,
+    afterLesson: 4,
+    title: "Bedtime! Where's the Teddy Bear?",
+    minutes: 16,
+    band: "6-8",
+    summary: "It's bedtime, and the giggly Cousins have hidden Baby's teddy bear and Grandpa's story book. Sleepy Dad looks for the teddy, Grandpa looks for his book, and each one finds the other's. Only when they tell each other what they saw does everybody get to bed.",
+    targets: {
+      words: ["bathroom", "bedroom", "kitchen", "living room", "bed", "cabinet", "shower", "TV"],
+      grammar: ["Where's the ...? It's in / on the ...", "The ... is in / on / next to the ..."],
     },
-    "roles": [
-      {
-        "id": "n",
-        "name": "Narrator",
-        "who": "the teacher, or a confident reader"
-      },
-      {
-        "id": "seeker",
-        "name": "Seeker",
-        "who": "a confident child: the most lines"
-      },
-      {
-        "id": "teddy",
-        "name": "Teddy Bear",
-        "who": "a short, funny part",
-        "optional": {
-          "cut": true
-        }
-      },
-      {
-        "id": "k",
-        "name": "Home Helpers",
-        "who": "children who like to act; short lines",
-        "group": {
-          "max": 9
-        }
-      }
+    roles: [
+      { id: "n", name: "Narrator", who: "the teacher", teacher: true },
+      { id: "dad", name: "Dad", who: "a confident child: very sleepy, yawns all the time; the most lines" },
+      { id: "grandpa", name: "Grandpa", who: "a slow, kind voice; wants his story book" },
+      { id: "kids", name: "Cousin", who: "giggly children who hid everything; they shout \"It's in the house!\"", group: { max: 6 } },
+      { id: "baby", name: "Baby", who: "a tiny, funny part: cries, then laughs (with no child free, the teacher voices a doll)", optional: { give: "n" } },
+      { id: "cabinet", name: "Cabinet", who: "a short part: opens its arms like doors (creak!)", optional: { give: "kids" } },
+      { id: "tv", name: "TV", who: "a short part: says beep", optional: { give: "kids" } },
+      { id: "shower", name: "Shower", who: "a short, splashy part with the big surprise", optional: { give: "kids" } },
     ],
-    "scenes": [
+    scenes: [
       {
-        "title": "Scene 1: Where is it?",
-        "lines": [
-          {
-            "stage": "The room has five places: bedroom, bathroom, kitchen, living room and the shower. The Home Helpers stand at the places."
-          },
-          {
-            "role": "n",
-            "text": "The Seeker has a teddy bear. It's lost!",
-            "do": "Look around, sad."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the teddy bear?",
-            "do": "Hands out, shrug."
-          },
-          {
-            "role": "k",
-            "text": "It's in the bedroom.",
-            "do": "Point at the bedroom."
-          },
-          {
-            "role": "seeker",
-            "text": "Is it in the bedroom? No, it isn't.",
-            "do": "Look and shake your head."
-          },
-          {
-            "role": "k",
-            "text": "It's in the kitchen.",
-            "do": "Point at the kitchen."
-          },
-          {
-            "role": "seeker",
-            "text": "Is it in the kitchen? No, it isn't.",
-            "do": "Look and shake your head."
-          },
-          {
-            "everyone": "Where's the teddy bear? Where?",
-            "do": "Look left, look right."
-          }
-        ]
+        title: "Scene 1: Bedtime",
+        lines: [
+          { stage: "Four corners of the room are the house: the kitchen (the Cabinet), the living room (the TV), the bathroom (the Shower, holding up a towel), the bedroom (a bed of two chairs with a blanket). Before the play, Dad and Grandpa shut their eyes. The Cousins hide the teddy bear behind the Shower's towel, and give the book card to the TV, who holds it behind their back. The Cabinet holds a ball card. The Baby (or, with no child free, the teacher's doll) lies in the bed under the blanket." },
+          { role: "n", text: "It's night. The baby is in the bedroom.", do: "Hands together under your cheek: the bedroom." },
+          { role: "baby", text: "Teddy! Teddy! Waaah!", do: "Rub your eyes and cry." },
+          { role: "kids", text: "Where's the teddy bear? Hee hee!", do: "Whisper to the audience. Hands over your mouth.", all: true },
+          { role: "dad", text: "Ahh... Where's the teddy bear?", do: "Yawn a big yawn. Then hug a bear that is not there." },
+          { role: "kids", text: "It's in the house!", do: "Make a roof over your head. Giggle.", all: true },
+          { role: "dad", text: "Oh no! A big house!", do: "Spread your arms wide. Droop." },
+          { role: "kids", text: "Hee hee! A big, big house!", do: "Spread your arms wide. Giggle." },
+          { role: "grandpa", text: "Story time! Where's my book?", do: "Open your hands like a book. Look left and right." },
+          { role: "kids", text: "It's in the house!", do: "Make a roof over your head. Giggle.", all: true },
+          { role: "grandpa", text: "Hmm. Cousins? A game?", do: "Shake a finger at the Cousins." },
+          { role: "kids", text: "Hee hee! It's a game!", do: "Hands over your mouth. Giggle." },
+        ],
       },
       {
-        "title": "Scene 2: Under and on",
-        "lines": [
-          {
-            "role": "k",
-            "text": "It's in the living room.",
-            "do": "Point at the living room."
-          },
-          {
-            "role": "seeker",
-            "text": "The teddy bear is under the bed?",
-            "do": "Look under the bed."
-          },
-          {
-            "role": "k",
-            "text": "No, it isn't. It's on the TV.",
-            "do": "Point at the TV."
-          },
-          {
-            "role": "seeker",
-            "text": "Is it on the TV? No, it isn't.",
-            "do": "Look up and shake your head."
-          },
-          {
-            "role": "k",
-            "text": "It's in the bathroom.",
-            "do": "Point at the bathroom."
-          },
-          {
-            "role": "k",
-            "text": "It's next to the bed.",
-            "do": "Point next to the bed."
-          },
-          {
-            "role": "seeker",
-            "text": "No, it isn't!",
-            "do": "Shake your head and stamp."
-          },
-          {
-            "everyone": "Where's the teddy bear? Where?",
-            "do": "Look left, look right."
-          }
-        ]
+        title: "Scene 2: Is it in the cabinet?",
+        lines: [
+          { role: "n", text: "Dad looks in the kitchen.", do: "Stir a big pot: the kitchen." },
+          { role: "dad", text: "Is it in the cabinet?", do: "Knock on two doors." },
+          { stage: "{@cabinet} keeps their arms shut like doors. Only {@cabinet} can see inside." },
+          { role: "cabinet", text: "Creak! No, it isn't. It's a ball.", do: "Open your arms like two doors. Show the ball card." },
+          { role: "dad", text: "A ball? Oh no. No teddy bear.", do: "Sad face. Shake your head." },
+          { role: "kids", text: "Shh! Dad is in the kitchen!", do: "Whisper, one hand by your mouth. Stir a pot.", all: true },
+          { role: "dad", text: "The bedroom! Is it in the bed?", do: "Hands under your cheek. Then pat the blanket." },
+          { stage: "The Baby is under the blanket, so Dad cannot see what is in the bed." },
+          { role: "baby", text: "No, it isn't. It's me! Hee hee!", do: "Pop your head out from under the blanket." },
+          { role: "dad", text: "The baby! No teddy bear.", do: "Hands on your hips. Yawn." },
+          { role: "dad", text: "Where's the teddy bear?", do: "Hug a bear that is not there." },
+          { role: "kids", text: "It's in the house!", do: "Make a roof over your head. Giggle.", all: true },
+          { role: "dad", text: "The living room! Is it on the TV?", do: "Sit back and put your feet up. Then point at the TV." },
+          { stage: "{@tv} holds the book card behind their back, so Dad cannot see it." },
+          { role: "tv", text: "Beep! No, it isn't. It's a book.", do: "Draw a square screen in the air. Show the book card." },
+          { stage: "{@tv} puts the book card on top of their head: now the book is on the TV." },
+          { role: "dad", text: "A book? Ahh... Zzz.", do: "Yawn. Fall asleep standing up." },
+          { role: "kids", text: "Hee hee! The book is on the TV!", do: "Whisper to the audience. Point at the TV.", all: true },
+          { role: "kids", text: "Dad! Dad! Hello!", do: "Tap the air next to Dad's shoulder." },
+          { role: "grandpa", text: "The bathroom! Is it in the shower?", do: "Wash your hands. Then pull a curtain." },
+          { stage: "{@shower} holds the towel up like a curtain. The teddy bear is behind it." },
+          { role: "shower", text: "Splash! No, it isn't. It's a teddy bear!", do: "Wiggle your fingers down over your head like water. Show the bear." },
+          { role: "grandpa", text: "A teddy bear? Not my book!", do: "Shake your head. Walk away." },
+          { role: "kids", text: "Hee hee! Grandpa is in the bathroom!", do: "Whisper. Wash your hands." },
+        ],
       },
       {
-        "title": "Scene 3: In the shower!",
-        "lines": [
-          {
-            "role": "n",
-            "text": "Listen! Shh. Something splashes.",
-            "do": "Hand to ear, splash."
-          },
-          {
-            "role": "k",
-            "text": "It's in the shower!",
-            "do": "Point at the shower."
-          },
-          {
-            "role": "teddy",
-            "text": "Hello! I'm in the shower!",
-            "do": "Pop up in a shower hat."
-          },
-          {
-            "role": "seeker",
-            "text": "Oh! It's in the shower!",
-            "do": "Laugh and clap."
-          },
-          {
-            "role": "k",
-            "text": "Teddy bear in the shower!",
-            "do": "Point and laugh."
-          },
-          {
-            "role": "k",
-            "text": "It's on the bed!",
-            "do": "Point at the bed."
-          },
-          {
-            "role": "seeker",
-            "text": "The teddy bear is next to the bed. Good night!",
-            "do": "Hug the bear."
-          },
-          {
-            "everyone": "Where's the teddy bear? Here!",
-            "do": "Hug a teddy bear."
-          }
-        ]
-      }
+        title: "Scene 3: Dad and Grandpa",
+        lines: [
+          { role: "n", text: "Dad and Grandpa meet. They are sad.", do: "Walk slowly to the middle. Sad face." },
+          { role: "dad", text: "No teddy bear.", do: "Shrug." },
+          { role: "grandpa", text: "No book. Where's my book?", do: "Shrug. Open your hands like a book." },
+          { role: "dad", text: "Oh! It's on the TV! Where's the teddy bear?", do: "Draw a square screen, eyes wide. Then hug the air." },
+          { role: "grandpa", text: "Oh! It's in the shower!", do: "Wiggle your fingers down over your head like water." },
+          { role: "kids", text: "Hee hee! Good game!", do: "Clap and jump.", all: true },
+          { role: "n", text: "Dad runs to the bathroom.", do: "Run on the spot. Then wash your hands." },
+          { stage: "{@shower} gives the teddy bear to {@dad}. From now on {@dad} holds it." },
+          { role: "shower", text: "Splash! Here!", do: "Hold out the teddy bear." },
+          { role: "dad", text: "Oh no! Water!", do: "Squeeze the teddy bear. Drip, drip." },
+          { stage: "{@tv} gives the book card to {@grandpa}. From now on {@grandpa} holds it." },
+          { role: "tv", text: "Beep! Here!", do: "Hold out the book card." },
+          { role: "grandpa", text: "My book! Thank you!", do: "Hug the book." },
+          { role: "kids", text: "Story time! Hee hee!", do: "Sit down on the floor. Clap." },
+          { role: "dad", text: "The teddy bear is on the bed.", do: "Put the bear on the bed. Pat a pillow." },
+          { role: "baby", text: "Teddy! Hee hee!", do: "Hug the bear and laugh." },
+          { role: "n", text: "Grandpa reads. And Dad is on the bed, too!", do: "Open a book. Then lie down on the bed." },
+          { role: "dad", text: "Zzz...", do: "Snore. Hands under your cheek." },
+          { role: "kids", text: "Look! Dad is next to the teddy bear!", do: "Point at the bed and giggle." },
+          { everyone: "Shh! The teddy bear is on the bed!", do: "Finger on your lips. Then hands under your cheek." },
+        ],
+      },
     ],
-    "rehearsal": [
-      {
-        "round": "Listen and do",
-        "minutes": 4,
-        "how": "Read the whole play aloud, slowly. The children only do the actions; they may join the refrain. Nobody has to speak alone yet."
-      },
-      {
-        "round": "Echo the lines",
-        "minutes": 4,
-        "how": "Say each line; the child with that part echoes it with its action. Everyone says the refrain. Then give the one-minute fix."
-      },
-      {
-        "round": "Perform with scripts or picture cards",
-        "minutes": 4,
-        "how": "Perform with scripts and picture cards or a toy teddy bear that moves around the real classroom."
-      },
-      {
-        "round": "Own words",
-        "minutes": 4,
-        "how": "Hide a real toy in the classroom. The class asks \"Where's the ...?\" and the Helpers answer \"It's in / on / under the ...\" with the places they can see."
-      }
+    rehearsal: [
+      { round: "Listen and do", minutes: 4, how: "Read the whole play aloud, slowly. The children only do the actions, and the Cousins may shout \"It's in the house!\". Nobody speaks alone yet." },
+      { round: "Echo the lines", minutes: 4, how: "Say each line; the child with that part echoes it with its action. Then give the one-minute fix." },
+      { round: "Perform with scripts", minutes: 4, how: "Perform with scripts in hand, with the real teddy bear, book card and towel. Each question is asked at a closed thing: the Cabinet's arms, the TV's back, the towel, the blanket." },
+      { round: "Key words", minutes: 3, how: "Perform again with only the key words on the board: Where's / Is it in, on, under / cabinet, TV, shower, bed. Let the Cousins hide the teddy somewhere new, so Dad's questions are real again." },
     ],
-    "focusOnForm": [
-      "\"It's in the kitchen\": not \"It in kitchen\": say \"the\" and the little 's.",
-      "\"in\" vs \"on\" vs \"under\": show with a hand on each, never mix them.",
-      "\"Where's\": say the 's: \"Where is\" together."
+    focusOnForm: [
+      "\"It's in the shower\", not \"It in the shower\": Vietnamese learners drop the 's. Tap your chest on \"It's\".",
+      "Say \"the\": \"in the kitchen\", not \"in kitchen\". Clap once on \"the\".",
+      "Final sounds: \"bed\", \"cabinet\", \"isn't\". Hold up a finger and make the last d or t heard.",
+      "\"in / on / under\": show each with a hand and a box (in the box, on the box, under the box), then ask \"Where's the teddy?\" once each way.",
     ],
-    "props": [
-      "a teddy bear toy",
-      "room cards (bathroom, bedroom, kitchen, living room)",
-      "a paper bed, TV and shower"
-    ],
-    "teacherNote": "Put the room cards around the classroom. The children move to each room as they say its name.",
-    "encore": "Later, hide a different toy and use \"under\", \"on\" and \"next to\" in the real classroom."
+    props: ["a teddy bear (hidden by the Cousins behind the Shower's towel, then Dad's)", "a book card (the TV's, then Grandpa's)", "a ball card (the Cabinet's)", "a towel (the shower curtain)", "a blanket and two chairs for the bed", "a doll for the Baby when the teacher voices it"],
+    teacherNote: "One action per word, the same every time: kitchen = stir a big pot; bathroom = wash your hands; bedroom = hands under your cheek; living room = sit back with your feet up; bed = pat a pillow; cabinet = open two doors; shower = fingers down over your head; TV = draw a square screen. The Cousins' \"It's in the house!\" is true and no help at all: that is the joke. Dad and Grandpa shut their eyes while the Cousins hide everything, so their questions are real. In a small class the teacher voices the Baby with a doll, and a Cousin plays the Cabinet, the TV and the Shower: the Cousins hid everything, so they know what is inside. Give these parts their own children as soon as there are enough.",
+    encore: "Next lesson, perform it again with no scripts, and let the Cousins hide the two things somewhere new (the teddy under the bed, the book in the cabinet). Grandma can take Grandpa's part. Dad and Grandpa must ask and listen to find them.",
   },
   {
-    "id": "look1-u6-p2",
-    "course": "look",
-    "level": 1,
-    "unit": 6,
-    "afterLesson": 7,
-    "title": "Hide and Seek at Home",
-    "minutes": 16,
-    "band": "6-8",
-    "summary": "Friends play hide and seek with toys in a home. \"Where's the ball?\" \"The ball is under the bed.\" A friend hides, too, and everyone has fun.",
-    "targets": {
-      "words": [
-        "bathroom",
-        "bedroom",
-        "kitchen",
-        "living room",
-        "bed",
-        "cabinet",
-        "shower",
-        "TV"
-      ],
-      "grammar": [
-        "Where's the ...? It's in the ...",
-        "The ... is on / under / next to the ..."
-      ]
+    id: "look1-u6-p2",
+    course: "look",
+    level: 1,
+    unit: 6,
+    afterLesson: 7,
+    title: "The Robot in the New House",
+    minutes: 16,
+    band: "6-8",
+    summary: "Mom has a new house and a party at three o'clock. A helpful Robot carries the boxes, but the Friends make it spin, and dizzy, it puts the bed in the kitchen and the TV in the shower. The Friends help put everything in the right room just in time.",
+    targets: {
+      words: ["bathroom", "bedroom", "kitchen", "living room", "bed", "cabinet", "shower", "TV"],
+      grammar: ["Where's the ...? It's next to / in the ...", "The ... is in the ..."],
     },
-    "roles": [
-      {
-        "id": "n",
-        "name": "Narrator",
-        "who": "the teacher, or a confident reader"
-      },
-      {
-        "id": "seeker",
-        "name": "Seeker",
-        "who": "a confident child: asks where"
-      },
-      {
-        "id": "hider",
-        "name": "Silly Friend",
-        "who": "a short, funny part: hides badly",
-        "optional": {
-          "give": "k"
-        }
-      },
-      {
-        "id": "k",
-        "name": "Hiding Friends",
-        "who": "children who like to act; short lines",
-        "group": {
-          "max": 9
-        }
-      }
+    roles: [
+      { id: "n", name: "Narrator", who: "the teacher", teacher: true },
+      { id: "mom", name: "Mom", who: "a quick, busy voice; holds the house plan" },
+      { id: "robot", name: "Robot", who: "a confident child: a beep-beep voice and stiff arms; loves to spin" },
+      { id: "kids", name: "Friend", who: "friends at the window: they can see every room and shout to the Robot", group: { max: 7 } },
+      { id: "bed", name: "Bed", who: "a short, funny part: sits in the first box", optional: { cut: true } },
+      { id: "tv", name: "TV", who: "a short, funny part: sits in the second box", optional: { cut: true } },
+      { id: "clock", name: "Clock", who: "a short part: tick-tock (with no child free, the teacher)", optional: { give: "n" } },
     ],
-    "scenes": [
+    scenes: [
       {
-        "title": "Scene 1: One, two, three",
-        "lines": [
-          {
-            "stage": "The Seeker covers their eyes. The Hiding Friends hide a toy or themselves around the room."
-          },
-          {
-            "role": "n",
-            "text": "Hide and seek! Close your eyes!",
-            "do": "Cover your eyes."
-          },
-          {
-            "everyone": "Hide and seek! One, two, three!",
-            "do": "Count and cover your eyes."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the ball?",
-            "do": "Look around."
-          },
-          {
-            "role": "k",
-            "text": "The ball is under the bed.",
-            "do": "Point under the bed."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the kite?",
-            "do": "Look around."
-          },
-          {
-            "role": "k",
-            "text": "The kite is on the TV.",
-            "do": "Point at the TV."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the doll?",
-            "do": "Look around."
-          },
-          {
-            "role": "k",
-            "text": "The doll is next to the cabinet.",
-            "do": "Point next to the cabinet."
-          }
-        ]
+        title: "Scene 1: A new house",
+        lines: [
+          { stage: "Chairs make four rooms: the bathroom (with a shower), the bedroom, the kitchen and the living room. {@mom} holds the house plan to her chest: only {@mom} can see it. Three closed boxes stand in a line: the bed card is in the first, the TV card in the second, and the third box is the cabinet. Only {@robot} may peek in and carry the cards. The Friends stand at one side of the room: the window. From there they can see every room." },
+          { stage: "{@bed} sits in the first box and holds the bed card: {@bed} is the bed, and the Robot leads {@bed} by the hand.", if: "bed" },
+          { stage: "{@tv} sits in the second box and holds the TV card: {@tv} is the TV, and the Robot leads {@tv} by the hand.", if: "tv" },
+          { role: "n", text: "Mom has a new house. Look!", do: "Make a roof over your head." },
+          { role: "clock", text: "Tick tock! It's one.", do: "Swing your arm like a clock hand. Hold up one finger." },
+          { role: "mom", text: "Oh no! The party is at three!", do: "Hold up three fingers. Hands on your cheeks." },
+          { role: "robot", text: "Beep boop! I'm a robot! Help? Help?", do: "Stiff robot arms. Wave one hand." },
+          { role: "mom", text: "Yes, please! Help me, Robot!", do: "Hands together, please." },
+          { role: "kids", text: "Hello, Robot! Beep boop!", do: "Wave at the window. Make stiff robot arms." },
+          { role: "kids", text: "Where's the bed?", do: "Look all around through the window.", all: true },
+          { role: "mom", text: "It's in a box!", do: "Pat the first box." },
+        ],
       },
       {
-        "title": "Scene 2: More places",
-        "lines": [
-          {
-            "role": "seeker",
-            "text": "Where's the train?",
-            "do": "Look in the kitchen."
-          },
-          {
-            "role": "k",
-            "text": "The train is in the kitchen.",
-            "do": "Point at the kitchen."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the game?",
-            "do": "Look in the living room."
-          },
-          {
-            "role": "k",
-            "text": "The game is in the living room.",
-            "do": "Point at the living room."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the plane?",
-            "do": "Look in the bathroom."
-          },
-          {
-            "role": "k",
-            "text": "The plane is in the bathroom.",
-            "do": "Point at the bathroom."
-          },
-          {
-            "role": "seeker",
-            "text": "Where's the bat?",
-            "do": "Look in the bedroom."
-          },
-          {
-            "role": "k",
-            "text": "The bat is in the bedroom.",
-            "do": "Point at the bedroom."
-          },
-          {
-            "everyone": "Hide and seek! One, two, three!",
-            "do": "Count and cover your eyes."
-          }
-        ]
+        title: "Scene 2: Three boxes",
+        lines: [
+          { role: "mom", text: "What's this?", do: "Knock on the first box." },
+          { stage: "{@robot} peeks into the box. Only {@robot} can see inside." },
+          { role: "robot", text: "Beep! It's a bed. Where's the bedroom?", do: "Pat a pillow: a bed. Then look all around." },
+          { role: "mom", text: "It's next to the bathroom.", do: "Look at your plan. Point. Wash your hands: the bathroom." },
+          { role: "kids", text: "Spin, Robot! One, two, three!", do: "Spin a finger in the air. Count.", all: true },
+          { stage: "{@robot} spins around three times, slowly." },
+          { role: "robot", text: "Beep... Is this the bedroom?", do: "Wobble. Point at the kitchen." },
+          { role: "kids", text: "No, it isn't!", do: "Shake your head. Wave your arms at the window.", all: true },
+          { role: "kids", text: "Next to the bathroom!", do: "Wash your hands. Point." },
+          { role: "robot", text: "Beep! Next to the bathroom!", do: "Turn to look, and turn, and turn." },
+          { stage: "{@robot} is dizzy, and carries the bed card to the kitchen." },
+          { role: "robot", text: "Beep! The bedroom! OK!", do: "Put the bed down. Thumbs up." },
+          { role: "kids", text: "Oh no! The bed is in the kitchen!", do: "Hands on your cheeks. Stir a pot.", all: true },
+          { role: "bed", text: "Not in the kitchen!", do: "Hold up the bed card. Shake your head." },
+          { role: "mom", text: "What's this?", do: "Knock on the second box." },
+          { role: "robot", text: "Beep! It's a TV. Where's the living room?", do: "Draw a square screen. Then look all around." },
+          { role: "mom", text: "It's next to the kitchen.", do: "Look at your plan. Point. Stir a pot: the kitchen." },
+          { role: "kids", text: "Spin, Robot! One, two, three!", do: "Spin a finger in the air. Count.", all: true },
+          { stage: "{@robot} spins around three times, slowly." },
+          { role: "robot", text: "Beep... Is this the living room?", do: "Wobble. Point at the shower." },
+          { role: "kids", text: "No, it isn't!", do: "Shake your head. Wave your arms at the window.", all: true },
+          { role: "kids", text: "Next to the kitchen!", do: "Stir a pot. Point." },
+          { role: "robot", text: "Beep! Next to the kitchen!", do: "Turn to look, and turn, and turn." },
+          { stage: "{@robot} is dizzy, and carries the TV card into the shower." },
+          { role: "robot", text: "Beep! The living room! OK!", do: "Put the TV down. Thumbs up." },
+          { role: "kids", text: "Oh no! The TV is in the shower!", do: "Hands on your cheeks. Fingers down over your head.", all: true },
+          { role: "tv", text: "Oh no! Water!", do: "Hold up the TV card. Wiggle your fingers down over your head." },
+          { role: "mom", text: "What's this?", do: "Knock on the third box. It is big." },
+          { role: "robot", text: "Beep! It's a cabinet. Where's the kitchen?", do: "Open two doors with your hands. Look all around." },
+          { role: "mom", text: "It's next to the living room.", do: "Look at your plan. Point. Sit back, feet up: the living room." },
+          { role: "kids", text: "Spin, Robot! One, two, three, four, five, six!", do: "Spin a finger in the air. Count to six.", all: true },
+          { stage: "{@robot} spins and spins, and falls into the cabinet box. {@mom} is reading her plan and does not see." },
+          { role: "robot", text: "Beep... beep... boop.", do: "Wobble. Sit down in the box." },
+          { role: "mom", text: "Good! Where's the robot?", do: "Look up from your plan. Look left and right." },
+          { role: "kids", text: "It's in the cabinet!", do: "Open two doors with your hands." },
+          { role: "robot", text: "Beep! Help! Help!", do: "Knock from inside the box." },
+        ],
       },
       {
-        "title": "Scene 3: A friend!",
-        "lines": [
-          {
-            "role": "seeker",
-            "text": "Where's my friend?",
-            "do": "Look around, hands out."
-          },
-          {
-            "role": "n",
-            "text": "Look! Two feet under the bed.",
-            "do": "Point at the bed."
-          },
-          {
-            "role": "k",
-            "text": "The friend is under the bed!",
-            "do": "Point and laugh."
-          },
-          {
-            "role": "hider",
-            "text": "I'm here! Hello!",
-            "do": "Wave from under the bed."
-          },
-          {
-            "role": "seeker",
-            "text": "Oh! The friend is next to the shower!",
-            "do": "Point at the shower."
-          },
-          {
-            "role": "hider",
-            "text": "No! I'm in the cabinet!",
-            "do": "Hide in the cabinet."
-          },
-          {
-            "role": "k",
-            "text": "Play with your friends!",
-            "do": "Hold hands and smile."
-          },
-          {
-            "everyone": "Hide and seek! One, two, three!",
-            "do": "Count and cover your eyes."
-          }
-        ]
-      }
+        title: "Scene 3: Friends help",
+        lines: [
+          { stage: "{@mom} was busy with her plan. She did not see where the Robot put the things." },
+          { role: "mom", text: "Is the bed in the bedroom?", do: "Look at your plan. Hands under your cheek." },
+          { role: "kids", text: "No, it isn't! It's in the kitchen!", do: "Shake your head. Stir a big pot." },
+          { role: "mom", text: "Is the TV in the living room?", do: "Draw a square screen. Look around." },
+          { role: "kids", text: "No, it isn't! It's in the shower!", do: "Shake your head. Fingers down over your head." },
+          { role: "mom", text: "Oh no! Friends, help!", do: "Wave the Friends in." },
+          { stage: "The Friends come in from the window. They pick up the bed card and the TV card from where the Robot put them." },
+          { stage: "The Bed and the TV keep their own cards; the Friends lead them by the hand.", if: "bed" },
+          { role: "kids", text: "The bed is in the bedroom!", do: "Carry the bed to the bedroom. Hands under your cheek." },
+          { role: "bed", text: "The bedroom! Ahh!", do: "Hold up the bed card. Smile." },
+          { role: "kids", text: "The TV is in the living room!", do: "Carry the TV to the living room. Sit back, feet up." },
+          { role: "tv", text: "The living room! Hooray!", do: "Hold up the TV card. Smile." },
+          { role: "kids", text: "The cabinet is in the kitchen!", do: "Push the cabinet box to the kitchen. Stir a pot." },
+          { role: "robot", text: "Beep! Hello! Is this the living room?", do: "Climb out of the box. Point at the right room, slowly." },
+          { role: "kids", text: "Yes, it is!", do: "Thumbs up. Jump.", all: true },
+          { role: "mom", text: "Thank you, Robot! Thank you, friends!", do: "Hug everyone with big arms." },
+          { role: "clock", text: "Tick tock! It's three! The party!", do: "Swing your arm like a clock hand. Hold up three fingers." },
+          { everyone: "The bed is in the bedroom! Party time!", do: "Hands under your cheek. Then dance." },
+        ],
+      },
     ],
-    "rehearsal": [
-      {
-        "round": "Listen and do",
-        "minutes": 4,
-        "how": "Read the whole play aloud, slowly. The children only do the actions; they may join the refrain. Nobody has to speak alone yet."
-      },
-      {
-        "round": "Echo the lines",
-        "minutes": 4,
-        "how": "Say each line; the child with that part echoes it with its action. Everyone says the refrain. Then give the one-minute fix."
-      },
-      {
-        "round": "Perform with scripts or picture cards",
-        "minutes": 4,
-        "how": "Perform with scripts and real toys hidden around the classroom. Each answer points to the real place."
-      },
-      {
-        "round": "Own words",
-        "minutes": 4,
-        "how": "Children hide a different toy in the classroom and use \"in\", \"on\", \"under\" and \"next to\" with their own places."
-      }
+    rehearsal: [
+      { round: "Listen and do", minutes: 4, how: "Read the whole play aloud. The children only do the actions: spin, wobble, carry the boxes. Everyone may shout \"Spin, Robot!\" and \"No, it isn't!\"." },
+      { round: "Echo the lines", minutes: 4, how: "Say each line; the child with that part echoes it with its action. Then give the one-minute fix." },
+      { round: "Perform with scripts", minutes: 4, how: "Perform with scripts in hand. Keep the boxes closed: only the Robot peeks, and only Mom sees the plan." },
+      { round: "Key words", minutes: 4, how: "Perform with only the key words on the board: What's this? / Where's the ...? / next to / The ... is in the .... Then change what is in each box, so Mom's questions are real again." },
     ],
-    "focusOnForm": [
-      "\"on\" / \"under\" / \"next to\": show with a hand each time.",
-      "\"The ball is under the bed\": not \"Ball under bed\": say \"the\" each time.",
-      "\"Where's the ...?\": say the 's and the end of the word."
+    focusOnForm: [
+      "\"The bed is in the kitchen\", not \"The bed in the kitchen\": Vietnamese learners leave out \"is\". Hold up one finger for each word and point to the missing one.",
+      "\"next to\": say the t at the end of \"next\". Stand next to a child as you say it.",
+      "\"Where's the ...?\": the 's and \"the\" are both there. Tap them: Where-'s-the.",
+      "\"Is this the bedroom?\": make your voice go up at the end. \"No, it isn't\": say the final t.",
     ],
-    "props": [
-      "toys to hide",
-      "paper bed, TV, cabinet, shower",
-      "room cards"
-    ],
-    "teacherNote": "Value: play with your friends. Keep the hiding friendly; nobody is left out.",
-    "encore": "Later, hide new toys and play it as a real game, with a different Seeker."
-  }
+    props: ["three closed boxes (one big: the cabinet)", "a house plan (a paper with four rooms drawn), held by Mom", "a bed card and a TV card in the boxes (carried by the Robot, later by the Friends; held by the Bed and the TV when those parts are cast)", "a toy clock (optional)"],
+    teacherNote: "One action per word, the same every time: kitchen = stir a big pot; bathroom = wash your hands; bedroom = hands under your cheek; living room = sit back with your feet up; bed = pat a pillow; cabinet = open two doors; shower = fingers down over your head; TV = draw a square screen. Two sides each hold half the story: only the Robot sees inside the boxes, and only Mom sees the plan, so \"What's this?\" and \"Where's the ...?\" are real questions. The Robot goes wrong only because it is dizzy: it hears \"next to the bathroom\" and turns and turns to look. Keep the spinning safe: three slow turns on the spot. Value: play with your friends.",
+    encore: "Next lesson, play it again with no scripts and new things in the boxes (a shower, a bed, a TV). The Robot puts them in new wrong rooms, and the Friends choose where to put them right.",
+  },
 ];

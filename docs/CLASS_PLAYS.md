@@ -46,7 +46,27 @@ the new one. The teacher can also set the number by hand, for example when
 the teacher takes a part.
 
 - Roles without `optional` are always cast. **At most 4 such roles**, so a class of 4
-  never doubles up. With fewer children, one child reads two parts.
+  never doubles up. With fewer children, one child reads two parts, but never two parts
+  that speak one after the other: a child never asks and answers themself. When every
+  child is already in a part's conversation, the TEACHER reads it (actor -1, shown as
+  "Teacher"). From 2 children up the suite holds every play to that.
+- `teacher: true`: always the teacher's part (the Narrator for Mars). No child is cast in it
+  and it counts for no child; it is never optional or a group.
+- **Who gets the next child.** Past the always-cast roles, each child goes where it
+  lightens the load most, the heaviest voice first, the teacher's voice included: the
+  next optional role (in the order listed) or one more member of a group. A child with 3
+  lines or fewer is light enough, so then a cameo wins. A group never carries half the
+  play while two-line cameos take the other children.
+- With 2-3 children, every way of handing out the parts is tried. No two parts that
+  speak one after the other share a voice, and the teacher takes the lightest part that
+  fits.
+- `member: k` on a group line pins it to member k (wrapping with fewer members). The
+  child who names a prop is the one who gets it back.
+- `if: "role"` on a stage line shows it only when that role is cast. Stage text never
+  names a cut cameo.
+- A merged line keeps the part it belongs to (`as`). The screen and the print show
+  "Beach Kid 1 as Mom Crab", and the suite counts it as that part when it checks for
+  self-talk. A `{@role}` mention of a character the teacher voices keeps the character's name.
 - `optional: { give: "x" }`: cast only when a child is left for it, in the order the
   roles are listed. Otherwise its lines go to role x. Chains are fine: owl → dog → kids.
 - `optional: { cut: true }`: a cameo whose lines are left out when nobody is left.
@@ -61,6 +81,83 @@ the teacher takes a part.
   everyone cast must have a line.
 - Children's names go on the parts on screen and on paper only. Nothing about a child
   is saved, and a play never contains a child's name.
+
+## The playwright's charter (owner, 25 Nov 2026)
+
+Why: the owner read a Mars play and found it poor. It had no story, and one child
+asked a question and answered it themself ("Is it a pen? Yes, it is!"). These
+rules come from a second research pass, checked on 25 Nov 2026.
+
+**Evidence rules** (a study supports each one):
+
+1. **Questions are real.** The asker cannot know the answer, because another character
+   holds it: a closed box or bag, hands behind a back, eyes shut, a phone, a curtain. A
+   question and its answer always belong to two different roles, never to one line.
+   Referential questions draw longer answers than display questions (Long & Sato 1983;
+   Brock 1986). Children aged 8-13 negotiate meaning in pair tasks (Oliver 1998, *MLJ*
+   82(3), 192 children).
+2. **A two-way gap at least once.** Each side holds something the other needs (Oliver 1998).
+3. **One matching action per target word.** The action shows the meaning (`do`), and the
+   child who says the word does it. Never put an arbitrary move on a target word.
+   - Gestures the children reproduce helped 5-year-olds recall words (Tellier 2008).
+   - Unrelated gestures recall worse than none (García-Gámez & Macizo 2019).
+4. **Whole body where the room allows:** move like the animal, put on the coat. In
+   Mavilidi et al. 2015 (111 preschoolers, randomised), acting out the word beat
+   gesture, which beat unrelated exercise, which beat sitting and repeating. In
+   Toumpaniari et al. 2015 (67 four-year-olds, English animal words), the same order held.
+5. **Two or three of the unit's frames carry the play.** Each comes 4-6 times with one
+   slot changing ("Is it a cat?" / "Is it a ruler?"). Learners take apart chunks they
+   learned whole and reuse the parts (Myles, Hooper & Mitchell 1998; Ellis 2002).
+6. **Few words, heard many times, in the same story.** At most about 8 target words. The
+   same story three times beat three stories with the same words (Horst et al. 2011).
+7. **The same script, performed again.** Write it to be rehearsed at least three times
+   and to come back as an `encore`. Readers' theatre builds fluency through repeated
+   reading for an audience (Young & Rasinski 2009; meta-analysis by Mastrothanasis et
+   al. 2023).
+8. **Chorus first, then solo.** Every target chunk is said in chorus before a child says
+   it alone, and every child gets at least one line of their own. Choral response
+   raises participation; the evidence is thin and mostly from special education.
+9. **The class teacher, in short bursts.** Drama-based pedagogy works best led by the
+   class teacher, in a few hours spread out (Lee, Enciso & Brown 2020).
+10. **Surprise lands on a target word.** The box holds the wrong thing, and the "cat" is
+    a ruler. Surprise wins attention, but repetition makes words stick (Gambi et al.
+    2021: a wrong guess did not boost preschoolers' word learning).
+11. **Humour is about the thing, never about a child,** and it is visual and physical.
+
+**Craft rules** (good theatre, no direct study):
+
+12. **A story spine.** Someone wants something, meets an obstacle, tries, and gets it,
+    or gets something better. Every play has a want, a problem, a turn and a payoff.
+13. **The rule of three.** Two wrong tries, then the right one, with a twist on the
+    third. Repetition then feels like suspense, not drill.
+14. **Every line has a reason.** A character speaks because they want, need, fear or find
+    something. A line that only shows off a word is cut.
+15. **Pantomime call-and-response.** The chorus shouts the target chunk on cue ("No, it
+    isn't!", "It's behind you!"), and the audience may join.
+16. **The gap is on stage:** a prop hides the information.
+17. **Group roles are real roles,** inside the action (the wind, the shoppers), so a shy
+    child is in the story and can step up later.
+18. **Each part has its moment:** a laugh, a reveal or a save. A part that only says
+    "Yes" is cut or rewritten.
+19. **A shared last line.** The whole cast says the key chunk together, and it resolves
+    the want.
+20. **Characters, not labels.** Each one wants something different and sounds different
+    (the grumpy one, the hasty one, the sleepy one). Dramatic irony is welcome: the
+    audience sees what a character cannot.
+
+**Mars (Look 1, grades 1-2, American English):**
+- Most lines are 2-6 words (10 at most).
+- The teacher narrates.
+- Listen-and-do comes first.
+- Every line has a `do`.
+
+The suite enforces what it can:
+- no line asks a question and answers it;
+- from 2 children up, nobody talks to themself at any size;
+- up to the play's size, every child has a line of their own.
+
+The rest is checked by a table read: a reviewer casts the play at several sizes and
+reads it as the children would.
 
 ## Writing a play: the rules
 
@@ -89,3 +186,11 @@ the teacher takes a part.
 | 7-9 | Venus (OD 1, grades 2-4) | 12-25 | 14 words | Refrain + actions; lines carry the unit's grammar; a twist or joke; not babyish |
 | 8-12 | SKY 1 (OD 3), Jupiter (RH 3) | 15-30 | 24 words | Readers' theatre with a problem to solve; the unit's grammar and its Level 4 step; a short improvised ending in the last round |
 | 13-16 | Sun Class (IELTS, grades 8-10) | 20-35 | 40 words | A scene from the term's topic: opinions with reasons, comparing, a decision; the script ends in an improvised scene; the last round is with no script |
+
+## Which courses follow the charter yet
+
+Mars (Look 1) was rewritten to the charter on 25 Nov 2026. 25 plays were written by
+Opus playwrights, then each was table-read at 2-14 children by an independent reviewer
+and revised. Venus, SKY 1, Jupiter and Sun Class still carry the first plays. The
+suite reports their charter failures as PENDING (`CHARTER_PENDING` in the test), and
+a course leaves that list when its plays are rewritten the same way.

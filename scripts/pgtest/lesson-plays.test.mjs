@@ -13,6 +13,13 @@ import { transform, build } from "esbuild";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 let pass = 0, fail = 0;
+// The playwright's charter checks (docs/CLASS_PLAYS.md, 25 Nov 2026) hold every course.
+// Courses still written before the charter are listed here: their charter failures are
+// reported as PENDING, counted, and do not fail the run. Take a course off the list when
+// its plays are rewritten; never add one back.
+const CHARTER_PENDING = new Set(["oxford-discover-2e", "reach-higher", "hec-ielts-sl"]);
+let pending = 0;
+const charter = (p, n, c, x = "") => { if (c || !CHARTER_PENDING.has(p.course)) return ok(n, c, x); console.log(`  PENDING  ${n} :: ${x}`); pending++; };
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
 const eq = (n, got, want) => ok(n, JSON.stringify(got) === JSON.stringify(want), JSON.stringify(got) === JSON.stringify(want) ? "" : `got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
 async function load(rel, name) {
@@ -59,7 +66,9 @@ eq("an uncast role's lines go where it says, through a chain", [said(c, "Woof.")
 ok("a cut cameo is left out", !said(c, "Tweet.") && c.cut.includes("Bird"));
 eq("a role mention reads as whoever says its lines now", [lines(c)[0].text, said(c, "Hello, Kid!")?.labels], ["Kid sits in a tree.", ["Cat"]]);
 c = P.castPlay(sample, 4);
-eq("4 children: the first optional role is cast", c.parts.map((p) => p.label), ["Cat", "Narrator", "Kid", "Dog"]);
+eq("4 children: the Kid carries 6 lines, so the group grows before a cameo", c.parts.map((p) => p.label), ["Cat", "Narrator", "Kid 1", "Kid 2"]);
+c = P.castPlay(sample, 5);
+eq("5 children: a tie goes to the first optional role", c.parts.map((p) => p.label), ["Cat", "Narrator", "Kid 1", "Kid 2", "Dog"]);
 eq("its lines are its own again, and the chain stops at it", [said(c, "Woof.").labels, said(c, "Hoo.").labels], [["Dog"], ["Dog"]]);
 c = P.castPlay(sample, 9);
 eq("9 children: every role, the group full", c.parts.map((p) => p.label), ["Cat", "Narrator", "Kid 1", "Kid 2", "Kid 3", "Kid 4", "Dog", "Owl", "Bird"]);
@@ -72,6 +81,66 @@ c = P.castPlay(sample, 12);
 eq("past the play's max, the extra children join the group", [c.actors, c.parts.filter((p) => p.role === "kids").length], [12, 7]);
 eq("same play, same size, same cast", P.castPlay(sample, 6), P.castPlay(sample, 6));
 ok("a bad size reads as one child", P.castPlay(sample, NaN).actors === 1 && P.castPlay(sample, -3).actors === 1);
+// A conversation is never one child talking to themself, at any class size.
+const talk = {
+  ...sample, id: "t-p2", roles: [{ id: "a", name: "Ann" }, { id: "b", name: "Ben" }, { id: "c", name: "Cat" }, { id: "kids", name: "Kid", group: { max: 4 } }],
+  scenes: [{ title: "One", lines: [
+    { role: "a", text: "Is it a pen?" }, { stage: "Ben looks." }, { role: "b", text: "No, it isn't." }, { role: "c", text: "Is it a book?" },
+    { role: "a", text: "Yes, it is!" }, { role: "kids", text: "One." }, { role: "kids", text: "Two." }, { role: "kids", text: "Three." }, { role: "kids", text: "Four." },
+  ] }],
+};
+// The teacher narrating and then voicing a character (or back) is storytelling, not self-talk.
+const selfTalk = (cst, narrators = new Set()) => {
+  const out = [];
+  for (const sc of cst.scenes) {
+    let prev = null;
+    for (const l of sc.lines) {
+      if (l.kind === "stage") continue;
+      if (l.together) { prev = null; continue; }
+      const narrating = (x) => narrators.has(x.labels[0]) && !x.as;
+      if (prev && prev.actors[0] === l.actors[0] && !(l.actors[0] === -1 && (narrating(prev) || narrating(l)))) {
+        // A merged line counts as the part it belongs to: one child saying the Man's line
+        // and then the Girl's (both merged into the Crowd) is still talking to themself.
+        if (prev.labels[0] !== l.labels[0] || (prev.as ?? "") !== (l.as ?? "")) out.push(`${prev.labels[0]}${prev.as ? ` (as ${prev.as})` : ""} and ${l.labels[0]}${l.as ? ` (as ${l.as})` : ""} are one child: "${prev.text}" / "${l.text}"`);
+        else if (/\?["')]?$/.test(prev.text.trim()) && !/\?["')]?$/.test(l.text.trim())) out.push(`${l.labels[0]} asks and answers: "${prev.text}" / "${l.text}"`);
+      }
+      prev = l;
+    }
+  }
+  return out;
+};
+{
+  const cst = P.castPlay(talk, 2);
+  eq("2 children, a three-way talk: nobody talks to themself", selfTalk(cst), []);
+  ok("the teacher reads what no child can", cst.byActor[0].actor === -1 && cst.actors === 2, JSON.stringify(cst.byActor));
+  const one = P.castPlay(talk, 1);
+  ok("1 child: the child and the teacher share the parts", one.actors === 1 && one.byActor.map((a) => a.actor).join() === "-1,0", JSON.stringify(one.byActor));
+}
+{
+  const narrated = { ...talk, id: "t-p3", roles: [{ id: "n", name: "Narrator", teacher: true }, ...talk.roles], scenes: [{ title: "One", lines: [{ role: "n", text: "Look!" }, ...talk.scenes[0].lines] }] };
+  const c3 = P.castPlay(narrated, 3);
+  eq("a teacher role is always the teacher's and counts for no child", [c3.parts.find((p) => p.role === "n").actor, c3.actors, P.minCast(narrated), P.maxCast(narrated)], [-1, 3, 4, 7]);
+  eq("2 children and a teacher role: still nobody talks to themself", selfTalk(P.castPlay(narrated, 2)), []);
+}
+{
+  const pinned = { ...talk, id: "t-p4", scenes: [{ title: "One", lines: [
+    { role: "kids", text: "My ball!", member: 2 }, { role: "a", text: "Is this your ball?" }, { role: "kids", text: "Yes, it is!", member: 2 },
+    { role: "kids", text: "One." }, { role: "kids", text: "Two." }, { role: "kids", text: "Three." }, { role: "kids", text: "Four." }, { role: "b", text: "Hi." }, { role: "c", text: "Hi." },
+  ] }] };
+  const c7 = P.castPlay(pinned, 7);
+  eq("a pinned group line goes to its member: the owner gets the ball back", [said(c7, "My ball!").labels, said(c7, "Yes, it is!").labels], [["Kid 2"], ["Kid 2"]]);
+  const c4 = P.castPlay(pinned, 4);
+  eq("with fewer members it wraps", said(c4, "My ball!").labels, ["Kid"]);
+}
+{
+  const staged = { ...sample, id: "t-p5", scenes: [{ title: "One", lines: [{ stage: "The Bird sits in a tree.", if: "bird" }, ...sample.scenes[0].lines] }] };
+  eq("a stage line about a cameo shows only when the cameo is cast", [P.castPlay(staged, 3).scenes[0].lines[0].text, P.castPlay(staged, 9).scenes[0].lines[0].text], ["Kid sits in a tree.", "The Bird sits in a tree."]);
+}
+{
+  const voiced = { ...sample, id: "t-p6", roles: [{ id: "n", name: "Narrator", teacher: true }, ...sample.roles.map((r) => (r.id === "dog" ? { ...r, optional: { give: "n" } } : r))], scenes: [{ title: "One", lines: [{ stage: "{@dog} hides." }, { role: "n", text: "Look!" }, ...sample.scenes[0].lines] }] };
+  eq("a mention of a character the teacher plays keeps its name", P.castPlay(voiced, 3).scenes[0].lines[0].text, "Dog hides.");
+}
+eq("enough children: the teacher reads nothing", P.castPlay(talk, 4).byActor.map((a) => a.actor), [0, 1, 2, 3]);
 const st = P.studentPlay(sample);
 ok("the student copy has no fixes and no teacher note", st.focusOnForm.length === 0 && !("teacherNote" in st) && sample.focusOnForm.length === 1);
 
@@ -99,6 +168,13 @@ const ids = new Set();
 // Longest line a child of the band says, in words; and the play's minutes.
 const BAND = { "6-8": { words: 10, min: 10, max: 20 }, "7-9": { words: 14, min: 12, max: 25 }, "8-12": { words: 24, min: 15, max: 30 }, "13-16": { words: 40, min: 20, max: 35 } };
 const COURSE_BAND = { look: ["6-8"], "oxford-discover-2e": ["7-9", "8-12"], "reach-higher": ["8-12"], "hec-ielts-sl": ["13-16"] };
+// One line that asks and then answers itself ("Is it a pen? Yes, it is!").
+// One line that proposes and accepts ("Let's play! Great idea!").
+const PROPOSES_AND_ACCEPTS = /let'?s\b[^.!?]*[.!?]\s*["']?\s*(great idea|ok|okay|yes|good idea|sure)\b/i;
+const ASKS_AND_ANSWERS = /\?\s*["']?\s*(yes|no|it'?s|it is|it isn'?t|they'?re|they are|i'?m|i am|that'?s|this is|we'?re|he'?s|she'?s|there'?s|there are|i can|i like)\b/i;
+// Character names that sound rude in Vietnamese: the child who holds one is laughed at
+// ("Kit" ~ cứt, "Bobo" ~ bô, "Dit" ~ đít, "Dai" ~ dái, "Lon" ~ lồn, "Ia" ~ ỉa).
+const VN_RUDE = /\b(Kit|Kitty|Bobo|Dit|Dai|Lon|Ia)\b/;
 const NAMEISH = /\b(Linh|Minh|Bảo|Bao|Anh|Huy|Nam|Mai|Lan|Khoa|Ngọc|Ngoc|Trang|Vy|Long)\b/; // a play never carries a child's name
 for (const p of PLAYS) {
   const tag = p.id;
@@ -109,10 +185,13 @@ for (const p of PLAYS) {
   if (!band) continue;
   ok(`${tag}: minutes fit the band (${band.min}-${band.max})`, p.minutes >= band.min && p.minutes <= band.max, String(p.minutes));
   const roleIds = new Set(p.roles.map((r) => r.id));
+  ok(`${tag}: a teacher role is neither optional nor a group`, p.roles.every((r) => !r.teacher || (!r.optional && !r.group)));
   ok(`${tag}: role ids are unique and well formed`, roleIds.size === p.roles.length && p.roles.every((r) => /^[a-z][a-z0-9-]*$/.test(r.id)));
   const all = p.scenes.flatMap((s) => s.lines);
   const spoken = all.filter((l) => "role" in l);
   ok(`${tag}: every line's role exists`, spoken.every((l) => roleIds.has(l.role)), spoken.filter((l) => !roleIds.has(l.role)).map((l) => l.role).join(","));
+  ok(`${tag}: a stage line's if names a role`, all.every((l) => !("stage" in l) || l.if === undefined || roleIds.has(l.if)));
+  ok(`${tag}: a pinned member is a positive number on a group role's line`, spoken.every((l) => l.member === undefined || (Number.isInteger(l.member) && l.member >= 1 && p.roles.find((r) => r.id === l.role)?.group)));
   ok(`${tag}: every role has a line`, p.roles.every((r) => spoken.some((l) => l.role === r.id)), p.roles.filter((r) => !spoken.some((l) => l.role === r.id)).map((r) => r.id).join(","));
   ok(`${tag}: every give goes to a role of this play`, p.roles.every((r) => !r.optional || "cut" in r.optional || roleIds.has(r.optional.give)));
   ok(`${tag}: at least one group role, and room for 12 children`, p.roles.some((r) => r.group && r.group.max >= 3) && P.maxCast(p) >= 12, `max ${P.maxCast(p)}`);
@@ -125,14 +204,28 @@ for (const p of PLAYS) {
   const mentions = [...text.matchAll(/\{@([a-z][a-z0-9-]*)\}/g)].map((m) => m[1]);
   ok(`${tag}: every {@role} names a role`, mentions.every((m) => roleIds.has(m)), mentions.filter((m) => !roleIds.has(m)).join(","));
   ok(`${tag}: no name slot or raw token`, !/\{s\d\}|\{@\}/.test(text));
+  charter(p, `${tag}: no name that sounds rude in Vietnamese`, !VN_RUDE.test(text), (VN_RUDE.exec(text) ?? [""])[0]);
   ok(`${tag}: no child's name`, !NAMEISH.test(text), (NAMEISH.exec(text) ?? [""])[0]);
   const long = [...spoken.map((l) => l.text), ...all.filter((l) => "everyone" in l).map((l) => l.everyone)].filter((t) => t.split(/\s+/).length > band.words);
   ok(`${tag}: lines short enough for ${p.band} (<= ${band.words} words)`, long.length === 0, long[0]);
-  const script = all.map((l) => l.text ?? l.everyone ?? l.stage ?? "").join(" ").toLowerCase();
+  // Spoken, not only in a stage direction: a word the children never say is not practised.
+  const script = all.map((l) => l.text ?? l.everyone ?? "").join(" ").toLowerCase();
   const missing = p.targets.words.filter((w) => !script.includes(w.toLowerCase().replace(/[.!?]$/, "").slice(0, Math.max(3, w.length - 2))));
-  ok(`${tag}: every target word is in the script`, missing.length === 0, missing.join(", "));
+  charter(p, `${tag}: every target word is spoken`, missing.length === 0, missing.join(", "));
   ok(`${tag}: targets, rehearsal rounds and fixes are there`, p.targets.words.length >= 4 && p.targets.grammar.length >= 1 && p.rehearsal.length >= 3 && p.focusOnForm.length >= 1);
   ok(`${tag}: rehearsal fits the minutes`, p.rehearsal.reduce((a, r) => a + r.minutes, 0) <= p.minutes, `${p.rehearsal.reduce((a, r) => a + r.minutes, 0)} > ${p.minutes}`);
+  const selfAnswer = [...spoken.map((l) => l.text), ...all.filter((l) => "everyone" in l).map((l) => l.everyone)].filter((t) => ASKS_AND_ANSWERS.test(t) || PROPOSES_AND_ACCEPTS.test(t));
+  charter(p, `${tag}: no line asks a question and answers it`, selfAnswer.length === 0, selfAnswer[0]);
+  const talking = [];
+  for (let n = 2; n <= 16 && !talking.length; n++) talking.push(...selfTalk(P.castPlay(p, n), new Set(p.roles.filter((r) => r.teacher).map((r) => r.name))).map((x) => `n=${n}: ${x}`));
+  charter(p, `${tag}: from 2 children to 16 nobody talks to themself`, talking.length === 0, talking[0]);
+  const mute = [];
+  for (let n = 1; n <= Math.min(16, P.maxCast(p)); n++) {
+    const cst = P.castPlay(p, n);
+    const solo = new Set(cst.scenes.flatMap((sc) => sc.lines).filter((l) => l.kind === "line" && !l.together).flatMap((l) => l.actors));
+    for (let a = 0; a < n; a++) if (!solo.has(a)) { mute.push(`n=${n}: child ${a + 1} only speaks in chorus`); break; }
+  }
+  charter(p, `${tag}: up to the play's size every child has a line of their own`, mute.length === 0, mute[0]);
   // Every class size a class may have: everyone cast has a line, and no spoken line is lost but a cut cameo's.
   const cutRoles = new Set(p.roles.filter((r) => r.optional && "cut" in r.optional).map((r) => r.id));
   const keep = spoken.filter((l) => !cutRoles.has(l.role)).length + all.filter((l) => "everyone" in l).length;
@@ -158,5 +251,5 @@ const per = new Map();
 for (const p of PLAYS) per.set(`${p.course} ${p.level} ${p.unit}`, (per.get(`${p.course} ${p.level} ${p.unit}`) ?? 0) + 1);
 for (const [k, v] of [...per].sort()) ok(`${k}: at most 9 plays (two or three a month)`, v <= 9, String(v));
 
-console.log(`\n${pass} passed, ${fail} failed`);
+console.log(`\n${pass} passed, ${fail} failed${pending ? `, ${pending} pending the charter rewrite (${[...CHARTER_PENDING].join(", ")})` : ""}`);
 process.exit(fail ? 1 : 0);

@@ -8,46 +8,56 @@ export const look1U5Plays: Play[] = [
     "level": 1,
     "unit": 5,
     "afterLesson": 4,
-    "title": "The Robot Builder",
-    "minutes": 16,
+    "title": "The Lost Little Monster",
+    "minutes": 18,
     "band": "6-8",
-    "summary": "The children build a funny robot out of body words. \"This is my head. These are my hands.\" But the robot's hands are on its feet! \"No! These are your hands!\"",
+    "summary": "Mama Monster phones the Monster Police: her baby Tod is lost. He has three eyes and big ears, and he doesn't have hair. The Police check the Park Monsters, but Tod is hiding under the Police desk all along, and his hand, his foot and then his head pop up whenever the Police look away.",
     "targets": {
       "words": [
-        "leg",
-        "foot",
-        "mouth",
-        "eye",
         "head",
-        "ear",
         "arm",
-        "hand"
+        "leg",
+        "hand",
+        "mouth",
+        "foot",
+        "eye",
+        "ear"
       ],
       "grammar": [
-        "This is my ... / These are my ...s",
-        "He has ... hair. / She doesn't have ... eyes."
+        "This is my head. / These are my arms.",
+        "He has three eyes. / He has big ears. / He doesn't have hair.",
+        "Is he your baby? Yes, he is. / No, he isn't."
       ]
     },
     "roles": [
       {
         "id": "n",
         "name": "Narrator",
-        "who": "the teacher, or a confident reader"
+        "who": "the teacher",
+        "teacher": true
       },
       {
-        "id": "builder",
-        "name": "Builder",
-        "who": "a confident child: calls out the parts"
+        "id": "police",
+        "name": "Monster Police",
+        "who": "a calm, slow child who writes everything down and never sees behind him in time"
       },
       {
-        "id": "robot",
-        "name": "Robot",
-        "who": "a funny part: moves like a robot"
+        "id": "little",
+        "name": "Little Monster",
+        "who": "a cheeky child who hides under the desk and giggles; with 2 children, the teacher works a hand puppet under the desk"
+      },
+      {
+        "id": "mama",
+        "name": "Mama Monster",
+        "who": "a loud, worried part on the phone; if no child is left, the teacher plays her",
+        "optional": {
+          "give": "n"
+        }
       },
       {
         "id": "k",
-        "name": "Helpers",
-        "who": "children who like to act; short lines",
+        "name": "Park Monster",
+        "who": "silly monsters who love showing off their bodies",
         "group": {
           "max": 9
         }
@@ -55,132 +65,244 @@ export const look1U5Plays: Play[] = [
     ],
     "scenes": [
       {
-        "title": "Scene 1: Build a robot",
+        "title": "Scene 1: Ring, ring!",
         "lines": [
           {
-            "stage": "The Robot stands stiff. The Builder and the Helpers stand around it with body-part cards."
+            "stage": "The Monster Police sits on a chair in front of a desk, facing the audience, with a phone and a pencil. The Little Monster hides under the desk behind him: the audience can see him, the Police can't. The Park Monsters stand frozen in funny shapes. {@mama} is far away with a phone."
           },
           {
             "role": "n",
-            "text": "Let's build a robot!",
-            "do": "Clap and rub your hands."
+            "text": "Ring, ring! Ring, ring!",
+            "do": "Shake like a ringing phone."
           },
           {
-            "role": "builder",
-            "text": "This is my head.",
-            "do": "Touch the robot's head, then your own."
+            "role": "police",
+            "text": "Hello! Monster Police!",
+            "do": "Pick up the phone and salute."
+          },
+          {
+            "role": "mama",
+            "text": "Help! My baby! Oh no!",
+            "do": "Hold the phone and cry."
+          },
+          {
+            "role": "police",
+            "text": "Your baby? What's his name?",
+            "do": "Pick up the pencil."
+          },
+          {
+            "role": "mama",
+            "text": "His name is Tod. He's small.",
+            "do": "Hold a hand down low."
+          },
+          {
+            "role": "police",
+            "text": "Tod. Small. OK!",
+            "do": "Write it down."
+          },
+          {
+            "role": "mama",
+            "text": "He has three eyes!",
+            "do": "Hold up three fingers next to your eyes."
+          },
+          {
+            "role": "police",
+            "text": "He has three eyes. OK!",
+            "do": "Point at your eyes, then write it down."
+          },
+          {
+            "role": "mama",
+            "text": "He has big ears!",
+            "do": "Make big ears with your hands."
+          },
+          {
+            "role": "police",
+            "text": "He has big ears. Hair?",
+            "do": "Write it down, then touch your hair."
+          },
+          {
+            "role": "mama",
+            "text": "No! He doesn't have hair!",
+            "do": "Rub a bald head."
+          },
+          {
+            "everyone": "He has three eyes! He has big ears!",
+            "do": "Three fingers by your eyes, then big ears."
+          }
+        ]
+      },
+      {
+        "title": "Scene 2: Line up!",
+        "lines": [
+          {
+            "role": "police",
+            "text": "Park Monsters! Line up!",
+            "do": "Blow a whistle."
           },
           {
             "role": "k",
-            "text": "This is my eye.",
-            "do": "Point at your eye."
+            "text": "These are my arms!",
+            "do": "Wave your arms.",
+            "all": true
           },
           {
             "role": "k",
-            "text": "These are my eyes.",
-            "do": "Point at both eyes."
+            "text": "This is my head!",
+            "do": "Pat your head."
           },
           {
             "role": "k",
-            "text": "This is my mouth.",
+            "text": "These are my legs!",
+            "do": "March on the spot."
+          },
+          {
+            "role": "k",
+            "text": "These are my hands!",
+            "do": "Clap your hands."
+          },
+          {
+            "role": "k",
+            "text": "This is my mouth! Ahh!",
             "do": "Open your mouth wide."
           },
           {
+            "stage": "Behind the Police, the Little Monster's hand pops up from under the desk."
+          },
+          {
             "role": "k",
-            "text": "These are my ears.",
-            "do": "Wiggle both ears."
+            "text": "Look! A hand!",
+            "do": "Point at the desk.",
+            "all": true
           },
           {
-            "role": "robot",
-            "text": "Beep! This is my head.",
-            "do": "Touch your head like a robot."
+            "role": "police",
+            "text": "A hand? Hmm...",
+            "do": "Turn around fast. The hand is gone."
           },
           {
-            "everyone": "Head, arms, hands, feet!",
-            "do": "Touch each body part."
+            "role": "k",
+            "text": "Ha ha! No hand!",
+            "do": "Giggle and hide your hands."
+          },
+          {
+            "role": "k",
+            "text": "These are my eyes! One, two, three!",
+            "do": "Point at your eyes and count.",
+            "member": 1
+          },
+          {
+            "role": "k",
+            "text": "These are my ears! Small, small!",
+            "do": "Make tiny ears with your fingers.",
+            "member": 1
+          },
+          {
+            "role": "police",
+            "text": "Is he your baby? Three eyes, small ears.",
+            "do": "Pick up the phone; three fingers, then tiny ears."
+          },
+          {
+            "role": "mama",
+            "text": "No, he isn't! Small ears!",
+            "do": "Shake your head and cry."
+          },
+          {
+            "everyone": "He has three eyes! He has big ears!",
+            "do": "Three fingers by your eyes, then big ears."
           }
         ]
       },
       {
-        "title": "Scene 2: Oh no!",
+        "title": "Scene 3: A foot!",
         "lines": [
           {
-            "role": "builder",
-            "text": "This is my arm. These are my legs.",
-            "do": "Point at each."
-          },
-          {
-            "role": "robot",
-            "text": "These are my hands.",
-            "do": "Point at your feet, wrongly."
+            "role": "police",
+            "text": "Monsters! Hop, please!",
+            "do": "Blow the whistle."
           },
           {
             "role": "k",
-            "text": "No! These are your feet!",
-            "do": "Point at the robot's feet and laugh."
+            "text": "This is my foot! Hop, hop!",
+            "do": "Hop on one foot."
           },
           {
-            "role": "robot",
-            "text": "Beep! This is my foot.",
-            "do": "Point at your head, wrongly."
-          },
-          {
-            "role": "k",
-            "text": "No! This is your head!",
-            "do": "Touch the robot's head."
+            "stage": "Behind the Police, the Little Monster's foot pops up from under the desk."
           },
           {
             "role": "k",
-            "text": "This is my arm. These are my arms.",
-            "do": "Hold up one arm, then both."
+            "text": "Look! A foot!",
+            "do": "Hop and point at the desk."
+          },
+          {
+            "role": "police",
+            "text": "A foot? Hmm...",
+            "do": "Turn around fast. The foot is gone."
+          },
+          {
+            "role": "police",
+            "text": "Oh no! No Tod!",
+            "do": "Sit on the desk and put your head in your hands."
           },
           {
             "role": "k",
-            "text": "These are my legs. This is my leg.",
-            "do": "Stomp one leg, then both."
+            "text": "Oh no! Mama! Boo hoo!",
+            "do": "Rub your eyes and cry."
           },
           {
-            "everyone": "Head, arms, hands, feet!",
-            "do": "Touch each body part."
-          }
-        ]
-      },
-      {
-        "title": "Scene 3: A perfect robot",
-        "lines": [
-          {
-            "role": "robot",
-            "text": "This is my head. These are my hands.",
-            "do": "Point correctly."
+            "stage": "The desk giggles. The Little Monster's whole head pops up, right next to the Police."
           },
           {
             "role": "k",
-            "text": "He has blue eyes!",
-            "do": "Point at the robot's eyes."
+            "text": "Look! A head!",
+            "do": "Jump up and down and point.",
+            "all": true
+          },
+          {
+            "role": "police",
+            "text": "A head? Who's this?",
+            "do": "Turn around slowly."
+          },
+          {
+            "role": "little",
+            "text": "Hee hee! These are my ears!",
+            "do": "Flap big ears."
           },
           {
             "role": "k",
-            "text": "He has black hair!",
-            "do": "Touch your hair, then the robot's."
+            "text": "Look! Three eyes!",
+            "do": "Hold up three fingers and point at the Little Monster."
           },
           {
-            "role": "k",
-            "text": "He doesn't have green hair.",
-            "do": "Shake your head."
+            "role": "police",
+            "text": "Big ears! Three eyes! No hair!",
+            "do": "Count on your fingers."
           },
           {
-            "role": "builder",
-            "text": "Beep! Good robot!",
-            "do": "Pat the robot's head."
+            "role": "police",
+            "text": "Is he your baby?",
+            "do": "Pick up the phone."
           },
           {
-            "role": "n",
-            "text": "The robot dances.",
-            "do": "Dance like a robot."
+            "role": "mama",
+            "text": "Yes, he is! My Tod!",
+            "do": "Jump for joy with the phone."
           },
           {
-            "everyone": "Head, arms, hands, feet!",
-            "do": "Touch each body part."
+            "role": "police",
+            "text": "Tod! Your mama!",
+            "do": "Point at the phone, then at the door."
+          },
+          {
+            "stage": "{@mama} runs in with open arms."
+          },
+          {
+            "role": "little",
+            "text": "Mama! These are my arms!",
+            "do": "Open your arms wide and run."
+          },
+          {
+            "everyone": "These are my arms! Hug, hug, hug!",
+            "do": "Open your arms wide, then hug yourself."
           }
         ]
       }
@@ -189,35 +311,38 @@ export const look1U5Plays: Play[] = [
       {
         "round": "Listen and do",
         "minutes": 4,
-        "how": "Read the whole play aloud, slowly. The children only do the actions; they may join the refrain. Nobody has to speak alone yet."
+        "how": "Read the whole play slowly. The children do every action, join the chant \"He has three eyes! He has big ears!\" and shout \"Look! A hand!\". Nobody speaks alone yet."
       },
       {
-        "round": "Echo the lines",
+        "round": "Echo",
         "minutes": 4,
-        "how": "Say each line; the child with that part echoes it with its action. Everyone says the refrain. Then give the one-minute fix."
+        "how": "Read each line; the child with that part echoes it with the action. Then give the one-minute fix."
       },
       {
-        "round": "Perform with scripts or picture cards",
-        "minutes": 4,
-        "how": "Perform with scripts and body-part picture cards. The Robot moves only when it hears the right word."
+        "round": "Script",
+        "minutes": 6,
+        "how": "Perform with scripts. The Police sits with his back to the desk, so the audience sees what he cannot."
       },
       {
-        "round": "Own words",
+        "round": "Key words",
         "minutes": 4,
-        "how": "Children swap in other parts and make their own mistakes on purpose: \"These are my hands\" (pointing at their feet). The class says \"No! These are your feet!\""
+        "how": "Perform again with only key words on the board: three eyes, big ears, no hair, arms, head, legs, hands, mouth, foot. Children say the whole lines. If time is short, do this round at the start of the next lesson."
       }
     ],
     "focusOnForm": [
-      "\"This is my head\" (one) / \"These are my hands\" (two): say the -s on two things.",
-      "\"He has\" / \"She has\": not \"He have\": say \"has\" for one boy or girl.",
-      "Final sounds: \"head\", \"hand\", \"foot\": say the last sound loudly."
+      "Plural s: \"These are my arms\", \"three eyes\", \"big ears\". One is \"This is my head\". Hold up fingers and hiss the s.",
+      "\"He has three eyes\", not \"He have\": he has, I have.",
+      "\"He doesn't have hair\", not \"He no have hair\".",
+      "Final sounds: head, hand, foot. Tap the d and the t at the end."
     ],
     "props": [
-      "body-part picture cards",
-      "a robot costume (box or paper)"
+      "a toy phone each for the Police and Mama",
+      "a pencil and paper (the Police's)",
+      "a desk with a cloth over it (Tod hides under it)",
+      "a whistle (the Police's)"
     ],
-    "teacherNote": "Teach \"This is my...\" for one and \"These are my...\" for two with real body parts. The mistake is the fun: let the Robot point at the wrong part.",
-    "encore": "Later, build a new monster (three eyes, two heads) and use \"He has ...\""
+    "teacherNote": "Value: be active; the Park Monsters move every body part they name. The joke is dramatic irony: the audience always sees Tod, the Police never does until the head. Rehearse the Police's slow turn and Tod's quick duck first. With 2 children, you work Tod as a hand puppet under the desk. The play is about 50 lines: if the class is slow, do the Key words round in the next lesson. With no child left for Mama Monster, you are Mama on the phone from the side of the room.",
+    "encore": "Later, Mama loses a different baby: \"She has two heads! She has small ears! She doesn't have a mouth!\" The Park Monsters change their bodies to match."
   },
   {
     "id": "look1-u5-p2",
@@ -225,184 +350,345 @@ export const look1U5Plays: Play[] = [
     "level": 1,
     "unit": 5,
     "afterLesson": 7,
-    "title": "Move Your Body",
-    "minutes": 16,
+    "title": "Bones in the Bag",
+    "minutes": 18,
     "band": "6-8",
-    "summary": "The Coach wakes up a sleepy monster with a body game. \"This is my head. These are my arms.\" The children describe him: \"He has green hair. He doesn't have a mouth.\"",
+    "summary": "At night in the museum, the Skeleton wants to dance, but he sneezes and his bones fly into a bag. He doesn't have eyes, so the Museum Mice pull out the bones for him: a leg he waves like an arm, a hand he wears like an ear, and a ball he says is his head (\"Oh no, it isn't!\").",
     "targets": {
       "words": [
-        "leg",
-        "foot",
-        "mouth",
-        "eye",
-        "head",
-        "ear",
         "arm",
-        "hand"
+        "leg",
+        "hand",
+        "ear",
+        "head",
+        "eye",
+        "foot"
       ],
       "grammar": [
-        "This is my ... / These are my ...s",
-        "He has ... hair. / She doesn't have ... eyes."
+        "Is this your arm? Yes, it is. / No, it isn't. It's a leg.",
+        "This is my arm. / These are my eyes.",
+        "He doesn't have a head. / He has a leg."
       ]
     },
     "roles": [
       {
         "id": "n",
         "name": "Narrator",
-        "who": "the teacher, or a confident reader"
+        "who": "the teacher",
+        "teacher": true
       },
       {
-        "id": "coach",
-        "name": "Coach",
-        "who": "a confident child: calls the moves"
-      },
-      {
-        "id": "monster",
-        "name": "Sleepy Monster",
-        "who": "a funny part: yawns and stretches"
+        "id": "skeleton",
+        "name": "Skeleton",
+        "who": "a dramatic, wobbly child who wants to dance; sure of everything, often wrong"
       },
       {
         "id": "k",
-        "name": "Movers",
-        "who": "children who like to act; short lines",
+        "name": "Mouse Helper",
+        "who": "squeaky, busy helpers who pull bones out of the bag",
         "group": {
-          "max": 9
+          "max": 11
         }
       }
     ],
     "scenes": [
       {
-        "title": "Scene 1: Wake up!",
+        "title": "Scene 1: Ah-choo!",
         "lines": [
           {
-            "stage": "The Sleepy Monster is asleep on the floor. The Coach and the Movers stand around."
+            "stage": "Night in the museum. The Skeleton stands next to a box. The Museum Mice hide around the room. Behind the box is a big bag; the Mice own it."
           },
           {
             "role": "n",
-            "text": "The monster is sleepy. Wake up!",
-            "do": "Snore, then clap."
+            "text": "Night. The museum. Shh!",
+            "do": "Finger on your lips; tiptoe."
           },
           {
-            "role": "coach",
-            "text": "Wake up, head!",
-            "do": "Wiggle your head."
+            "role": "skeleton",
+            "text": "Music! Dance, dance!",
+            "do": "Wiggle your bones."
           },
           {
-            "role": "monster",
-            "text": "This is my head.",
-            "do": "Touch your head, yawn."
+            "role": "skeleton",
+            "text": "Ah... ah... AH-CHOO!",
+            "do": "Sneeze, then sit down fast and fall to pieces."
           },
           {
-            "role": "coach",
-            "text": "Wake up, arms!",
-            "do": "Swing your arms."
+            "stage": "The bones fly into the bag. The Skeleton sits on the floor, arms tucked in his shirt, legs folded under him, a cloth over his head. The skull rolls under the box."
           },
           {
-            "role": "monster",
-            "text": "These are my arms.",
-            "do": "Stretch both arms."
+            "role": "k",
+            "text": "Oh no! The skeleton!",
+            "do": "Hands on your cheeks.",
+            "all": true
           },
           {
-            "role": "coach",
-            "text": "Wake up, legs!",
-            "do": "Stomp your legs."
+            "role": "k",
+            "text": "He doesn't have arms!",
+            "do": "Hide your arms behind your back."
           },
           {
-            "role": "monster",
-            "text": "These are my legs.",
-            "do": "Stand up and wobble."
+            "role": "k",
+            "text": "He doesn't have legs!",
+            "do": "Kneel down."
           },
           {
-            "everyone": "Move, move, move your body!",
-            "do": "Dance on the spot."
+            "role": "k",
+            "text": "He doesn't have a head!",
+            "do": "Cover your head with your hands."
+          },
+          {
+            "role": "skeleton",
+            "text": "Help! I don't have eyes!",
+            "do": "Wave around blindly under the cloth."
+          },
+          {
+            "role": "k",
+            "text": "Bones, bones, in the bag! Is this your arm?",
+            "do": "Reach into the bag and hold up a bone.",
+            "all": true
           }
         ]
       },
       {
-        "title": "Scene 2: Move your body",
+        "title": "Scene 2: Is this your arm?",
         "lines": [
           {
-            "role": "k",
-            "text": "This is my hand.",
-            "do": "Wave a hand."
+            "role": "n",
+            "text": "The Mice help. Squeak, squeak!",
+            "do": "Make little mouse paws."
           },
           {
             "role": "k",
-            "text": "These are my hands.",
-            "do": "Clap both hands."
+            "text": "Squeak! A bone!",
+            "do": "Peek into the bag."
+          },
+          {
+            "stage": "One Mouse pulls a long paper bone out of the bag. It has a foot at the end, but the Mouse holds that end down."
           },
           {
             "role": "k",
-            "text": "This is my foot.",
-            "do": "Tap one foot."
+            "text": "Is this your arm?",
+            "do": "Hold up the long bone.",
+            "member": 1
+          },
+          {
+            "role": "skeleton",
+            "text": "Is it big?",
+            "do": "Feel the air."
           },
           {
             "role": "k",
-            "text": "These are my feet.",
-            "do": "Stomp both feet."
+            "text": "Yes, it is!",
+            "do": "Nod and stretch your arms wide.",
+            "member": 1
+          },
+          {
+            "stage": "The Mouse gives the bone to the Skeleton."
+          },
+          {
+            "role": "skeleton",
+            "text": "Yes! This is my arm!",
+            "do": "Wave the bone like an arm."
+          },
+          {
+            "stage": "The foot swings up. Everyone sees it."
           },
           {
             "role": "k",
-            "text": "This is my mouth.",
-            "do": "Open and close your mouth."
+            "text": "No, it isn't! It's a leg!",
+            "do": "Point at the foot and laugh.",
+            "all": true
+          },
+          {
+            "role": "skeleton",
+            "text": "A leg? Oh! This is my leg!",
+            "do": "Put the bone down, then unfold one leg and wiggle it."
           },
           {
             "role": "k",
-            "text": "These are my eyes.",
-            "do": "Blink both eyes."
+            "text": "He has a leg!",
+            "do": "Hop on one leg."
           },
           {
             "role": "k",
-            "text": "This is my ear.",
-            "do": "Pull your ear."
-          },
-          {
-            "role": "k",
-            "text": "These are my ears.",
-            "do": "Wiggle both ears."
-          },
-          {
-            "everyone": "Move, move, move your body!",
-            "do": "Dance on the spot."
+            "text": "Bones, bones, in the bag! Is this your arm?",
+            "do": "Reach into the bag and hold up a bone.",
+            "all": true
           }
         ]
       },
       {
-        "title": "Scene 3: Who has what?",
+        "title": "Scene 3: Is this your hand?",
         "lines": [
           {
-            "role": "n",
-            "text": "Look at the monster. Look at his face.",
-            "do": "Point at the monster."
+            "role": "k",
+            "text": "Squeak! A bone!",
+            "do": "Peek into the bag again."
+          },
+          {
+            "stage": "Another Mouse pulls out a small bone with five fingers."
           },
           {
             "role": "k",
-            "text": "He has green hair.",
-            "do": "Touch your hair, point at the monster."
+            "text": "Is this your hand?",
+            "do": "Hold up the small bone.",
+            "member": 2
+          },
+          {
+            "role": "skeleton",
+            "text": "Is it small?",
+            "do": "Feel the air."
           },
           {
             "role": "k",
-            "text": "He has three eyes!",
-            "do": "Hold up three fingers at your eyes."
+            "text": "Yes, it is!",
+            "do": "Nod and hold a hand down low.",
+            "member": 2
+          },
+          {
+            "stage": "The Mouse gives the bone to the Skeleton."
+          },
+          {
+            "role": "skeleton",
+            "text": "Yes! This is my ear!",
+            "do": "Put the hand up by your head, like a big ear."
           },
           {
             "role": "k",
-            "text": "He doesn't have a mouth.",
-            "do": "Cover your mouth and shake your head."
+            "text": "No, it isn't! It's a hand!",
+            "do": "Wave and laugh.",
+            "all": true
           },
           {
-            "role": "monster",
-            "text": "I have a big mouth! Aaah!",
-            "do": "Open your mouth wide."
+            "role": "skeleton",
+            "text": "A hand? Oh! This is my hand!",
+            "do": "Pull one arm out of your shirt and wave the hand."
           },
           {
-            "role": "coach",
-            "text": "She doesn't have blue eyes. She has red eyes.",
-            "do": "Point at a mask, laugh."
+            "role": "k",
+            "text": "He has an arm! He has a hand!",
+            "do": "Wave one arm."
           },
           {
-            "everyone": "Move, move, move your body!",
-            "do": "Dance on the spot."
+            "role": "k",
+            "text": "Look! An arm and a hand!",
+            "do": "Pull a second arm bone out of the bag."
+          },
+          {
+            "stage": "The Skeleton pulls the other arm out of his shirt."
+          },
+          {
+            "role": "skeleton",
+            "text": "These are my arms! These are my hands!",
+            "do": "Wave both arms and wiggle your fingers."
+          },
+          {
+            "role": "k",
+            "text": "Bones, bones, in the bag! Is this your arm?",
+            "do": "Reach into the bag and hold up a bone.",
+            "all": true
+          }
+        ]
+      },
+      {
+        "title": "Scene 4: Is this your head?",
+        "lines": [
+          {
+            "stage": "Another Mouse pulls a round thing out of the bag: a ball. The Skeleton can't see it."
+          },
+          {
+            "role": "k",
+            "text": "Is this your head?",
+            "do": "Hold up the ball with both hands.",
+            "member": 3
+          },
+          {
+            "role": "skeleton",
+            "text": "Is it big?",
+            "do": "Feel the air with your new hands."
+          },
+          {
+            "role": "k",
+            "text": "Yes, it is!",
+            "do": "Nod and make a big circle with your arms.",
+            "member": 3
+          },
+          {
+            "stage": "The Mouse gives the ball to the Skeleton."
+          },
+          {
+            "role": "skeleton",
+            "text": "Yes! This is my head!",
+            "do": "Put the ball on top of the cloth."
+          },
+          {
+            "role": "k",
+            "text": "No, it isn't! It's a ball!",
+            "do": "Bounce an invisible ball.",
+            "all": true
+          },
+          {
+            "role": "skeleton",
+            "text": "Oh yes, it is!",
+            "do": "Hold the ball on your head, proud."
+          },
+          {
+            "role": "k",
+            "text": "Oh no, it isn't!",
+            "do": "Shake your head hard.",
+            "all": true
+          },
+          {
+            "role": "skeleton",
+            "text": "Oh yes, it is!",
+            "do": "Stamp your foot."
+          },
+          {
+            "stage": "A Mouse peeks under the box and finds a skull."
+          },
+          {
+            "role": "k",
+            "text": "Look! A head! Under the box!",
+            "do": "Lift the skull up high.",
+            "member": 4
+          },
+          {
+            "stage": "The Mouse takes the ball and gives the Skeleton the skull. The Skeleton pulls the cloth off his head."
+          },
+          {
+            "role": "skeleton",
+            "text": "Wow! This is my head! These are my eyes!",
+            "do": "Pat your head, then point at your eyes."
+          },
+          {
+            "role": "k",
+            "text": "He has a head!",
+            "do": "Pat your head."
+          },
+          {
+            "role": "k",
+            "text": "He has eyes! He has ears!",
+            "do": "Point at your eyes, then your ears."
+          },
+          {
+            "role": "k",
+            "text": "Look! A leg and a foot!",
+            "do": "Pull the last leg bone out of the bag and give it to the Skeleton."
+          },
+          {
+            "role": "skeleton",
+            "text": "Look! My feet! Dance, dance!",
+            "do": "Unfold your other leg and stand up on both feet."
+          },
+          {
+            "role": "k",
+            "text": "Dance, Skeleton, dance!",
+            "do": "Clap to the beat."
+          },
+          {
+            "everyone": "These are my arms! These are my legs! Dance!",
+            "do": "Wave your arms, kick your legs, then dance."
           }
         ]
       }
@@ -411,35 +697,38 @@ export const look1U5Plays: Play[] = [
       {
         "round": "Listen and do",
         "minutes": 4,
-        "how": "Read the whole play aloud, slowly. The children only do the actions; they may join the refrain. Nobody has to speak alone yet."
+        "how": "Read the whole play slowly. The children do every action and join the chant \"Bones, bones, in the bag! Is this your arm?\" and the \"No, it isn't!\" shouts. Nobody speaks alone yet."
       },
       {
-        "round": "Echo the lines",
+        "round": "Echo",
         "minutes": 4,
-        "how": "Say each line; the child with that part echoes it with its action. Everyone says the refrain. Then give the one-minute fix."
+        "how": "Read each line; the child with that part echoes it with the action. Then give the one-minute fix."
       },
       {
-        "round": "Perform with scripts or picture cards",
-        "minutes": 4,
-        "how": "Perform with scripts. The Coach leads real moves; the Movers copy while they say each line."
+        "round": "Script",
+        "minutes": 6,
+        "how": "Perform with scripts and the paper bones. The Skeleton keeps arms tucked in and legs folded until each bone goes back."
       },
       {
-        "round": "Own words",
+        "round": "Key words",
         "minutes": 4,
-        "how": "Children make a new monster with their own parts: \"It has red hair. It doesn't have ears.\" The class touches each part."
+        "how": "Perform again with only key words on the board: arm, leg, hand, ear, head, eyes, foot, ball. Children say the whole lines. If time is short, do this round at the start of the next lesson."
       }
     ],
     "focusOnForm": [
-      "\"These are my arms\": the -s on two arms, two hands, two legs.",
-      "\"doesn't have\": not \"doesn't has\": say \"have\" after doesn't.",
-      "\"This\" and \"These\": the final sound, /s/ for one and /z/ for two."
+      "\"This is my arm\" for one, \"These are my arms\" for two: hold up one finger, then two.",
+      "\"He doesn't have a head\", not \"He no have head\": say doesn't and the a.",
+      "\"an arm\", \"an ear\", but \"a leg\", \"a hand\": an before a vowel sound.",
+      "Final sounds: arm, leg, hand, head. Close the word; do not drop the last sound. One foot, two feet: no \"foots\"."
     ],
     "props": [
-      "a monster mask",
-      "picture cards of body parts",
-      "music for the dance (optional)"
+      "a big bag with paper bones: a leg with a foot, two arms with hands (the Mice's)",
+      "a ball in the same bag (the Mice's, until a Mouse gives it to the Skeleton)",
+      "a paper skull under the box",
+      "a cloth for the Skeleton's head",
+      "a box for the Skeleton to stand on"
     ],
-    "teacherNote": "Value: be active. Dance on the spot at the end, with real movement.",
-    "encore": "Later, use a new monster and have a child be the Coach with their own moves."
+    "teacherNote": "Value: be active; the play ends with everyone dancing. Make the bones from paper, and keep the leg's foot hidden until the Mouse lets it swing. The Skeleton must say \"This is my arm!\" with total confidence so the class can shout \"No, it isn't!\". Practice the \"Oh yes, it is! / Oh no, it isn't!\" argument first. Give the Mice who find the bones (members 1 to 4) the bag in turn. Safety: the Skeleton sits or kneels to fall apart; no jumping off the box. The play is about 60 lines: if the class is slow, do the Key words round in the next lesson.",
+    "encore": "Later, a second skeleton loses her bones: \"Is this your foot? No, it isn't! It's a hand!\" The Mice can also hide the bones around the room for the Skeleton to find with their help."
   }
 ];

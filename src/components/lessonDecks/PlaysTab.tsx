@@ -13,7 +13,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { castPlay, studentPlay, unitWord, type Cast, type Play } from "@/lib/lessonDecks/plays";
-import { actorName, playMaterial } from "@/lib/lessonDecks/playDoc";
+import { actorName, partLabel, playMaterial } from "@/lib/lessonDecks/playDoc";
 import { castFor } from "@/lib/lessonDecks/names";
 import type { Audience } from "@/lib/lessonDecks/audience";
 import { downloadBlob, tryMakeDocument } from "@/lib/hecDocs";
@@ -78,7 +78,7 @@ export function playMarkup(play: Play, cast: Cast, names: string[], audience: Au
           <h2 className="text-xl font-semibold">{s.title}</h2>
           {s.lines.map((l, k) => l.kind === "stage"
             ? <p key={k} className="italic text-gray-600">({l.text})</p>
-            : <p key={k}><strong>{l.actors.length > 3 ? l.labels.join(", ") : `${l.actors.map((a) => actorName(names, a)).join(" + ")} (${l.labels.join(", ")})`}:</strong> {l.text}{l.do ? <em className="text-gray-600"> [{l.do}]</em> : null}</p>)}
+            : <p key={k}><strong>{l.actors.length > 3 ? partLabel(l) : `${l.actors.map((a) => actorName(names, a)).join(" + ")} (${partLabel(l)})`}:</strong> {l.text}{l.do ? <em className="text-gray-600"> [{l.do}]</em> : null}</p>)}
         </section>
       ))}
       {audience === "teacher" && (
@@ -263,7 +263,7 @@ export function PlayStage({ play, cast, names, onClose }: { play: Play; cast: Ca
           ) : (
             <div key={k} className="rounded-hec-lg border border-hec-line bg-hec-surface px-4 py-2">
               <p className="text-base font-semibold text-amber-700">
-                {l.actors.length > 3 ? l.labels.join(", ") : `${l.actors.map((a) => actorName(names, a)).join(" + ")} · ${l.labels.join(", ")}`}
+                {l.actors.length > 3 ? partLabel(l) : `${l.actors.map((a) => actorName(names, a)).join(" + ")} · ${partLabel(l)}`}
               </p>
               {mode !== "own" && <p className="text-2xl leading-snug text-hec-ink md:text-3xl">{mode === "keys" ? keyWords(l.text) : l.text}</p>}
               {l.do && <p className="text-lg text-hec-ink-soft">↳ {l.do}</p>}

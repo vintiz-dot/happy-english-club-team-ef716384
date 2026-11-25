@@ -7,12 +7,14 @@ import type { Audience } from "./audience";
 import type { Cast, Play } from "./plays";
 
 /** The child (or stand-in) on each actor number. */
-export const actorName = (names: string[], actor: number) => names[actor] ?? `Actor ${actor + 1}`;
+/** A line's part names, with the part a merged line belongs to: "Beach Kid 1 as Mom Crab". */
+export const partLabel = (l: { labels: string[]; as?: string }) => l.labels.join(", ") + (l.as ? ` as ${l.as}` : "");
+export const actorName = (names: string[], actor: number) => (actor < 0 ? "Teacher" : names[actor] ?? `Actor ${actor + 1}`);
 
 export function playMaterial(play: Play, cast: Cast, names: string[], audience: Audience, course?: string): LessonMaterial {
   const teacher = audience === "teacher";
-  const who = (actors: number[], labels: string[]) =>
-    actors.length > 3 ? labels.join(", ") : `${actors.map((a) => actorName(names, a)).join(" + ")} (${labels.join(", ")})`;
+  const who = (l: { actors: number[]; labels: string[]; as?: string }) =>
+    l.actors.length > 3 ? partLabel(l) : `${l.actors.map((a) => actorName(names, a)).join(" + ")} (${partLabel(l)})`;
   const blocks: DocBlock[] = [
     {
       heading: "Cast",
@@ -30,7 +32,7 @@ export function playMaterial(play: Play, cast: Cast, names: string[], audience: 
       eyebrow: play.title,
       table: {
         head: ["Who", "Line", "Action"],
-        rows: s.lines.map((l) => (l.kind === "stage" ? ["", `(${l.text})`, ""] : [who(l.actors, l.labels), l.text, l.do ?? ""])),
+        rows: s.lines.map((l) => (l.kind === "stage" ? ["", `(${l.text})`, ""] : [who(l), l.text, l.do ?? ""])),
       },
     })),
   ];

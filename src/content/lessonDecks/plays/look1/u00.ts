@@ -8,10 +8,10 @@ export const look1U0Plays: Play[] = [
     "level": 1,
     "unit": 0,
     "afterLesson": 1,
-    "title": "Hello, Big and Small",
+    "title": "Boom in the Big Box",
     "minutes": 16,
     "band": "6-8",
-    "summary": "Color Kids say hello, their age and how they are, count to ten, then a big bear tries to hide behind a small box.",
+    "summary": "A big red box knocks, and a BIG voice says its name is Boom and it is ten. The Kids count to three, to five, then to ten to open it, and the box is empty: Boom is behind them, small, blue and six, just like them.",
     "targets": {
       "words": [
         "big",
@@ -19,6 +19,7 @@ export const look1U0Plays: Play[] = [
         "red",
         "blue",
         "one",
+        "six",
         "ten"
       ],
       "grammar": [
@@ -31,206 +32,328 @@ export const look1U0Plays: Play[] = [
       {
         "id": "n",
         "name": "Narrator",
-        "who": "the teacher, or a confident reader"
+        "who": "the teacher",
+        "teacher": true
       },
       {
-        "id": "host",
-        "name": "Host",
-        "who": "a confident child: asks the questions"
-      },
-      {
-        "id": "mouse",
-        "name": "Small Mouse",
-        "who": "a short, funny part",
-        "optional": {
-          "give": "k"
-        }
-      },
-      {
-        "id": "bear",
-        "name": "Big Bear",
-        "who": "a short, funny part",
-        "optional": {
-          "give": "k"
-        }
+        "id": "boom",
+        "name": "Boom",
+        "who": "a child who likes funny voices: a BIG voice in the box, a tiny voice out of it"
       },
       {
         "id": "k",
-        "name": "Color Kids",
-        "who": "children who like to act; short lines",
+        "name": "Kid",
+        "who": "curious and kind; short lines, good for shy children",
         "group": {
-          "max": 8
+          "max": 10
+        }
+      },
+      {
+        "id": "cat",
+        "name": "Sleepy Cat",
+        "who": "a small, funny part: sleeps on the box and hates noise",
+        "optional": {
+          "cut": true
         }
       }
     ],
     "scenes": [
       {
-        "title": "Scene 1: Hello!",
+        "title": "Scene 1: Knock, knock!",
         "lines": [
           {
-            "stage": "The Host stands by a big box. Each Color Kid holds a color card."
+            "stage": "A big red box with a lid stands in the middle (or a red sheet over two chairs). Boom hides inside it. Boom cannot see the Kids, and the Kids cannot see Boom."
+          },
+          {
+            "stage": "The Sleepy Cat sleeps on the lid.",
+            "if": "cat"
           },
           {
             "role": "n",
-            "text": "Hello, everyone! Let's say hello.",
-            "do": "Wave to the class."
-          },
-          {
-            "everyone": "Hello! Hello! Hello!",
-            "do": "Wave with both hands."
-          },
-          {
-            "role": "host",
-            "text": "Hello! What's your name?",
-            "do": "Wave, then point at a Color Kid."
+            "text": "Look! A big box.",
+            "do": "Draw a big box in the air."
           },
           {
             "role": "k",
-            "text": "My name's Red.",
-            "do": "Hold up a red card."
+            "text": "A red box!",
+            "do": "Point at the red.",
+            "all": true
+          },
+          {
+            "role": "n",
+            "text": "Big or small?",
+            "do": "Hands wide apart, then hands close together."
           },
           {
             "role": "k",
-            "text": "My name's Blue.",
-            "do": "Hold up a blue card."
+            "text": "BIG! It's BIG!",
+            "do": "Throw your arms out wide.",
+            "all": true
+          },
+          {
+            "role": "cat",
+            "text": "Meow... Zzz...",
+            "do": "Curl up on the lid and snore."
+          },
+          {
+            "stage": "Knock, knock! Boom knocks on the box from inside."
           },
           {
             "role": "k",
-            "text": "My name's Green.",
-            "do": "Hold up a green card."
+            "text": "Oh no! Hello?",
+            "do": "Jump back, then wave at the box."
+          },
+          {
+            "role": "boom",
+            "text": "HELLO!",
+            "do": "Use a big, deep voice. Bang the box: boom!"
           },
           {
             "role": "k",
-            "text": "My name's Yellow.",
-            "do": "Hold up a yellow card."
+            "text": "What's your name?",
+            "do": "Cup a hand by your ear and lean to the box.",
+            "all": true
           },
           {
-            "role": "host",
+            "role": "boom",
+            "text": "My name's BOOM!",
+            "do": "Bang the box with both fists: boom, boom!"
+          },
+          {
+            "role": "k",
+            "text": "Boom? Big or small?",
+            "do": "Hands wide, then close, with a puzzled face. You cannot see in."
+          },
+          {
+            "role": "boom",
+            "text": "I'm BIG! Big, big, BIG!",
+            "do": "Stomp inside the box like a giant."
+          },
+          {
+            "role": "k",
+            "text": "Oh no! Big!",
+            "do": "Hug yourself and shake."
+          },
+          {
+            "role": "cat",
+            "text": "Shh! Zzz...",
+            "do": "Finger on your lips, then snore again."
+          },
+          {
+            "role": "k",
             "text": "How old are you?",
-            "do": "Hold up fingers and tilt your head."
+            "do": "Hold up your fingers and tilt your head.",
+            "all": true
+          },
+          {
+            "role": "boom",
+            "text": "I'm TEN!",
+            "do": "Wiggle ten fingers above the lid."
+          },
+          {
+            "role": "n",
+            "text": "Ten! Big or small?",
+            "do": "Show ten fingers, then hands wide and hands close."
           },
           {
             "role": "k",
-            "text": "I'm six.",
-            "do": "Show six fingers."
+            "text": "BIG! It's BIG!",
+            "do": "Stomp like a giant.",
+            "all": true
+          }
+        ]
+      },
+      {
+        "title": "Scene 2: Boom asks",
+        "lines": [
+          {
+            "stage": "Boom cannot see out of the box, so Boom asks too."
+          },
+          {
+            "role": "boom",
+            "text": "Hello? What's your name?",
+            "do": "Knock on the lid. Big voice."
           },
           {
             "role": "k",
-            "text": "I'm seven.",
-            "do": "Show seven fingers."
+            "text": "My name's (your name)!",
+            "do": "Point to yourself and say your own name."
+          },
+          {
+            "role": "boom",
+            "text": "How old are you?",
+            "do": "Wiggle your fingers above the lid."
           },
           {
             "role": "k",
-            "text": "I'm eight.",
-            "do": "Show eight fingers."
+            "text": "I'm six!",
+            "do": "Hold up six fingers.",
+            "all": true
           },
           {
-            "role": "k",
-            "text": "I'm nine.",
-            "do": "Show nine fingers."
+            "role": "boom",
+            "text": "Six! Ha, ha! Small!",
+            "do": "A big laugh, hands on your tummy."
           },
           {
-            "role": "host",
+            "role": "boom",
             "text": "How are you?",
-            "do": "Smile and open your hands."
+            "do": "Knock on the lid. Big, bossy voice."
           },
           {
             "role": "k",
             "text": "I'm fine, thanks!",
-            "do": "Give a thumbs up."
+            "do": "Thumbs up at the box.",
+            "all": true
           },
           {
             "role": "k",
-            "text": "I'm fine, thanks!",
-            "do": "Give a thumbs up."
+            "text": "How are you?",
+            "do": "Open your hands and smile at the box."
+          },
+          {
+            "role": "boom",
+            "text": "I'm fine... I'm FINE!",
+            "do": "Say it in a tiny voice, then cough and say it BIG."
           }
         ]
       },
       {
-        "title": "Scene 2: Count!",
+        "title": "Scene 3: Open the box!",
         "lines": [
           {
             "role": "n",
-            "text": "Let's count the colors!",
-            "do": "Point at each card."
+            "text": "Let's open the box!",
+            "do": "Lift a lid in the air."
           },
           {
             "role": "k",
-            "text": "One!",
-            "do": "Hold up one finger."
+            "text": "One, two, three... open!",
+            "do": "Count on your fingers, then pull at the lid."
+          },
+          {
+            "role": "boom",
+            "text": "NO!",
+            "do": "Pull the lid down hard. Big voice."
           },
           {
             "role": "k",
-            "text": "Two!",
-            "do": "Hold up two fingers."
+            "text": "Oh no! Boom says NO!",
+            "do": "Jump back from the box."
+          },
+          {
+            "role": "cat",
+            "text": "Meow! Shh!",
+            "do": "Jump up, cross, then lie down again."
           },
           {
             "role": "k",
-            "text": "Three!",
-            "do": "Hold up three fingers."
+            "text": "One, two, three, four, five... open!",
+            "do": "Count on your fingers, then pull at the lid."
           },
           {
-            "role": "k",
-            "text": "Four!",
-            "do": "Hold up four fingers."
+            "role": "boom",
+            "text": "NO! NO! NO!",
+            "do": "Hold the lid down with both hands."
           },
-          {
-            "everyone": "One, two, three, four, five, six, seven, eight, nine, ten!",
-            "do": "Count on your fingers."
-          }
-        ]
-      },
-      {
-        "title": "Scene 3: Big or small?",
-        "lines": [
           {
             "role": "n",
-            "text": "Look! A big bear and a small mouse.",
-            "do": "Point to each."
+            "text": "Eyes shut! Count to ten!",
+            "do": "Cover your eyes with your hands."
           },
           {
-            "role": "bear",
-            "text": "I'm big!",
-            "do": "Stand tall, arms up."
+            "stage": "The Kids shut their eyes. Boom creeps out of the back of the box, silently. The audience can see it; the Kids cannot."
           },
           {
-            "role": "mouse",
-            "text": "I'm small!",
-            "do": "Crouch down low."
+            "role": "k",
+            "text": "One, two, three, four, five, six, seven, eight, nine, TEN!",
+            "do": "Eyes shut, count on your fingers.",
+            "all": true
           },
           {
-            "role": "host",
+            "stage": "The Kids open the lid. The box is empty! Boom stands behind them."
+          },
+          {
+            "role": "k",
+            "text": "Oh no! No Boom!",
+            "do": "Look into the box, hands on your cheeks."
+          },
+          {
+            "role": "n",
+            "text": "Behind you! Behind you!",
+            "do": "Lead the audience: point behind the Kids."
+          },
+          {
+            "role": "boom",
+            "text": "Hello!",
+            "do": "Tap a Kid on the shoulder. A tiny, squeaky voice."
+          },
+          {
+            "role": "k",
+            "text": "Wow! Hello!",
+            "do": "Turn around, see Boom, and kneel down to look."
+          },
+          {
+            "role": "k",
+            "text": "Blue! A blue Boom!",
+            "do": "Point at something blue on Boom."
+          },
+          {
+            "role": "n",
             "text": "Big or small?",
             "do": "Hands wide, then hands close."
           },
           {
             "role": "k",
-            "text": "Big!",
-            "do": "Open your arms wide."
+            "text": "SMALL! Small, small, small!",
+            "do": "Crouch down low and make a tiny circle with your fingers.",
+            "all": true
+          }
+        ]
+      },
+      {
+        "title": "Scene 4: Hello, Boom",
+        "lines": [
+          {
+            "role": "k",
+            "text": "What's your name?",
+            "do": "Tilt your head at the small Boom: is it really Boom?"
+          },
+          {
+            "role": "boom",
+            "text": "My name's Boom.",
+            "do": "A tiny wave and a tiny voice."
           },
           {
             "role": "k",
-            "text": "Small!",
-            "do": "Make a tiny circle with your fingers."
+            "text": "How old are you?",
+            "do": "Hold up your fingers and tilt your head."
           },
           {
-            "role": "n",
-            "text": "The bear sees a small blue box.",
-            "do": "Point at the box."
+            "role": "boom",
+            "text": "I'm six.",
+            "do": "Show six fingers and look at the floor."
           },
           {
-            "role": "bear",
-            "text": "I'm small! I'm small!",
-            "do": "Squeeze behind the box, tummy out."
+            "role": "k",
+            "text": "How are you, Boom?",
+            "do": "Open your hands and smile."
           },
           {
-            "role": "host",
-            "text": "No! You're big!",
-            "do": "Shake your finger and laugh."
+            "role": "boom",
+            "text": "I'm small... and I'm fine, thanks!",
+            "do": "Make yourself tiny, then give a big thumbs up."
           },
           {
-            "everyone": "Big, big, big! Small, small, small!",
-            "do": "Hands wide, then hands close."
+            "role": "cat",
+            "text": "Meow! Hello, Boom!",
+            "do": "Wake up, stretch, and wave a paw."
+          },
+          {
+            "role": "k",
+            "text": "Hello, Boom! I'm six, too!",
+            "do": "Show six fingers to Boom and wave.",
+            "all": true
           }
         ]
       }
@@ -239,35 +362,36 @@ export const look1U0Plays: Play[] = [
       {
         "round": "Listen and do",
         "minutes": 4,
-        "how": "Read the whole play aloud, slowly. The children only do the actions; they may join the refrain. Nobody has to speak alone yet."
+        "how": "Read the whole play aloud, slowly, with Boom's big and tiny voices. The children only do the actions and join the together lines. Nobody speaks alone yet."
       },
       {
         "round": "Echo the lines",
         "minutes": 4,
-        "how": "Say each line; the child with that part echoes it with its action. Everyone says the refrain. Then give the one-minute fix."
+        "how": "Read each line; the child with that part echoes it with its action. Everyone tries the big Boom voice and the tiny Boom voice. Then give the one-minute fix."
       },
       {
-        "round": "Perform with scripts or picture cards",
+        "round": "Perform with the script",
         "minutes": 4,
-        "how": "Perform once with scripts, then once with only the color cards and number cards."
+        "how": "Perform with the script, the box and the lid. In the count to ten the Kids really shut their eyes, so Boom can creep out."
       },
       {
         "round": "Own words",
         "minutes": 4,
-        "how": "Children say their own color name and their real age, and ask a partner \"How are you?\". Swap big and small things around the room."
+        "how": "No script. A new child goes in the box and chooses a new name and age. The Kids say their real names and ages, and ask \"How are you?\"."
       }
     ],
     "focusOnForm": [
-      "\"My name's ...\", not \"I name ...\": say it with the card held up.",
-      "\"I'm six\", not \"I six\": clap on I'm.",
-      "Final sounds: \"fine\", \"thanks\", \"ten\", \"nine\": ask the child to say the last sound loudly."
+      "\"I'm six\", not \"I six\": Vietnamese has no \"am\". Clap once on \"I'm\".",
+      "\"My name's ...\", not \"My name ...\": hiss the s on \"name's\".",
+      "\"How old are you?\", not \"How old you?\": four words, tap four fingers.",
+      "Final sounds: \"five\", \"nine\", \"ten\", \"fine\", \"big\". Vietnamese learners drop them: the child says the word again and holds the last sound (fi-v, te-n, bi-g)."
     ],
     "props": [
-      "color cards (red, blue, green, yellow)",
-      "a big box and a small box",
-      "a bear mask and a mouse mask (optional)"
+      "a big red box with a lid (or a red sheet over two chairs)",
+      "something blue for Boom (a scarf, a hat or a mask)",
+      "cat ears (optional)"
     ],
-    "teacherNote": "The Color Kids can wear a color card on a string. Shy children can play Small Mouse: one short line. Teach the actions in the Listen-and-do round.",
-    "encore": "Perform it once with no scripts as a warm-up in a later lesson, and add a new color card or a bigger number."
+    "teacherNote": "The box is what makes every question real: Boom cannot see the Kids and the Kids cannot see Boom, so both sides ask. Seat the audience so they see Boom creep out at the back during the count to ten; you lead them in \"Behind you!\". Boom stays silent in every Kid chorus, even about itself. Give Boom to a child who enjoys voices. You read the Narrator. In a small class the Cat is left out.",
+    "encore": "In a later lesson, turn it around: a tiny voice in the box says \"I'm small! I'm one!\", and a very BIG Boom comes out. Or hide a new animal with a new name, age and color."
   }
 ];
