@@ -12,7 +12,7 @@ import { formatVND } from "@/lib/money";
 import { SIBLING_SWAP_ACTION, swapLine, swapsToShow, type SwapResult } from "@/lib/siblingSwaps";
 
 /**
- * Finance > Tuition: sibling discounts the app moved to fit what a family paid
+ * Reports > Checks: sibling discounts the app moved to fit what a family paid
  * (owner, 24 Nov 2026).
  *
  * A family sometimes puts the sibling discount on another child than the one

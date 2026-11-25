@@ -31,6 +31,9 @@ import { AgeBandProvider } from "@/hooks/useAgeBand";
 import { navGroupsFor, sectionIsActive, groupOfPath, type NavSection } from "@/lib/navSections";
 import { navIcon } from "@/components/navIcons";
 import { SectionTabs } from "@/components/SectionTabs";
+import { CheckBadge } from "@/components/admin/CheckBadge";
+import { useCheckProblems } from "@/hooks/useCheckProblems";
+import { checkLines } from "@/lib/checkProblems";
 
 interface LayoutProps {
   children: ReactNode;
@@ -62,6 +65,8 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   useSyncMotionLevel(user?.id);
   // Lesson monitor pilot (D-28): the menu entry only for a teacher of a pilot class.
   const pilotClasses = useMyPilotClasses(role === "teacher");
+  // Money checks that need a person: a red count on Reports in the menu (the cards are Reports > Checks).
+  const checks = useCheckProblems(role === "admin");
   // The class recorder may refuse (a lesson is being recorded) or tidy its local audio first.
   const signOut = () => guardedSignOut(rawSignOut);
   const navigate = useNavigate();
@@ -117,7 +122,10 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
     path: section.members[0].path,
     icon: navIcon(section.icon),
     section,
+    // Only the Reports entry carries the checks' count.
+    badge: section.id === "/admin?tab=reports" ? checks.total : 0,
   });
+  const badgeLines = checkLines(checks.counts);
   type NavEntry = ReturnType<typeof entryOf>;
   const activeGroupId = groupOfPath(navGroups, location.pathname, location.search)?.id;
   const showSidebar = role === "admin" || role === "teacher";
@@ -293,6 +301,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                   )}
                   <item.icon className="relative h-5 w-5 shrink-0" aria-hidden />
                   {sidebarOpen && <span className="relative min-w-0">{item.label}</span>}
+                  <CheckBadge total={item.badge} lines={badgeLines} dot={!sidebarOpen} />
                 </button>
               ) : (
                 <button
@@ -321,6 +330,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                     )}
                   />
                   {sidebarOpen && <span className="relative z-10 truncate">{item.label}</span>}
+                  <CheckBadge total={item.badge} lines={badgeLines} dot={!sidebarOpen} />
                 </button>
               );
 
@@ -404,11 +414,12 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="group"
+                className="group relative"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label={mobileMenuOpen ? "Close the menu" : "Open the menu"}
                 aria-expanded={mobileMenuOpen}
               >
+                {!mobileMenuOpen && <CheckBadge total={checks.total} lines={badgeLines} dot />}
                 {mobileMenuOpen ? (
                   <X className="h-5 w-5 group-hover:text-royalGreen dark:group-hover:text-royalGreen-light transition-colors" />
                 ) : (
@@ -461,6 +472,7 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
                       !isActive && "group-hover:text-royalGreen dark:group-hover:text-royalGreen-light"
                     )} />
                     <span>{item.label}</span>
+                    <CheckBadge total={item.badge} lines={badgeLines} />
                   </Button>
                 );
               })}

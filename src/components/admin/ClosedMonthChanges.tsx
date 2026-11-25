@@ -14,7 +14,7 @@ import { heldRows, heldTotals, monthsBefore, sortHeldRows, type HeldBillRow } fr
 import type { Json } from "@/integrations/supabase/types";
 
 /**
- * Closed months whose bill no longer matches today's pricing (Finance > Tuition).
+ * Closed months whose bill no longer matches today's pricing (Reports > Checks).
  *
  * A closed month's saved bill never changes on its own: calculate-tuition keeps
  * it and answers `held` (supabase/functions/_lib/past-month-hold.ts). This card

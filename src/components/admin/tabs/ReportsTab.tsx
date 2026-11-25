@@ -8,11 +8,14 @@
  *   Forensic   one child's account in full (the student audit and printable
  *              statement), and every payment of a month traced to its bills
  *              and its ledger legs.
+ *   Checks     the money checks (bills against the register, changes waiting to be
+ *              repriced, attendance, closed months, sibling swaps). Its tab, and the
+ *              Reports entry in the menu, carry a red count when one needs a person.
  *
  * Only the open tab is mounted, so no tab pays for another's queries.
  */
 import { useState } from "react";
-import { BarChart3, Gauge, Microscope } from "lucide-react";
+import { BarChart3, Gauge, Microscope, ShieldAlert } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHero } from "@/components/quest/PageHero";
 import { StudentAuditRoster } from "@/components/admin/reports/StudentAuditRoster";
@@ -20,15 +23,20 @@ import { StudentStatementPrint } from "@/components/admin/reports/StudentStateme
 import OperationalReports from "@/components/admin/reports/OperationalReports";
 import ExecutiveReport from "@/components/admin/reports/ExecutiveReport";
 import { ForensicPaymentTrail } from "@/components/admin/reports/ForensicPaymentTrail";
+import { ChecksPanel } from "@/components/admin/reports/ChecksPanel";
+import { CheckBadge } from "@/components/admin/CheckBadge";
+import { useCheckProblems } from "@/hooks/useCheckProblems";
+import { checkLines } from "@/lib/checkProblems";
 import { tryMakeDocument, downloadBlob } from "@/lib/hecDocs";
 import type { StudentAudit } from "@/hooks/useStudentAudit";
 
-type Depth = "executive" | "top" | "forensic";
+type Depth = "executive" | "top" | "forensic" | "checks";
 type ForensicView = "trail" | "students";
 
 const ReportsTab = () => {
   const [depth, setDepth] = useState<Depth>("executive");
   const [forensicView, setForensicView] = useState<ForensicView>("trail");
+  const checks = useCheckProblems(true);
   // The statement that is currently staged for printing. Held here, at
   // the top, because the print portal hides every sibling under <body>
   // and there must only ever be one of it on the page.
@@ -58,7 +66,7 @@ const ReportsTab = () => {
       />
 
       <Tabs value={depth} onValueChange={(v) => setDepth(v as Depth)} className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl bg-muted/60 p-1 sm:inline-grid sm:w-auto">
+        <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl bg-muted/60 p-1 sm:inline-grid sm:w-auto sm:grid-cols-4">
           <TabsTrigger value="executive" className="gap-1.5 rounded-lg py-2 text-sm font-semibold">
             <Gauge className="h-4 w-4" aria-hidden />
             Executive
@@ -70,6 +78,11 @@ const ReportsTab = () => {
           <TabsTrigger value="forensic" className="gap-1.5 rounded-lg py-2 text-sm font-semibold">
             <Microscope className="h-4 w-4" aria-hidden />
             Forensic
+          </TabsTrigger>
+          <TabsTrigger value="checks" className="gap-1.5 rounded-lg py-2 text-sm font-semibold">
+            <ShieldAlert className="h-4 w-4" aria-hidden />
+            Checks
+            <CheckBadge total={checks.total} lines={checkLines(checks.counts)} className="ml-1" />
           </TabsTrigger>
         </TabsList>
 
@@ -94,6 +107,10 @@ const ReportsTab = () => {
               <StudentAuditRoster onPrint={print} />
             </TabsContent>
           </Tabs>
+        </TabsContent>
+
+        <TabsContent value="checks" className="mt-4">
+          <ChecksPanel />
         </TabsContent>
       </Tabs>
 

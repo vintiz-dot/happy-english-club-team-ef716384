@@ -21,7 +21,7 @@ import { isMissingTrialTable, trialRows, trialValue, type TrialRow, type Tuition
  * ticks a lesson as a free trial, with a reason; the row goes into
  * free_trial_lessons and the month is priced again without it. Nothing is
  * priced here. A closed month keeps its bill until the change is approved in
- * Finance > Tuition, like every other change to a closed month.
+ * Reports > Checks, like every other change to a closed month.
  */
 
 const monthName = (m: string) =>

@@ -7,6 +7,8 @@ import { dayjs } from "@/lib/date";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { formatVND } from "@/lib/money";
+import { fetchBillGaps, fetchBillRun } from "@/hooks/useCheckProblems";
+import { heldBillMessages, wrongBills, type BillGap as Gap } from "@/lib/checkProblems";
 
 /**
  * Does every child with lessons this month have a bill, and does it match the
@@ -15,31 +17,6 @@ import { formatVND } from "@/lib/money";
  * the bills every hour. November 2026 had seven children with no bill or a bill
  * of 0 and nothing said so; this card is that something.
  */
-type Gap = {
-  student_id: string;
-  full_name: string;
-  is_active: boolean;
-  problem: "missing" | "zero" | "differs";
-  billable_lessons: number;
-  expected_base: number;
-  saved_base: number | null;
-  saved_total: number | null;
-  confirmation_status: string | null;
-  /** Set by refresh-month-bills when calculate-tuition kept or priced the bill as charged because lessons have no mark. */
-  held?: { lessons: number; message: string };
-  /** The bill was saved with the unmarked lessons priced as charged. */
-  note?: { lessons: number; message: string };
-};
-
-type Run = {
-  ran_at: string;
-  started_by: "timer" | "admin";
-  found: number;
-  recalculated: number;
-  failed: Array<{ student_id: string; name: string; error: string }>;
-  still_open: Gap[];
-};
-
 const vnd = (n: number | null | undefined) => (n == null ? "-" : formatVND(n));
 const PROBLEM: Record<Gap["problem"], string> = {
   missing: "No bill",
@@ -58,26 +35,13 @@ export function TuitionBillCheck({ month }: { month: string }) {
   const gaps = useQuery({
     queryKey: ["tuition-bill-gaps", month],
     enabled: !future,
-    queryFn: async () => {
-      const { data, error } = await (supabase.rpc as any)("tuition_bill_gaps", { p_month: month });
-      if (error) throw error;
-      return (data ?? []) as Gap[];
-    },
+    queryFn: () => fetchBillGaps(month),
   });
 
   const lastRun = useQuery({
     queryKey: ["tuition-bill-check-run", month],
     enabled: !future,
-    queryFn: async () => {
-      const { data, error } = await (supabase.from as any)("tuition_bill_check_runs")
-        .select("ran_at, started_by, found, recalculated, failed, still_open")
-        .eq("month", month)
-        .order("ran_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return (data ?? null) as Run | null;
-    },
+    queryFn: () => fetchBillRun(month),
   });
 
   const recalculate = async () => {
@@ -155,8 +119,8 @@ export function TuitionBillCheck({ month }: { month: string }) {
   }
 
   const failedById = new Map((run?.failed ?? []).map((f) => [f.student_id, f.error]));
-  const heldById = new Map((run?.still_open ?? []).filter((g) => g.held || g.note).map((g) => [g.student_id, (g.held ?? g.note)!.message]));
-  const wrong = rows.filter((g) => !heldById.has(g.student_id));
+  const heldById = heldBillMessages(run);
+  const wrong = wrongBills(rows, run);
   if (wrong.length === 0) {
     // Every listed child is held: the bill stays as charged until the register is fixed.
     return (

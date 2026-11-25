@@ -3,7 +3,7 @@
  *
  * calculate-tuition keeps a closed month's saved bill and answers `held` with
  * both sets of figures (supabase/functions/_lib/past-month-hold.ts). This file
- * only arranges those answers for Finance > Tuition (ClosedMonthChanges.tsx):
+ * only arranges those answers for Reports > Checks (ClosedMonthChanges.tsx):
  * which months to ask about, and one row per held bill. No pricing here: every
  * figure is the function's.
  */

@@ -7,8 +7,9 @@ import { dayjs } from "@/lib/date";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { functionRefusalText } from "@/lib/moneyGuard";
+import { fetchAttendanceGaps } from "@/hooks/useCheckProblems";
 import {
-  GAP_KINDS, GAP_LABEL, GAP_NEEDS_PERSON, firstRows, groupGaps, isNotInstalled, monthsOf, parseApplyResult, parseGapRows,
+  GAP_KINDS, GAP_LABEL, GAP_NEEDS_PERSON, firstRows, groupGaps, isNotInstalled, monthsOf, parseApplyResult,
   type ApplyResult, type GapRow,
 } from "@/lib/attendanceProof";
 
@@ -35,11 +36,7 @@ export function AttendanceEvidenceCheck() {
   const gaps = useQuery({
     queryKey: ["attendance-evidence-gaps", from, to],
     retry: false,
-    queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("attendance_evidence_gaps", { p_from: from, p_to: to });
-      if (error) throw error;
-      return parseGapRows(data);
-    },
+    queryFn: () => fetchAttendanceGaps(from, to),
   });
 
   const reload = () => queryClient.invalidateQueries({ queryKey: ["attendance-evidence-gaps"] });
