@@ -7,11 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dayjs } from "@/lib/date";
 import { formatVND } from "@/lib/money";
-import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { History, Loader2 } from "lucide-react";
 import { heldRows, heldTotals, monthsBefore, sortHeldRows, type HeldBillRow } from "@/lib/closedMonthChanges";
-import type { Json } from "@/integrations/supabase/types";
+import { approveClosedBill } from "@/components/admin/reports/approveClosedBill";
 
 /**
  * Closed months whose bill no longer matches today's pricing (Reports > Checks).
@@ -265,38 +264,14 @@ export function ClosedMonthChanges() {
     const key = `${row.studentId}|${row.month}`;
     setApproving(key);
     try {
-      const { data, error } = await supabase.functions.invoke("calculate-tuition", {
-        body: { studentId: row.studentId, month: row.month, force: true, reason: why },
-      });
-      if (error) throw new Error(await functionErrorMessage(error, "The bill was not changed"));
-      if (data?.error) throw new Error(data.error);
-      if (!data?.approvedChange) {
-        // Nothing was held any more (somebody approved it, or the register moved back).
-        toast.info(data?.held ? "Still held: the bill was not changed." : "This bill no longer differs. Nothing was changed.");
-      } else {
-        const { data: userData } = await supabase.auth.getUser();
-        const actor = userData?.user?.id ?? null;
-        const figures = (base: number, discount: number, total: number): { [key: string]: Json } => ({
-          base_amount: base, total_discount: discount, total_amount: total,
-        });
-        await supabase.from("audit_log").insert({
-          action: "manual_tuition_recalc_approved_change",
-          entity: "invoice",
-          entity_id: `${row.studentId}-${row.month}`,
-          actor_user_id: actor,
-          diff: {
-            student_id: row.studentId,
-            month: row.month,
-            actor_user_id: actor,
-            reason: why,
-            old: figures(row.savedBase, row.savedDiscount, row.savedTotal),
-            new: figures(Number(data.baseAmount ?? 0), Number(data.totalDiscount ?? 0), Number(data.totalAmount ?? 0)),
-          },
-        });
-        toast.success(`${row.name}, ${dayjs(`${row.month}-01`).format("MMMM YYYY")}: now ${formatVND(Number(data.totalAmount ?? 0))}`);
-      }
+      const r = await approveClosedBill(row, why);
+      if (!r.changed) toast.info(r.message);
+      else toast.success(`${row.name}, ${dayjs(`${row.month}-01`).format("MMMM YYYY")}: now ${formatVND(r.total)}`);
       setRows((prev) => (prev ?? []).filter((r) => `${r.studentId}|${r.month}` !== key));
-      await queryClient.invalidateQueries({ queryKey: ["admin-tuition-list"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-tuition-list"] }),
+        queryClient.invalidateQueries({ queryKey: ["closed-bill-verdicts"] }),
+      ]);
     } catch (e: any) {
       toast.error(e?.message || "The bill was not changed");
     } finally {

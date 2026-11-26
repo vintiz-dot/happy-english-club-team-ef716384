@@ -33,7 +33,7 @@ import { navIcon } from "@/components/navIcons";
 import { SectionTabs } from "@/components/SectionTabs";
 import { CheckBadge } from "@/components/admin/CheckBadge";
 import { useCheckProblems } from "@/hooks/useCheckProblems";
-import { checkLines } from "@/lib/checkProblems";
+import { problemLines } from "@/lib/checkProblems";
 
 interface LayoutProps {
   children: ReactNode;
@@ -119,13 +119,14 @@ const Layout = ({ children, title, hideNavigation = false }: LayoutProps) => {
   const entryOf = (section: NavSection) => ({
     key: section.id,
     label: section.label,
-    path: section.members[0].path,
+    // With problems waiting, the Reports entry opens straight on them.
+    path: section.id === "/admin?tab=reports" && checks.total > 0 ? "/admin?tab=reports&view=checks" : section.members[0].path,
     icon: navIcon(section.icon),
     section,
     // Only the Reports entry carries the checks' count.
     badge: section.id === "/admin?tab=reports" ? checks.total : 0,
   });
-  const badgeLines = checkLines(checks.counts);
+  const badgeLines = problemLines(checks.problems);
   type NavEntry = ReturnType<typeof entryOf>;
   const activeGroupId = groupOfPath(navGroups, location.pathname, location.search)?.id;
   const showSidebar = role === "admin" || role === "teacher";

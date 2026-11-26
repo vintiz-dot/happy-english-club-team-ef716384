@@ -128,9 +128,18 @@ export function navGroupsFor(role: string | null | undefined, opts: { pilot?: bo
     .filter((g) => g.sections.length > 0);
 }
 
-/** A member is current when its path is the page, or (with a ?tab=) the page and query. */
-export const navPathActive = (itemPath: string, pathname: string, search: string) =>
-  itemPath.includes("?") ? pathname + search === itemPath : pathname === itemPath && !search;
+/**
+ * A member is current when its path is the page, or (with a ?tab=) the page and every parameter
+ * of its query; the page may carry more (`/admin?tab=reports&view=checks` is still Reports).
+ */
+export const navPathActive = (itemPath: string, pathname: string, search: string) => {
+  if (!itemPath.includes("?")) return pathname === itemPath && !search;
+  const [path, query] = itemPath.split("?");
+  if (pathname !== path) return false;
+  const have = new URLSearchParams(search);
+  for (const [k, v] of new URLSearchParams(query)) if (have.get(k) !== v) return false;
+  return true;
+};
 
 export const sectionIsActive = (s: NavSection, pathname: string, search: string) =>
   s.members.some((m) => navPathActive(m.path, pathname, search));

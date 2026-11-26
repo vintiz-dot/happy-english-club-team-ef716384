@@ -15,6 +15,7 @@
  * Only the open tab is mounted, so no tab pays for another's queries.
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BarChart3, Gauge, Microscope, ShieldAlert } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHero } from "@/components/quest/PageHero";
@@ -26,7 +27,7 @@ import { ForensicPaymentTrail } from "@/components/admin/reports/ForensicPayment
 import { ChecksPanel } from "@/components/admin/reports/ChecksPanel";
 import { CheckBadge } from "@/components/admin/CheckBadge";
 import { useCheckProblems } from "@/hooks/useCheckProblems";
-import { checkLines } from "@/lib/checkProblems";
+import { problemLines } from "@/lib/checkProblems";
 import { tryMakeDocument, downloadBlob } from "@/lib/hecDocs";
 import type { StudentAudit } from "@/hooks/useStudentAudit";
 
@@ -34,7 +35,9 @@ type Depth = "executive" | "top" | "forensic" | "checks";
 type ForensicView = "trail" | "students";
 
 const ReportsTab = () => {
-  const [depth, setDepth] = useState<Depth>("executive");
+  // The red count in the menu links here with view=checks, straight to the problems.
+  const [searchParams] = useSearchParams();
+  const [depth, setDepth] = useState<Depth>(searchParams.get("view") === "checks" ? "checks" : "executive");
   const [forensicView, setForensicView] = useState<ForensicView>("trail");
   const checks = useCheckProblems(true);
   // The statement that is currently staged for printing. Held here, at
@@ -82,7 +85,7 @@ const ReportsTab = () => {
           <TabsTrigger value="checks" className="gap-1.5 rounded-lg py-2 text-sm font-semibold">
             <ShieldAlert className="h-4 w-4" aria-hidden />
             Checks
-            <CheckBadge total={checks.total} lines={checkLines(checks.counts)} className="ml-1" />
+            <CheckBadge total={checks.total} lines={problemLines(checks.problems)} className="ml-1" />
           </TabsTrigger>
         </TabsList>
 
@@ -110,7 +113,7 @@ const ReportsTab = () => {
         </TabsContent>
 
         <TabsContent value="checks" className="mt-4">
-          <ChecksPanel />
+          <ChecksPanel checks={checks} />
         </TabsContent>
       </Tabs>
 
