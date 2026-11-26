@@ -30,7 +30,7 @@ import {
   type ServerBoard,
   type ServerRow,
 } from "@/lib/leaderboard/board";
-import { announceVoiceAward, onVoiceAward, voiceAwardSeen } from "@/lib/voiceAward/events";
+import { announceVoiceAward, consumeLocalEcho, onVoiceAward, voiceAwardSeen } from "@/lib/voiceAward/events";
 import {
   dequeue,
   emptyQueue,
@@ -94,7 +94,7 @@ function skillOfNote(notes: string | null | undefined): VoiceAwardSkill | null {
   return VOICE_AWARD_SKILLS.find((s) => n.includes(s)) ?? null;
 }
 
-export function VoiceAwardOverlay({ classId }: { classId?: string }) {
+export function VoiceAwardOverlay({ classId, remote = false }: { classId?: string; remote?: boolean }) {
   const queryClient = useQueryClient();
   const [queue, setQueue] = useState<OverlayQueue>(emptyQueue);
   const [current, setCurrent] = useState<OverlayItem | null>(null);
@@ -128,18 +128,20 @@ export function VoiceAwardOverlay({ classId }: { classId?: string }) {
 
   // Another device's awards (a projector): realtime inserts of voice rows.
   useEffect(() => {
+    // Only a projector page (remote + a class) listens to the database.
+    if (!remote || !classId) return;
     const channel = supabase
-      .channel(`voice-award-${classId ?? "all"}-${Math.random().toString(36).slice(2, 8)}`)
+      .channel(`voice-award-${classId}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "point_transactions", ...(classId ? { filter: `class_id=eq.${classId}` } : {}) },
+        { event: "INSERT", schema: "public", table: "point_transactions", filter: `class_id=eq.${classId}` },
         (payload) => {
           const r = payload.new as { id?: string; student_id?: string; class_id?: string; points?: number; notes?: string | null };
           if (!r?.id || !r.student_id || !r.class_id || typeof r.points !== "number") return;
           if (!(r.notes ?? "").startsWith(VOICE_AWARD_NOTE_PREFIX)) return;
           // Give the saving browser a moment to announce it with the name and skill.
           window.setTimeout(() => {
-            if (voiceAwardSeen(r.id)) return;
+            if (voiceAwardSeen(r.id) || consumeLocalEcho(r.student_id!, r.points!)) return;
             const board = snapshotOf(r.class_id!);
             const name = board?.rows.find((x) => x.student_id === r.student_id)?.name ?? "";
             announceVoiceAward({
@@ -151,7 +153,7 @@ export function VoiceAwardOverlay({ classId }: { classId?: string }) {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [classId, snapshotOf]);
+  }, [classId, remote, snapshotOf]);
 
   // Start the next award when the stage is free.
   useEffect(() => {

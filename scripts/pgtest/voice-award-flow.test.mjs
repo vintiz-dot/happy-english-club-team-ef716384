@@ -58,7 +58,13 @@ eq("yes with no card says so", F.decide(P({ intent: "confirm" }), null).type, "s
 eq("cancel drops the card", F.decide(P({ intent: "cancel" }), waiting).type, "drop");
 eq("cancel with no card says so", F.decide(P({ intent: "cancel" }), null).type, "say");
 eq("a new award replaces an open card", F.decide(P({ studentId: "s2", studentName: "Lan" }), counting).type, "show");
-eq("undo is always an undo request", F.decide(P({ intent: "undo" }), counting).type, "undo");
+eq("undo with a card open drops the card, not an older award", F.decide(P({ intent: "undo" }), counting).type, "drop");
+eq("undo with a waiting card drops it too", F.decide(P({ intent: "undo" }), waiting).type, "drop");
+eq("undo with no card is an undo request", F.decide(P({ intent: "undo" }), null).type, "undo");
+eq("an unsure yes does nothing but ask again", F.decide(P({ intent: "confirm", confidence: "low" }), waiting).type, "say");
+eq("an unsure undo does nothing but ask again", F.decide(P({ intent: "undo", confidence: "low" }), null).type, "say");
+eq("an unsure undo with a card does not drop it", F.decide(P({ intent: "undo", confidence: "low" }), counting).type, "say");
+eq("an unsure cancel still drops the card", F.decide(P({ intent: "cancel", confidence: "low" }), counting).type, "drop");
 eq("none says something", F.decide(P({ intent: "none", reason: "no command" }), null).type, "say");
 
 // 4. undo eligibility: only this teacher's, only this lesson, not twice

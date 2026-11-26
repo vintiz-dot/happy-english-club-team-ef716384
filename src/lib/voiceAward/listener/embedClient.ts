@@ -7,6 +7,7 @@ import { VOICEPRINT_MODEL_URL } from "../listenerApi";
 import type { Embedder } from "./embedding";
 
 export const MODEL_CACHE = "hec-voiceprint-v1";
+export const EMBED_TIMEOUT_MS = 8000;
 const MIN_MODEL_BYTES = 20_000_000; // the real file is 26.5 MB; anything smaller is a broken download
 
 export async function loadModelBytes(onProgress?: (fraction: number) => void, url = VOICEPRINT_MODEL_URL): Promise<ArrayBuffer> {
@@ -57,11 +58,13 @@ export interface EmbedService extends Embedder {
 }
 
 let shared: Promise<EmbedService> | null = null;
+const sharedRef: { p: Promise<EmbedService> | null } = { p: null };
 
 /** Starts (once) the worker and the model. `onProgress` gets 0..1 while the model downloads. */
 export function getEmbedService(onProgress?: (fraction: number) => void): Promise<EmbedService> {
   if (!shared) {
     shared = createService(onProgress).catch((e) => { shared = null; throw e; });
+    sharedRef.p = shared;
   }
   return shared;
 }
@@ -69,33 +72,40 @@ export function getEmbedService(onProgress?: (fraction: number) => void): Promis
 async function createService(onProgress?: (fraction: number) => void): Promise<EmbedService> {
   const model = await loadModelBytes(onProgress);
   const worker = new Worker(new URL("./embedWorker.ts", import.meta.url), { type: "module" });
-  const waiting = new Map<number, { resolve(v: Float32Array): void; reject(e: Error): void }>();
+  const waiting = new Map<number, { resolve(v: Float32Array): void; reject(e: Error): void; timer: ReturnType<typeof setTimeout> }>();
   let nextId = 1;
+  let dead = false;
+  const die = (message: string) => {
+    // The worker crashed or hung: fail everything waiting, and let the next getEmbedService start a new one.
+    dead = true;
+    if (shared === sharedRef.p) shared = null;
+    try { worker.terminate(); } catch { /* gone already */ }
+    for (const w of waiting.values()) { clearTimeout(w.timer); w.reject(new Error(message)); }
+    waiting.clear();
+  };
   await new Promise<void>((resolve, reject) => {
     worker.onmessage = (e: MessageEvent) => {
       const m = e.data as { type: string; id?: number; message?: string; embedding?: Float32Array };
       if (m.type === "ready") resolve();
       else if (m.type === "error" && m.id === undefined) reject(new Error(m.message || "The voice model could not start."));
-      else if (m.type === "embedding" && m.id !== undefined) { waiting.get(m.id)?.resolve(m.embedding!); waiting.delete(m.id); }
-      else if (m.type === "error" && m.id !== undefined) { waiting.get(m.id)?.reject(new Error(m.message || "Voice check failed.")); waiting.delete(m.id); }
+      else if (m.type === "embedding" && m.id !== undefined) { const w = waiting.get(m.id); if (w) { clearTimeout(w.timer); w.resolve(m.embedding!); } waiting.delete(m.id); }
+      else if (m.type === "error" && m.id !== undefined) { const w = waiting.get(m.id); if (w) { clearTimeout(w.timer); w.reject(new Error(m.message || "Voice check failed.")); } waiting.delete(m.id); }
     };
-    worker.onerror = (e) => reject(new Error(e.message || "The voice model could not start."));
+    worker.onerror = (e) => { reject(new Error(e.message || "The voice model could not start.")); die(e.message || "The voice worker stopped."); };
+    worker.onmessageerror = () => die("The voice worker sent something unreadable.");
     worker.postMessage({ type: "init", model }, [model]);
   });
   return {
     embed(wave: Float32Array): Promise<Float32Array> {
       return new Promise((resolve, reject) => {
+        if (dead) { reject(new Error("The voice worker stopped.")); return; }
         const id = nextId++;
-        waiting.set(id, { resolve, reject });
+        const timer = setTimeout(() => die("The voice check took too long."), EMBED_TIMEOUT_MS);
+        waiting.set(id, { resolve, reject, timer });
         const copy = wave.slice(); // the caller keeps its own buffer
         worker.postMessage({ type: "embed", id, wave: copy }, [copy.buffer]);
       });
     },
-    dispose() {
-      worker.terminate();
-      for (const w of waiting.values()) w.reject(new Error("Stopped."));
-      waiting.clear();
-      shared = null;
-    },
+    dispose() { die("Stopped."); },
   };
 }

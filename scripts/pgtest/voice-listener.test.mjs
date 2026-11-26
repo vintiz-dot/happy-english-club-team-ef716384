@@ -29,7 +29,7 @@ const out = await build({
       export * from "${L}/dsp"; export * from "${L}/resample"; export * from "${L}/wav";
       export * from "${L}/fbank"; export * from "${L}/mfcc"; export * from "${L}/vad";
       export * from "${L}/dtw"; export * from "${L}/embedding"; export * from "${L}/calibrate";
-      export * from "${L}/engine";`,
+      export * from "${L}/engine"; export * from "${L}/embedClient";`,
     resolveDir: repo, sourcefile: "entry.ts", loader: "ts",
   },
   bundle: true, write: false, format: "esm", platform: "node", logLevel: "silent",
@@ -148,6 +148,45 @@ console.log("dtw");
   ok("a different word is far", other.dist > 5 * Math.max(slow.dist, 0.05) && other.dist > 1.5, f3(other.dist));
   const two = K.bestTwoAverage([5, 1, 3, 2, 9]);
   ok("best-2-of-5 average", Math.abs(two - 1.5) < 1e-9);
+}
+
+console.log("embed service failure handling (fake worker)");
+{
+  const mkWorker = (mode) => class FakeWorker {
+    constructor() { FakeWorker.last = this; setTimeout(() => this.onmessage?.({ data: { type: "ready" } }), 0); }
+    postMessage(m) {
+      if (m.type === "embed") {
+        if (mode === "crash") setTimeout(() => this.onerror?.({ message: "boom" }), 0);
+        else if (mode === "ok") setTimeout(() => this.onmessage?.({ data: { type: "embedding", id: m.id, embedding: new Float32Array(256) } }), 0);
+      }
+    }
+    terminate() { this.dead = true; }
+  };
+  globalThis.fetch = async () => new Response(new Uint8Array(21_000_000), { headers: { "content-length": "21000000" } });
+  const wave = new Float32Array(32000);
+  globalThis.Worker = mkWorker("crash");
+  let svc = await K.getEmbedService();
+  let err = null; try { await svc.embed(wave); } catch (e) { err = e; }
+  ok("a worker that dies after ready rejects the pending embed", err && /boom/.test(err.message), String(err));
+  let err2 = null; try { await svc.embed(wave); } catch (e) { err2 = e; }
+  ok("later embeds on the dead service reject at once", !!err2);
+  globalThis.Worker = mkWorker("ok");
+  svc = await K.getEmbedService();
+  ok("the next getEmbedService starts a fresh worker", (await svc.embed(wave)).length === 256);
+  svc.dispose();
+  globalThis.Worker = mkWorker("silent");
+  svc = await K.getEmbedService();
+  const t = performance.now(); let err3 = null; try { await svc.embed(wave); } catch (e) { err3 = e; }
+  ok("a worker that never answers is given up on after the timeout", err3 && /too long/.test(err3.message) && performance.now() - t >= K.EMBED_TIMEOUT_MS - 100, `${(performance.now() - t) | 0} ms`);
+  // the engine turns a failing embed into an error state, not a hang
+  const prof = { version: 1, userId: "u", createdAt: "", embedding: new Array(256).fill(0), threshold: 0.4, wakeTemplates: [[new Array(26).fill(0)]], wakeThreshold: 1e9, micLabel: null };
+  const states = [];
+  const eng = new K.ListenerEngine(prof, { onState: (x, d) => states.push(d ? x + ":" + d : x), onCommand() {}, onRejected() {} }, { embed: async () => { throw new Error("The voice check stopped working. Switch voice points off and on again."); } });
+  let sd = 5; const rn = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296 - 0.5);
+  const burst = (sec, amp) => Float32Array.from({ length: sec * 16000 }, (_, i) => rn() * amp * (0.5 + 0.5 * Math.sin(i / 20)));
+  for (const blk of [burst(1, 0.002), burst(2, 0.4), burst(2, 0.002)]) for (let o = 0; o < blk.length; o += 320) eng.push(blk.subarray(o, o + 320));
+  await new Promise((r) => setTimeout(r, 100));
+  ok("a failing embed gives onState error with the sentence, then listening again", states.some((x) => x.startsWith("error:The voice check stopped working")) && states[states.length - 1] === "listening", states.join(" > "));
 }
 
 // ------------------------------------------------------------- part 2: speech

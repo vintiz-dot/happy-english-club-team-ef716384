@@ -37,32 +37,63 @@ async function buildProfile(
   return buildProfileCore(userId, reading, wakeSamples, micLabel, embedder, (f) => onProgress?.(0.3 + f * 0.7));
 }
 
-async function startListener(profile: VoiceprintProfile, events: ListenerEvents, opts?: { deviceId?: string }): Promise<ListenerHandle> {
+export const VOICE_CHECK_STOPPED = "The voice check stopped working. Switch voice points off and on again.";
+
+function abortError(): Error {
+  const e = new Error("Stopped.");
+  e.name = "AbortError";
+  return e;
+}
+
+async function startListener(
+  profile: VoiceprintProfile,
+  events: ListenerEvents,
+  opts?: { deviceId?: string; signal?: AbortSignal },
+): Promise<ListenerHandle> {
+  const signal = opts?.signal;
+  if (signal?.aborted) throw abortError();
   events.onState("loading", "Starting the microphone");
   // Open the microphone first, inside the click that asked for it (the model may take a while).
   const mic = await openMic(opts?.deviceId);
   let engine: ListenerEngine | null = null;
   let stopped = false;
+  const teardown = () => {
+    if (stopped) return;
+    stopped = true;
+    engine?.stop();
+    mic.close(); // stops every track, disconnects the worklet, closes the AudioContext
+  };
+  // Aborting while the model loads releases the mic at once (the download itself carries on and is cached).
+  let onAbort: (() => void) | null = null;
+  const aborted = new Promise<never>((_, reject) => {
+    onAbort = () => { teardown(); reject(abortError()); };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+  });
+  aborted.catch(() => undefined);
   try {
-    const embedder = await embedderWithProgress((text) => events.onState("loading", text));
-    if (stopped) throw new Error("Stopped.");
-    engine = new ListenerEngine(profile, events, { embed: (w) => embedder.embed(w) });
+    const embedder = await Promise.race([embedderWithProgress((text) => events.onState("loading", text)), aborted]);
+    if (stopped) throw abortError();
+    engine = new ListenerEngine(profile, events, {
+      embed: (w) => embedder.embed(w).catch(() => { throw new Error(VOICE_CHECK_STOPPED); }),
+    });
   } catch (e) {
-    mic.close();
-    events.onState("error", e instanceof Error ? e.message : String(e));
+    teardown();
+    if ((e as Error)?.name !== "AbortError") events.onState("error", e instanceof Error ? e.message : String(e));
     throw e;
+  } finally {
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
   }
   const eng = engine;
   mic.onSamples = (s) => eng.push(s);
-  mic.onEnded = () => { if (!stopped) events.onState("error", "The microphone was disconnected."); };
+  mic.onEnded = () => {
+    if (stopped) return;
+    events.onState("error", "The microphone was disconnected.");
+    teardown();
+  };
   events.onState("listening");
   return {
-    stop() {
-      if (stopped) return;
-      stopped = true;
-      eng.stop();
-      mic.close();
-    },
+    stop() { teardown(); },
     pause() { eng.pause(); },
     resume() { eng.resume(); },
   };

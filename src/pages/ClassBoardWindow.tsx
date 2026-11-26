@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ProjectedBoard } from "@/components/leaderboard/ProjectedBoard";
 import { BoardErrorBoundary } from "@/components/leaderboard/BoardErrorBoundary";
+import { VoiceAwardOverlay } from "@/components/voiceAward/VoiceAwardOverlay";
 
 export default function ClassBoardWindow() {
   const { classId } = useParams<{ classId: string }>();
@@ -20,6 +21,8 @@ export default function ClassBoardWindow() {
       <BoardErrorBoundary>
         <ProjectedBoard classId={classId} />
       </BoardErrorBoundary>
+      {/* Voice awards spoken on the teacher's laptop play here too (realtime). */}
+      <VoiceAwardOverlay classId={classId} remote />
     </div>
   );
 }

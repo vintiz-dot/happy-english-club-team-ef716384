@@ -33,8 +33,25 @@ export function voiceAwardSeen(transactionId: string | null | undefined): boolea
   return !!transactionId && seenSet.has(transactionId);
 }
 
-export function announceVoiceAward(a: VoiceAwardApplied): void {
+/** Local awards announced without a transaction id: kept briefly so a realtime echo of the same save is not played twice. */
+const ECHO_WINDOW_MS = 10_000;
+let localNoId: Array<{ studentId: string; points: number; at: number }> = [];
+
+/**
+ * True (and consumed) when a realtime row matches a local award that had no
+ * transaction id: same child, same points, announced within 10 s.
+ */
+export function consumeLocalEcho(studentId: string, points: number, now: number = Date.now()): boolean {
+  localNoId = localNoId.filter((x) => now - x.at <= ECHO_WINDOW_MS);
+  const i = localNoId.findIndex((x) => x.studentId === studentId && x.points === points);
+  if (i < 0) return false;
+  localNoId.splice(i, 1);
+  return true;
+}
+
+export function announceVoiceAward(a: VoiceAwardApplied, now: number = Date.now()): void {
   if (!claimVoiceAward(a.transactionId)) return;
+  if (!a.transactionId) localNoId.push({ studentId: a.studentId, points: a.points, at: now });
   for (const l of [...listeners]) {
     try { l(a); } catch { /* one bad listener must not stop the others */ }
   }
@@ -50,4 +67,5 @@ export function resetVoiceAwardEvents(): void {
   listeners.clear();
   seen.length = 0;
   seenSet.clear();
+  localNoId = [];
 }

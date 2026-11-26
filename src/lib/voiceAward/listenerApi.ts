@@ -95,6 +95,7 @@ export interface ListenerModule {
   startListener(
     profile: VoiceprintProfile,
     events: ListenerEvents,
-    opts?: { deviceId?: string },
+    /** `signal` aborts a start still loading the model (mic released at once). */
+    opts?: { deviceId?: string; signal?: AbortSignal },
   ): Promise<ListenerHandle>;
 }

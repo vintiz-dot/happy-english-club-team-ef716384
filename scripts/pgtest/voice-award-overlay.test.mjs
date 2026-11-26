@@ -46,6 +46,15 @@ eq("a throwing listener does not stop the others", bad, ["t4"]);
 for (let i = 0; i < 400; i++) E.claimVoiceAward("x" + i);
 ok("seen set is bounded (old ids forgotten)", E.claimVoiceAward("x0") === true);
 
+// 1b. a local award without a transaction id: its realtime echo is dropped once
+E.resetVoiceAwardEvents();
+E.announceVoiceAward(A({ transactionId: null, studentId: "s9", points: 5 }), 1000);
+ok("echo of same child and points within 10 s is recognised", E.consumeLocalEcho("s9", 5, 5000) === true);
+ok("and only once", E.consumeLocalEcho("s9", 5, 5001) === false);
+E.announceVoiceAward(A({ transactionId: null, studentId: "s9", points: 5 }), 1000);
+ok("other points or child are not echoes", E.consumeLocalEcho("s9", 6, 2000) === false && E.consumeLocalEcho("s8", 5, 2000) === false);
+ok("after 10 s it is not an echo", E.consumeLocalEcho("s9", 5, 12000) === false);
+
 // 2. queue
 let q = Q.emptyQueue();
 q = Q.enqueue(q, A({ studentId: "s1", points: 5 }));

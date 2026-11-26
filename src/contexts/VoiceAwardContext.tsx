@@ -74,7 +74,7 @@ export type VoicePhase =
 export interface VoiceCard {
   award: PendingAward;
   /** counting: saves by itself when the cancel window ends. waiting: needs "HEC yes" or Confirm. */
-  mode: "counting" | "waiting";
+  mode: "counting" | "waiting" | "saved";
   startedAt: number;
   cancelMs: number;
   classId: string;
@@ -174,6 +174,7 @@ export function useVoiceLevel(): number {
 /** The event the provider sends and ClassroomToolsLauncher listens for. */
 export const OPEN_VOICE_TOOL_EVENT = "hec-open-voice-award-tool";
 
+const ALREADY_SAVED = "Already saved \u2014 say 'HEC undo' to remove it.";
 const SAVED_KEY = (uid: string) => `hec-voice-award-saved:${uid}`;
 const QUERY_KEYS_AFTER_SAVE = [
   "monthly-leader",
@@ -224,6 +225,8 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   // Refs the listener callbacks read, so they never see a stale card or session.
   const cardRef = useRef<VoiceCard | null>(null);
   const busyRef = useRef<"asking" | "saving" | null>(null);
+  const savingRef = useRef(false);
+  const enrollingRef = useRef(false);
   const sessionRef = useRef<ActiveSession | null>(null);
   const classIdRef = useRef<string | null>(null);
   const savedRef = useRef<SavedAward[]>([]);
@@ -233,9 +236,15 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   sessionRef.current = session;
   classIdRef.current = classId;
 
-  const setBusyBoth = useCallback((b: "asking" | "saving" | null) => {
-    busyRef.current = b;
-    setBusy(b);
+  // "asking" is a request with the listening service; saving has its own flag so
+  // a clip or a finished request can never clear it.
+  const setAsking = useCallback((on: boolean) => {
+    busyRef.current = on ? "asking" : null;
+    setBusy(savingRef.current ? "saving" : busyRef.current);
+  }, []);
+  const setSavingFlag = useCallback((on: boolean) => {
+    savingRef.current = on;
+    setBusy(on ? "saving" : busyRef.current);
   }, []);
 
   const log = useCallback((kind: VoiceCommandEntry["kind"], text: string) => {
@@ -353,7 +362,19 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
 
   /* ---------------------------------------------------------------- saved */
   useEffect(() => {
+    // Another person signed in (or out): nothing of the last one may remain.
     savedRef.current = [];
+    setProfile({ state: "unknown", profile: null });
+    setClassIdState(null);
+    setClassTouched(false);
+    setCommands([]);
+    setNotice(null);
+    setSession(null);
+    setEnabledState(false);
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    timerRef.current = null;
+    cardRef.current = null;
+    setCard(null);
     if (!userId) return;
     try {
       const raw = sessionStorage.getItem(SAVED_KEY(userId));
@@ -384,9 +405,9 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   /* ----------------------------------------------------------------- save */
   const saveCard = useCallback(async () => {
     const c = cardRef.current;
-    if (!c || !userId || busyRef.current === "saving") return;
+    if (!c || c.mode === "saved" || !userId || savingRef.current) return;
     clearTimer();
-    setBusyBoth("saving");
+    setSavingFlag(true);
     const a = c.award;
     try {
       await awardPoints({
@@ -399,10 +420,11 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
       });
       // awardPoints returns no ids: read the row back for the overlay and for undo.
       let transactionId: string | null = null;
+      let txCreatedAt: string | null = null;
       try {
         const { data } = await supabase
           .from("point_transactions")
-          .select("id")
+          .select("id, created_at")
           .eq("student_id", a.studentId)
           .eq("session_id", c.sessionId)
           .eq("created_by", userId)
@@ -411,11 +433,13 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
           .order("created_at", { ascending: false })
           .limit(1);
         transactionId = (data?.[0]?.id as string | undefined) ?? null;
+        txCreatedAt = (data?.[0]?.created_at as string | undefined) ?? null;
       } catch {
         /* the board still plays; undo then uses a compensating row */
       }
       savedRef.current.push({
         transactionId,
+        txCreatedAt,
         studentId: a.studentId,
         studentName: a.studentName,
         points: a.points,
@@ -427,7 +451,15 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
         undone: false,
       });
       rememberSaved();
-      closeCard();
+      // Show "Saved" for a moment, unless another card has taken the place.
+      if (cardRef.current === c) {
+        const done: VoiceCard = { ...c, mode: "saved" };
+        cardRef.current = done;
+        setCard(done);
+        timerRef.current = window.setTimeout(() => {
+          if (cardRef.current === done) closeCard();
+        }, 1600);
+      }
       invalidate(c.classId);
       announceVoiceAward({
         classId: c.classId,
@@ -441,13 +473,13 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
       setNotice(`Saved ${cardTitle(a)}.`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "unknown error";
-      closeCard();
+      if (cardRef.current === c) closeCard();
       log("error", `Could not save ${cardTitle(a)}`);
       setNotice(`I could not save ${cardTitle(a)} (${msg}). Nothing was changed.`);
     } finally {
-      setBusyBoth(null);
+      setSavingFlag(false);
     }
-  }, [userId, clearTimer, closeCard, invalidate, log, rememberSaved, setBusyBoth]);
+  }, [userId, clearTimer, closeCard, invalidate, log, rememberSaved, setSavingFlag]);
 
   /* ----------------------------------------------------------------- undo */
   const doUndo = useCallback(async () => {
@@ -457,7 +489,11 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
       log("ignored", "Undo: nothing to undo");
       return;
     }
-    setBusyBoth("saving");
+    if (savingRef.current) {
+      setNotice("Still saving. Try undo again in a moment.");
+      return;
+    }
+    setSavingFlag(true);
     try {
       let removed = false;
       if (found.transactionId) {
@@ -470,19 +506,25 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
         removed = !error && (data?.length ?? 0) > 0;
       }
       if (writesSkillRow(found) && found.skill) {
-        const { data: rows } = await supabase
-          .from("skill_assessments")
-          .select("id")
-          .eq("student_id", found.studentId)
-          .eq("class_id", found.classId)
-          .eq("session_id", found.sessionId)
-          .eq("skill", found.skill)
-          .eq("score", found.points)
-          .eq("created_by", userId)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        const sid = rows?.[0]?.id as string | undefined;
+        // Only the skill row written with this award: same values AND made within 10 s of it.
+        const txAt = found.txCreatedAt ? Date.parse(found.txCreatedAt) : NaN;
+        let sid: string | undefined;
+        if (Number.isFinite(txAt)) {
+          const { data: rows } = await supabase
+            .from("skill_assessments")
+            .select("id, created_at")
+            .eq("student_id", found.studentId)
+            .eq("class_id", found.classId)
+            .eq("session_id", found.sessionId)
+            .eq("skill", found.skill)
+            .eq("score", found.points)
+            .eq("created_by", userId)
+            .order("created_at", { ascending: false })
+            .limit(5);
+          sid = (rows ?? []).find((r) => r.created_at && Math.abs(Date.parse(r.created_at) - txAt) <= 10_000)?.id as string | undefined;
+        }
         if (sid) await supabase.from("skill_assessments").delete().eq("id", sid);
+        else log("ignored", `Left the ${found.skill} skill score in place: I could not be sure which row was the voice one`);
       }
       if (!removed) {
         // The row could not be deleted (or was never found): write the opposite instead.
@@ -505,16 +547,13 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
       log("error", `Could not undo ${cardTitle(found)}`);
       setNotice(`I could not undo ${cardTitle(found)} (${msg}).`);
     } finally {
-      setBusyBoth(null);
+      setSavingFlag(false);
     }
-  }, [userId, invalidate, log, rememberSaved, setBusyBoth]);
+  }, [userId, invalidate, log, rememberSaved, setSavingFlag]);
 
   /* ------------------------------------------------------ what was said */
   const openCard = useCallback(
-    (award: PendingAward) => {
-      const s = sessionRef.current;
-      const cid = classIdRef.current;
-      if (!s || !cid) return;
+    (award: PendingAward, cid: string, sid: string) => {
       clearTimer();
       const next: VoiceCard = {
         award,
@@ -522,7 +561,7 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
         startedAt: Date.now(),
         cancelMs: VOICE_AWARD_CANCEL_MS,
         classId: cid,
-        sessionId: s.id,
+        sessionId: sid,
       };
       cardRef.current = next;
       setCard(next);
@@ -532,7 +571,7 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   );
 
   const handleResponse = useCallback(
-    (res: VoiceAwardResponse) => {
+    (res: VoiceAwardResponse, asked: { classId: string; sessionId: string }) => {
       if (!res.ok) {
         // The app is not strict, so `!res.ok` does not narrow the union by itself.
         const msg = failureSentence(res as Extract<VoiceAwardResponse, { ok: false }>);
@@ -540,23 +579,31 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
         log("error", msg);
         return;
       }
-      const c = cardRef.current;
-      const action = decide(res.parse, c ? { kind: c.mode, award: c.award } : null);
+      // The class or lesson moved on while Gemini was thinking: that answer is about something else.
+      if (classIdRef.current !== asked.classId || sessionRef.current?.id !== asked.sessionId) {
+        log("ignored", "Dropped an answer: the class or lesson changed meanwhile");
+        return;
+      }
+      const c = cardRef.current && cardRef.current.mode !== "saved" ? cardRef.current : null;
+      const action = decide(res.parse, c && c.mode !== "saved" ? { kind: c.mode, award: c.award } : null);
       switch (action.type) {
         case "show":
           setNotice(null);
-          openCard(action.award);
+          openCard(action.award, asked.classId, asked.sessionId);
           break;
         case "save":
           void saveCard();
           break;
         case "drop":
+          if (savingRef.current) {
+            setNotice(ALREADY_SAVED);
+            break;
+          }
           if (c) log("cancelled", cardTitle(c.award));
           closeCard();
           setNotice("Cancelled.");
           break;
         case "undo":
-          closeCard();
           void doUndo();
           break;
         case "say":
@@ -572,7 +619,7 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
     async (wavBase64: string) => {
       const cid = classIdRef.current;
       const s = sessionRef.current;
-      if (busyRef.current) {
+      if (busyRef.current === "asking") {
         log("ignored", "Heard you while still working on the last command");
         return;
       }
@@ -580,7 +627,7 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
         setNotice("There is no lesson running, so I did not act on that.");
         return;
       }
-      setBusyBoth("asking");
+      setAsking(true);
       try {
         const body: VoiceAwardRequest = { classId: cid, sessionId: s.id, audioBase64: wavBase64, mime: "audio/wav" };
         const { data, error } = await supabase.functions.invoke("voice-award", { body });
@@ -590,16 +637,16 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
           log("error", msg);
           return;
         }
-        handleResponse(data as VoiceAwardResponse);
+        handleResponse(data as VoiceAwardResponse, { classId: cid, sessionId: s.id });
       } catch {
         const msg = "I could not reach the listening service. Check the connection, or use the buttons.";
         setNotice(msg);
         log("error", msg);
       } finally {
-        setBusyBoth(null);
+        setAsking(false);
       }
     },
-    [handleResponse, log, setBusyBoth],
+    [handleResponse, log, setAsking],
   );
 
   // The listener holds this one function and always calls the newest.
@@ -630,13 +677,24 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
           {
             onState: (st, detail) => {
               if (cancelled) return;
+              if (st === "error") {
+                setEnabledState(false);
+                setNotice(detail || "The microphone stopped working, so I stopped listening.");
+                return;
+              }
               setListenerState(st);
               setListenerDetail(detail ?? null);
               if (st === "recording") soundManager.play("notification", { classroom: true });
             },
-            onCommand: (clip) => void commandRef.current(clip.wavBase64),
-            onRejected: (reason) => rejectedRef.current(reason),
-            onLevel: (rms) => setLevel(Math.max(0, Math.min(1, rms))),
+            onCommand: (clip) => {
+              if (!cancelled) void commandRef.current(clip.wavBase64);
+            },
+            onRejected: (reason) => {
+              if (!cancelled) rejectedRef.current(reason);
+            },
+            onLevel: (rms) => {
+              if (!cancelled) setLevel(Math.max(0, Math.min(1, rms)));
+            },
           },
           deviceId ? { deviceId } : undefined,
         );
@@ -646,6 +704,7 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
         }
         handle = h;
         handleRef.current = h;
+        if (enrollingRef.current) h.pause();
       } catch (e) {
         if (cancelled) return;
         setListenerState("error");
@@ -662,6 +721,7 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   }, [allowed, enabled, profileObj, sessionId]);
 
   // The enrolment dialog holds the microphone while it is open.
+  enrollingRef.current = enrolling;
   useEffect(() => {
     const h = handleRef.current;
     if (!h) return;
@@ -735,20 +795,32 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   );
 
   const confirm = useCallback(() => {
-    if (cardRef.current) void saveCard();
+    const c = cardRef.current;
+    if (c && c.mode !== "saved") void saveCard();
   }, [saveCard]);
   const cancel = useCallback(() => {
     const c = cardRef.current;
-    if (!c) return;
+    if (!c || c.mode === "saved") return;
+    if (savingRef.current) {
+      setNotice(ALREADY_SAVED);
+      return;
+    }
     log("cancelled", cardTitle(c.award));
     closeCard();
     setNotice("Cancelled.");
   }, [closeCard, log]);
   const undo = useCallback(() => {
-    if (busyRef.current) return;
-    closeCard();
+    if (busyRef.current === "asking" || savingRef.current) return;
+    const c = cardRef.current;
+    // A card that is still open is cancelled; undo never removes an older award behind it.
+    if (c && c.mode !== "saved") {
+      log("cancelled", cardTitle(c.award));
+      closeCard();
+      setNotice("Cancelled.");
+      return;
+    }
     void doUndo();
-  }, [closeCard, doUndo]);
+  }, [closeCard, doUndo, log]);
   const openTool = useCallback(() => {
     window.dispatchEvent(new CustomEvent(OPEN_VOICE_TOOL_EVENT));
   }, []);
@@ -785,7 +857,9 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
               : phase === "card"
                 ? card?.mode === "waiting"
                   ? 'Waiting: say "HEC yes" or tap Confirm'
-                  : "Saving in a moment: tap Cancel to stop it"
+                  : card?.mode === "saved"
+                    ? "Saved"
+                    : "Saving in a moment: tap Cancel to stop it"
                 : phase === "saving"
                   ? "Saving…"
                   : phase === "paused"

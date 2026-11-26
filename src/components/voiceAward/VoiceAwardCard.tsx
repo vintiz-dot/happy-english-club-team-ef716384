@@ -18,6 +18,7 @@ const INDIGO_DEEP = "#14102B";
 const TEAL = "#25DCCB";
 const AMBER = "#FFC83D";
 const CORAL = "#FF9D6E";
+const GREEN = "#4FB783";
 const PAPER = "#FAF9FD";
 
 const R = 26;
@@ -41,6 +42,7 @@ export function VoiceAwardCard() {
   const left = useSecondsLeft(card?.startedAt ?? 0, card?.cancelMs ?? 0, !!card && counting);
   if (!card || typeof document === "undefined") return null;
   const a = card.award;
+  const saved = card.mode === "saved";
   const plus = a.points > 0;
   const accent = plus ? TEAL : CORAL;
 
@@ -51,11 +53,15 @@ export function VoiceAwardCard() {
       aria-label={cardTitle(a)}
       // Never steal focus: clicking the card keeps the page's selection and typing.
       onMouseDown={(e) => e.preventDefault()}
-      style={{ background: INDIGO_DEEP, color: PAPER, borderColor: counting ? accent : AMBER }}
-      className="fixed bottom-6 left-1/2 z-[9999] flex w-[min(92vw,44rem)] -translate-x-1/2 items-center gap-5 rounded-3xl border-2 px-6 py-5 shadow-2xl"
+      style={{ background: INDIGO_DEEP, color: PAPER, borderColor: saved ? GREEN : counting ? accent : AMBER }}
+      className="fixed bottom-6 left-1/2 z-[10002] flex w-[min(92vw,44rem)] -translate-x-1/2 items-center gap-5 rounded-3xl border-2 px-6 py-5 shadow-2xl"
     >
       <div className="relative grid h-16 w-16 shrink-0 place-items-center" aria-hidden>
-        {counting ? (
+        {saved ? (
+          <span className="grid h-16 w-16 place-items-center rounded-full" style={{ background: GREEN, color: INDIGO_DEEP }}>
+            <Check className="h-8 w-8" />
+          </span>
+        ) : counting ? (
           <>
             <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90">
               <circle cx="32" cy="32" r={R} fill="none" stroke={INDIGO} strokeWidth="6" />
@@ -90,7 +96,9 @@ export function VoiceAwardCard() {
           {a.studentName} <span style={{ color: accent }}>{signed(a.points)}</span>{" "}
           <span className="text-2xl font-semibold opacity-90">{skillLabel(a.skill)}</span>
         </p>
-        {counting ? (
+        {saved ? (
+          <p className="mt-1 text-sm font-semibold" style={{ color: GREEN }}>Saved. Say &ldquo;HEC undo&rdquo; to remove it.</p>
+        ) : counting ? (
           <p className="mt-1 text-sm opacity-80">Saving in {left} s. Tap Cancel, or say &ldquo;HEC cancel&rdquo;, to stop it.</p>
         ) : (
           <p className="mt-1 text-sm" style={{ color: AMBER }}>
@@ -99,6 +107,7 @@ export function VoiceAwardCard() {
         )}
       </div>
 
+      {!saved && (
       <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
         <button
           type="button"
@@ -116,6 +125,7 @@ export function VoiceAwardCard() {
           <Check className="h-5 w-5" aria-hidden /> {counting ? "Save now" : "Confirm"}
         </button>
       </div>
+      )}
 
       <style>{`
         @keyframes voice-award-ring { from { stroke-dashoffset: 0; } to { stroke-dashoffset: ${CIRC}; } }

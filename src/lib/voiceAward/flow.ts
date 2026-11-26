@@ -93,6 +93,8 @@ export interface SavedAward {
   createdBy: string;
   savedAt: number;
   undone: boolean;
+  /** created_at of the point_transactions row, to match the skill row made with it. */
+  txCreatedAt?: string | null;
 }
 
 export interface UndoContext {
@@ -151,11 +153,14 @@ export type FlowAction =
 export function decide(parse: VoiceAwardParse, pending: PendingState): FlowAction {
   switch (parse.intent) {
     case "confirm":
+      if (parse.confidence !== "high") return { type: "say", message: "I am not sure I heard yes. Say HEC yes again, or tap Confirm." };
       return pending ? { type: "save" } : { type: "say", message: "There is nothing waiting to confirm." };
     case "cancel":
       return pending ? { type: "drop" } : { type: "say", message: "There is nothing to cancel." };
     case "undo":
-      return { type: "undo" };
+      if (parse.confidence !== "high") return { type: "say", message: "I am not sure I heard undo. Say HEC undo again, or tap Undo last." };
+      // With a card open, undo means drop that card; it never reaches back to an older award.
+      return pending ? { type: "drop" } : { type: "undo" };
     case "none":
       return { type: "say", message: parse.reason || (parse.heard ? `I did not find a command in "${parse.heard}".` : "I did not hear a command.") };
     case "award": {
