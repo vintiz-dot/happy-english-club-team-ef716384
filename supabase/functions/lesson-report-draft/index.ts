@@ -39,6 +39,7 @@ import {
   plannedLessons,
   readPastedTranscript,
   readTranscript,
+  speakingEvidence,
   transcriptText,
   type DraftContext,
 } from "../_lib/lesson-report-draft.ts";
@@ -199,6 +200,10 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
       ? "Not read: only the lesson's own teacher can read the lesson monitor transcript."
       : "No lesson monitor transcript for this lesson.";
 
+  // Grading the end of the lesson needs the monitor's own lines (who was tapped, how sure the machine was) and its
+  // coverage: a pasted transcript has neither, so it never gets a speaking grade.
+  const speaking = monitorBody && !pasted && transcript ? speakingEvidence(monitorBody, transcript, enrolled, attendance) : null;
+
   const photoMap = new Map<string, { kind: string; caption: string | null }>();
   const content: unknown[] = [];
   for (const p of (photos.data ?? []).slice(0, MAX_PHOTOS)) {
@@ -221,7 +226,7 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
   const ctx: DraftContext = {
     enrolled, workOwner, photos: photoMap, attendance, points,
     homework: setToday.map((h: any) => ({ homework_id: h.id, title: String(h.title ?? ""), due_date: h.due_date ?? null })),
-    transcript, transcriptNote, workCount: ownWork.length,
+    transcript, transcriptNote, workCount: ownWork.length, speaking,
   };
 
   const evidence = {
@@ -234,6 +239,7 @@ async function build(asCaller: SupabaseClient, token: string, session: any, isAd
     target_words: targets.data ? { words: targets.data.words ?? [], structures: targets.data.structures ?? [] } : null,
     planned_lessons: plan.error ? null : plannedLessons((plan.data ?? []).map((p: any) => p.curriculum_lessons)),
     photos: [...photoMap].map(([id, p]) => ({ photo_id: id, kind: p.kind, caption: p.caption })),
+    speaking_end: speaking && speaking.children.length ? { from_s: speaking.from_s, to_s: speaking.to_s, children: speaking.children } : null,
   };
   const intro = `EVIDENCE (JSON):\n${JSON.stringify(evidence)}\n\nTRANSCRIPT:\n${transcript ? transcriptText(transcript) : `(none - ${transcriptNote})`}`;
 

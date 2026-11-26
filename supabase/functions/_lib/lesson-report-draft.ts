@@ -20,7 +20,8 @@
 
 export const DRAFT_SCHEMA_ID = "hec-lesson-report-draft/1";
 
-export interface TranscriptLine { t: number; text: string; teacher: boolean }
+/** m = the child the teacher tapped as speaking (lesson monitor lines only); unsure = the machine doubted the words. */
+export interface TranscriptLine { t: number; text: string; teacher: boolean; m?: string; unsure?: boolean }
 export interface DraftContext {
   enrolled: Set<string>;
   /** student_work id -> the child it belongs to (student_id), lesson window only. */
@@ -34,12 +35,15 @@ export interface DraftContext {
   /** Why there is no transcript, for `sources` (null when there is one). */
   transcriptNote: string | null;
   workCount: number;
+  /** The end-of-lesson speaking evidence (speakingEvidence), or null when there is none to grade. */
+  speaking?: SpeakingEvidence | null;
 }
 
 const MET = ["yes", "partly", "no", "unknown"];
 const GAP_KINDS = ["misconception", "gap", "grammar", "vocabulary", "pronunciation"];
 const ATTENDANCE = ["Present", "Late", "Absent", "Excused"];
 const QUIZ_KINDS = ["choice", "gap", "order"];
+export const SPEAKING_CRITERIA = ["fluency", "accuracy", "vocabulary", "interaction"];
 /** Photos a family may be shown by default: material, not children. The teacher decides. */
 const SHARE_BY_DEFAULT = new Set(["screen", "whiteboard", "worksheet", "material"]);
 
@@ -119,6 +123,10 @@ export const DRAFT_JSON_SCHEMA = object({
     evidence: list(quote), suggestion: S,
   })),
   class_focus: list(pair),
+  speaking: list(object({
+    student_id: S, comment: S,
+    criteria: list(object({ criterion: { type: "string", enum: SPEAKING_CRITERIA }, score: { type: "integer" }, quote: S })),
+  })),
   students: list(object({
     student_id: S, highlight: S, highlight_vi: S, focus_next: S, focus_next_vi: S,
     work_ids: list(S), name_moments: list(object({ t: { type: "number" }, quote: S, why: S })),
@@ -169,7 +177,13 @@ Rules:
   missing word(s), options empty, answer the text, accept other correct spellings. kind "order": options are the
   sentence's pieces shuffled, answer is the pieces in the right order joined by one space. objective = the index (0-based)
   of the objective it checks. Child-friendly English prompts, prompt_vi a short Vietnamese help line.
-- ids in the quiz: q1, q2, ...`;
+- ids in the quiz: q1, q2, ...
+- speaking (staff only): ONLY for the children listed in evidence.speaking_end.children, which holds each child's own
+  lines from the end of the lesson (the teacher tapped who was speaking). Score each of fluency, accuracy, vocabulary
+  and interaction from 1 to 4 (1 = needs a lot of support, 2 = emerging, 3 = secure, 4 = strong for the child's
+  grade). Every score needs a quote copied exactly from THAT child's lines. The transcript is text from a speech
+  recogniser: never judge pronunciation or accent, and do not score a criterion the words do not show - leave it out.
+  Never write about a child who is not in the list, and never compare children. comment: one plain sentence for the teacher.`;
 
 // ------------------------------------------------------------------ checking the reply
 
@@ -300,12 +314,111 @@ export function cleanDraft(raw: unknown, ctx: DraftContext, workText: Map<string
     homework: ctx.homework.map((h) => ({ homework_id: h.homework_id, title: h.title, due_date: h.due_date })),
     photos,
     quiz: { title: str(quiz.title, 200) || "Lesson review", questions },
+    speaking: cleanSpeaking(arr(r.speaking), ctx.speaking ?? null),
     sources: {
       transcript: !!ctx.transcript, transcript_lines: lines.length, ...(ctx.transcriptNote ? { transcript_note: ctx.transcriptNote } : {}),
       photos: ctx.photos.size, works: ctx.workCount, attendance: ctx.attendance.size,
       points: [...ctx.points.values()].filter((p) => p !== 0).length,
     },
   };
+}
+
+// ------------------------------------------------------------------ speaking at the end of the lesson
+/* Owner, 26 Nov 2026: the class report grades each child's speaking toward the END of the lesson, only for
+ * a child whose speech there was captured whole and can be tied to them. Three conditions, all checked here
+ * from records and never from the model: (1) the recording is complete through the end (the room track runs
+ * to within a minute of the lesson's end and the recorder marked no gap inside the window); (2) the child was
+ * Present or Late; (3) the lines are THEIRS: the teacher tapped them as speaking, and the machine did not doubt
+ * the words. A child with fewer than SPEAKING_MIN_LINES such lines / SPEAKING_MIN_WORDS words is "not graded"
+ * with the reason, never given a grade from too little. The score is the mean of the criteria the model could
+ * back with a quote from the child's own lines; the model's words are a comment, its numbers are checked. */
+
+export const SPEAKING_WINDOW_S = 20 * 60;
+export const SPEAKING_MIN_LINES = 3;
+export const SPEAKING_MIN_WORDS = 20;
+export const SPEAKING_COVERAGE_SLACK_S = 60;
+export const SPEAKING_MIN_CRITERIA = 2;
+
+export type NotGradedReason = "absent" | "recording_incomplete" | "not_identified" | "too_little_speech" | "not_enough_evidence";
+export interface SpeakingEvidence {
+  from_s: number;
+  to_s: number;
+  complete: boolean;
+  /** Why the window is not whole (null when it is). */
+  incomplete_reason: string | null;
+  children: { student_id: string; words: number; lines: { t: number; text: string }[] }[];
+  not_graded: { student_id: string; reason: NotGradedReason }[];
+}
+
+const wordCount = (s: string) => (s.match(/[\p{L}\p{N}']+/gu) ?? []).length;
+
+/**
+ * Who can be graded, from the lesson monitor report's body (its lines, coverage, flags and duration).
+ * Null when there is no monitor body (a pasted transcript has no tapped speakers or coverage to rely on).
+ */
+export function speakingEvidence(monitorBody: unknown, lines: TranscriptLine[], enrolled: Set<string>,
+                                 attendance: Map<string, string>): SpeakingEvidence | null {
+  const b = obj(monitorBody);
+  if (!Object.keys(b).length) return null;
+  const duration = Number(obj(b.lesson).duration_s);
+  if (!Number.isFinite(duration) || duration <= 0) return null;
+  const to = duration, from = Math.max(0, duration - SPEAKING_WINDOW_S);
+  const roomUntil = obj(b.coverage).room_until_s;
+  const gapInWindow = arr(b.flags).some((f) => {
+    const o = obj(f);
+    return o.kind === "recorder_gap" && typeof o.t === "number" && o.t >= from - 30 && o.t <= to;
+  });
+  let incomplete: string | null = null;
+  if (typeof roomUntil !== "number") incomplete = "The room microphone has no recording for this lesson.";
+  else if (roomUntil < duration - SPEAKING_COVERAGE_SLACK_S) incomplete = "The recording stops before the end of the lesson.";
+  else if (gapInWindow) incomplete = "The recorder marked a gap in the last part of the lesson.";
+
+  const children: SpeakingEvidence["children"] = [];
+  const not_graded: SpeakingEvidence["not_graded"] = [];
+  for (const id of enrolled) {
+    const att = attendance.get(id);
+    if (att === "Absent" || att === "Excused") { not_graded.push({ student_id: id, reason: "absent" }); continue; }
+    if (incomplete) { not_graded.push({ student_id: id, reason: "recording_incomplete" }); continue; }
+    const own = lines.filter((l) => !l.teacher && l.m === id && !l.unsure && l.t >= from && l.t <= to + 30);
+    const tapped = lines.some((l) => !l.teacher && l.m === id && l.t >= from);
+    if (!tapped) { not_graded.push({ student_id: id, reason: "not_identified" }); continue; }
+    const words = own.reduce((n, l) => n + wordCount(l.text), 0);
+    if (own.length < SPEAKING_MIN_LINES || words < SPEAKING_MIN_WORDS) { not_graded.push({ student_id: id, reason: "too_little_speech" }); continue; }
+    children.push({ student_id: id, words, lines: own.slice(0, 40).map((l) => ({ t: Math.round(l.t), text: l.text })) });
+  }
+  return { from_s: Math.round(from), to_s: Math.round(to), complete: !incomplete, incomplete_reason: incomplete, children, not_graded };
+}
+
+/** The model's speaking scores, checked: a score counts only with a quote that is in THAT child's own lines. */
+export function cleanSpeaking(raw: unknown[], ev: SpeakingEvidence | null) {
+  if (!ev) return null;
+  const byChild = new Map(ev.children.map((c) => [c.student_id, c]));
+  const said = new Map<string, Record<string, unknown>>();
+  for (const v of raw) { const o = obj(v); const id = str(o.student_id, 40); if (byChild.has(id) && !said.has(id)) said.set(id, o); }
+  const graded: {
+    student_id: string; average: number; score: number; words: number; comment: string;
+    criteria: { criterion: string; score: number; t: number; quote: string }[];
+  }[] = [];
+  const not_graded = [...ev.not_graded];
+  for (const c of ev.children) {
+    const o = said.get(c.student_id) ?? {};
+    const own: TranscriptLine[] = c.lines.map((l) => ({ t: l.t, text: l.text, teacher: false }));
+    const seen = new Set<string>();
+    const criteria = arr(o.criteria).flatMap((x) => {
+      const k = obj(x);
+      const name = str(k.criterion, 20), score = Number(k.score), text = str(k.quote, 400);
+      if (!SPEAKING_CRITERIA.includes(name) || seen.has(name) || !Number.isInteger(score) || score < 1 || score > 4) return [];
+      const line = text ? findLine(own, text, 0) : null;
+      if (!line) return [];
+      seen.add(name);
+      return [{ criterion: name, score, t: line.t, quote: text }];
+    });
+    if (criteria.length < SPEAKING_MIN_CRITERIA) { not_graded.push({ student_id: c.student_id, reason: "not_enough_evidence" }); continue; }
+    const average = Math.round((criteria.reduce((n, k) => n + k.score, 0) / criteria.length) * 10) / 10;
+    graded.push({ student_id: c.student_id, average, score: Math.round((average / 4) * 100), words: c.words,
+      comment: str(o.comment, 400), criteria });
+  }
+  return { from_s: ev.from_s, to_s: ev.to_s, complete: ev.complete, incomplete_reason: ev.incomplete_reason, graded, not_graded };
 }
 
 /** "[mm:ss] T: text" lines for the prompt. */
@@ -320,7 +433,8 @@ export function readTranscript(body: unknown, maxLines = 2500): TranscriptLine[]
     const l = obj(x);
     const t = typeof l.t === "number" && Number.isFinite(l.t) ? l.t : null;
     const text = str(l.text, 500);
-    return t === null || !text ? [] : [{ t, text, teacher: l.who === "T" }];
+    const m = str(l.m, 40);
+    return t === null || !text ? [] : [{ t, text, teacher: l.who === "T", ...(m ? { m } : {}), ...(l.u === true || l.f === true ? { unsure: true } : {}) }];
   }).sort((a, b) => a.t - b.t).slice(0, maxLines);
 }
 

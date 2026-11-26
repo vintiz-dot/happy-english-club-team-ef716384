@@ -35,7 +35,7 @@ const hasKey = (v, keys) => {
   if (v && typeof v === "object") return Object.entries(v).some(([k, x]) => keys.includes(k) || hasKey(x, keys));
   return false;
 };
-const STAFF_ONLY = ["gaps", "name_moments", "name_moments_accepted", "evidence", "sources"];
+const STAFF_ONLY = ["gaps", "name_moments", "name_moments_accepted", "evidence", "sources", "speaking", "speaking_end"];
 
 // ---------------------------------------------------------------- the draft check (edge function)
 const K1 = "k1", K2 = "k2", OUTSIDER = "k9";

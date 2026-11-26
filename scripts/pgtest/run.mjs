@@ -406,6 +406,7 @@ const SUITES = [
   { name: "uncancel restores marks", file: "uncancel-restores-marks.test.mjs", migrations: [] },
   // Stage A without a database: the AI reply checked against the records, and what approval sends.
   { name: "lesson report approval", file: "lesson-report-approval.test.mjs", migrations: [] },
+  { name: "lesson report speaking grade", file: "lesson-report-speaking.test.mjs", migrations: [] },
   // Schedule -> class report page: which transcript belongs to a lesson, talk-time share, per-child rows.
   { name: "session class report", file: "session-class-report.test.mjs", migrations: [] },
   { name: "recorded lesson state", file: "recorded-lesson-state.test.mjs", migrations: [] },

@@ -5,6 +5,10 @@
   PY scripts\\lesson-monitor\\nightly.py --list          # sign in, show what is waiting, do nothing
   PY scripts\\lesson-monitor\\nightly.py --upload-drafts # save reports kept locally (token expired)
   PY scripts\\lesson-monitor\\nightly.py --no-upload     # the design's local-only path: report stays on this laptop
+  PY scripts\\lesson-monitor\\nightly.py --watch --class Jupiter --date today --careful --stop-after-done --stop-at 07:00
+      # one class, one day: wait for that recording to finish, transcribe it with a wider search, save the
+      # report, ask for the class report (which grades each child's speaking near the end of the lesson), stop.
+      # scripts\\lesson-monitor\\watch_jupiter_tonight.ps1 runs exactly this.
 
 What one lesson goes through (nothing leaves this laptop except the finished
 report, which goes to the database where only the lesson's teacher can read it):
@@ -64,6 +68,42 @@ import voiceprints  # noqa: E402
 VOICE: dict | None = None
 
 FINAL_REFUSALS = ("consent_missing", "other_teacher", "no_teacher")
+
+# Careful transcription (--careful): a wider beam search than the B2b settings' greedy decoding. Slower (roughly
+# twice), a little more accurate on quiet or accented speech. It is recorded in the report's own "settings", so the
+# report says which decoding made it; nothing else about B2b changes.
+CAREFUL_BEAM = 5
+
+
+def filter_pending(rows: list[dict], class_ids: set[str] | None, day: str | None) -> list[dict]:
+    """Keep only the waiting recordings of the chosen classes and day (None = no filter). Pure."""
+    return [r for r in rows
+            if (not class_ids or r.get("class_id") in class_ids) and (not day or str(r.get("session_date")) == day)]
+
+
+def resolve_day(value: str | None, today: date | None = None) -> str | None:
+    """"today" / "yesterday" / YYYY-MM-DD -> an ISO date; None stays None. Raises ValueError on anything else."""
+    if not value:
+        return None
+    v = value.strip().lower()
+    t = today or date.today()
+    if v == "today":
+        return t.isoformat()
+    if v == "yesterday":
+        return (t - timedelta(days=1)).isoformat()
+    return date.fromisoformat(v).isoformat()
+
+
+def resolve_classes(api, name: str | None) -> set[str] | None:
+    """The class(es) whose name contains `name`, read with the signed-in person's permissions. Refuses (ValueError)
+    when none match, so a typo never means "every class"."""
+    if not name:
+        return None
+    found = api.select("classes", {"name": f"ilike.*{name}*", "select": "id,name"}) or []
+    ids = {c["id"] for c in found}
+    if not ids:
+        raise ValueError(f"no class has a name containing '{name}'")
+    return ids
 
 
 # ------------------------------------------------------------------ step 0
@@ -580,6 +620,11 @@ def main(argv=None) -> int:
                     help="keep running: every few minutes take the next finished recording, transcribe it and save its "
                          "report at once (no 07:00 cut-off, no cap per night). Stops on the kill switch or Ctrl+C")
     ap.add_argument("--poll-minutes", type=int, default=5, help="with --watch: how often to look for new recordings")
+    ap.add_argument("--class", dest="cls", default=None, help="only recordings of the class whose name contains this (e.g. Jupiter)")
+    ap.add_argument("--date", default=None, help="only that lesson day: today, yesterday or YYYY-MM-DD")
+    ap.add_argument("--careful", action="store_true", help=f"transcribe with a beam search of {CAREFUL_BEAM} instead of greedy (slower, more careful)")
+    ap.add_argument("--stop-after-done", action="store_true", help="with --watch: stop once the first matching recording has been handled")
+    ap.add_argument("--stop-at", default=None, help="with --watch: stop looking at this local time (hh:mm); the next one after now")
     a = ap.parse_args(argv)
 
     pc.check_root()
@@ -618,10 +663,29 @@ def main(argv=None) -> int:
 
     import progress
     import transcribe
+    try:
+        a.class_ids = resolve_classes(api, a.cls)
+        a.day = resolve_day(a.date)
+    except ValueError as e:
+        print(f"Not starting: {e}.")
+        return 2
+    if a.careful:
+        transcribe.B2B["beam_size"] = CAREFUL_BEAM
+        pc.log(f"careful transcription on: beam {CAREFUL_BEAM}")
+    stop_at = plan.next_until(datetime.now().astimezone(), a.stop_at) if a.watch and a.stop_at else None
+    if a.cls or a.date:
+        pc.log(f"filter: class {a.cls or 'any'}, day {a.day or 'any'}, {len(a.class_ids or [])} matching class(es)")
     model = None
     while True:
+        _BATCH_WORK[0] = 0
         model = _run_batch(api, a, step0, model, progress, transcribe)
         if not a.watch or a.list or pc.stopped():
+            return 0
+        if a.stop_after_done and _BATCH_WORK[0]:
+            pc.log("watch: the matching recording has been handled; stopping")
+            return 0
+        if stop_at is not None and datetime.now().astimezone() >= stop_at:
+            pc.log(f"watch: {a.stop_at} has passed with nothing more to do; stopping")
             return 0
         try:
             time.sleep(max(1, a.poll_minutes) * 60)
@@ -634,11 +698,13 @@ def main(argv=None) -> int:
 
 
 _SEEN: set[str] = set()  # --watch only: recordings this run has already taken up
+_BATCH_WORK = [0]  # lessons handled (processed or refused) by the batch just run; main() reads it for --stop-after-done
 
 
 def _run_batch(api, a, step0, model, progress, transcribe):
     """One look at what is waiting and the work it allows. Returns the loaded model (loaded once, kept)."""
-    pending = api.rpc("lesson_monitor_pending", {"p_limit": 50}) or []
+    pending = filter_pending(api.rpc("lesson_monitor_pending", {"p_limit": 50}) or [],
+                             getattr(a, "class_ids", None), getattr(a, "day", None))
     now = datetime.now().astimezone()
     until = plan.next_until(now, a.until) if not a.watch else now + timedelta(days=3650)
     tonight = plan.choose_tonight(pending, now, a.max_lessons if not a.watch else 1000, until)
@@ -664,6 +730,7 @@ def _run_batch(api, a, step0, model, progress, transcribe):
     for r, why in tonight.refuse:
         api.rpc("lesson_monitor_record_run", {"p_recording": r["recording_id"], "p_outcome": "refused", "p_reason": why})
         pc.log(f"{r['recording_id']} refused: {why}")
+        _BATCH_WORK[0] += 1
     if not tonight.process:
         return model
     if model is None:
@@ -685,6 +752,7 @@ def _run_batch(api, a, step0, model, progress, transcribe):
             pc.log(f"stopping: another lesson would not finish before {a.until}")
             break
         outcomes.append(process_one(api, r, model, step0, a.no_upload, prog))
+        _BATCH_WORK[0] += 1
         prog.finish(r["recording_id"], outcomes[-1])
     prog.end()
     pc.log(f"done: {', '.join(outcomes) or 'nothing processed'}")

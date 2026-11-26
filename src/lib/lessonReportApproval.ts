@@ -26,6 +26,14 @@ export interface DraftStudent {
   student_id: string; highlight: string; highlight_vi: string; focus_next: string; focus_next_vi: string;
   work_ids: string[]; points: number; attendance: string; name_moments: NameMoment[];
 }
+export interface SpeakingGrade {
+  student_id: string; average: number; score: number; words: number; comment: string;
+  criteria: { criterion: string; score: number; t: number; quote: string }[];
+}
+export interface DraftSpeaking {
+  from_s: number; to_s: number; complete: boolean; incomplete_reason: string | null;
+  graded: SpeakingGrade[]; not_graded: { student_id: string; reason: string }[];
+}
 export interface DraftPhoto { photo_id: string; share: boolean; caption: string; caption_vi: string }
 export interface QuizQuestion {
   id: string; kind: QuizKind; prompt: string; prompt_vi: string; options: string[]; answer: string;
@@ -42,6 +50,8 @@ export interface Draft {
   gaps: DraftGap[];
   class_focus: EnVi[];
   students: DraftStudent[];
+  /** Staff-only grades of each child's speaking near the end of the lesson; null when there was nothing to grade. */
+  speaking: DraftSpeaking | null;
   parents: { tips: EnVi[]; ask_your_child: EnVi[]; next_lesson: EnVi };
   homework: { homework_id: string | null; title: string; due_date: string | null }[];
   photos: DraftPhoto[];
@@ -112,6 +122,7 @@ export function readDraft(body: unknown): Draft {
         evidence: arr(g.evidence).map((e) => ({ t: num(obj(e).t), quote: str(obj(e).quote) })) };
     }),
     class_focus: arr(b.class_focus).map(enVi),
+    speaking: readSpeaking(b.speaking),
     students: arr(b.students).map((v) => {
       const s = obj(v);
       return {
@@ -147,6 +158,22 @@ export function readDraft(body: unknown): Draft {
       }),
     },
     sources: obj(b.sources),
+  };
+}
+
+function readSpeaking(v: unknown): DraftSpeaking | null {
+  const s = obj(v);
+  if (!Object.keys(s).length) return null;
+  return {
+    from_s: num(s.from_s), to_s: num(s.to_s), complete: s.complete === true, incomplete_reason: str(s.incomplete_reason) || null,
+    graded: arr(s.graded).map((x) => {
+      const g = obj(x);
+      return {
+        student_id: str(g.student_id), average: num(g.average), score: num(g.score), words: num(g.words), comment: str(g.comment),
+        criteria: arr(g.criteria).map((c) => { const o = obj(c); return { criterion: str(o.criterion), score: num(o.score), t: num(o.t), quote: str(o.quote) }; }),
+      };
+    }).filter((g) => g.student_id),
+    not_graded: arr(s.not_graded).map((x) => ({ student_id: str(obj(x).student_id), reason: str(obj(x).reason) })).filter((g) => g.student_id),
   };
 }
 
@@ -238,6 +265,12 @@ export function buildApproval(d: Draft, r: Review, rec: ApprovalRecords): Approv
     gaps: d.gaps.map((g) => ({ issue: g.issue, kind: g.kind, who: g.who, evidence: g.evidence.map((e) => ({ t: e.t, quote: e.quote })), suggestion: g.suggestion })),
     name_moments_accepted: included.flatMap((s) => s.name_moments.filter((m) => m.decision === "accepted")
       .map((m) => ({ student_id: s.student_id, t: m.t, quote: m.quote }))),
+    // Staff only, like gaps: a grade of a child's speech is never in a family's part. Left-out children are left out here too.
+    ...(d.speaking ? { speaking_end: {
+      from_s: d.speaking.from_s, to_s: d.speaking.to_s, complete: d.speaking.complete, incomplete_reason: d.speaking.incomplete_reason,
+      graded: d.speaking.graded.filter((g) => enrolled.has(g.student_id) && !r.excluded.includes(g.student_id)),
+      not_graded: d.speaking.not_graded.filter((g) => enrolled.has(g.student_id) && !r.excluded.includes(g.student_id)),
+    } } : {}),
     sources: d.sources,
     model: rec.model,
   };

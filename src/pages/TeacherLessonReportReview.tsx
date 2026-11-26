@@ -35,6 +35,12 @@ import {
 const card = "rounded-hec-md border border-hec-line bg-hec-surface p-4 space-y-3";
 const MET: Met[] = ["yes", "partly", "no", "unknown"];
 
+const SPEAKING_WHY: Record<string, string> = {
+  absent: "not in the lesson", recording_incomplete: "the recording of the end is incomplete",
+  not_identified: "no lines tapped as this child at the end", too_little_speech: "too little speech to grade",
+  not_enough_evidence: "not enough quoted evidence",
+};
+
 function StaffOnly() {
   return <Badge variant="outline" className="gap-1 text-xs"><Lock className="h-3 w-3" /> Staff only</Badge>;
 }
@@ -341,6 +347,35 @@ export default function TeacherLessonReportReview() {
                 );
               })}
             </Section>
+
+            {draft.speaking && (
+              <Section title="Speaking at the end of the lesson" staff>
+                <p className="text-xs text-hec-ink-soft">
+                  {Math.floor(draft.speaking.from_s / 60)}:{String(draft.speaking.from_s % 60).padStart(2, "0")} to {Math.floor(draft.speaking.to_s / 60)}:{String(draft.speaking.to_s % 60).padStart(2, "0")}.
+                  Graded from the words the recorder wrote for lines you tapped as that child, scored 1 to 4. It cannot judge pronunciation. Never shown to families.
+                </p>
+                {!draft.speaking.complete && <p className="text-sm text-amber-700">Not graded: {draft.speaking.incomplete_reason}</p>}
+                {draft.speaking.graded.filter((g) => !review.excluded.includes(g.student_id)).map((g) => (
+                  <div key={g.student_id} className="rounded-hec-md border p-3 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{names[g.student_id] || "Child"}</span>
+                      <Badge variant="outline">{g.average} / 4</Badge>
+                      <Badge variant="outline">{g.score}%</Badge>
+                      <span className="text-xs text-hec-ink-soft">{g.words} words</span>
+                    </div>
+                    {g.comment && <p className="text-sm">{g.comment}</p>}
+                    <ul className="text-sm space-y-0.5">
+                      {g.criteria.map((c) => <li key={c.criterion}><b className="capitalize">{c.criterion}</b> {c.score}/4 - "{c.quote}"</li>)}
+                    </ul>
+                  </div>
+                ))}
+                {draft.speaking.not_graded.length > 0 && (
+                  <p className="text-xs text-hec-ink-soft">
+                    Not graded: {draft.speaking.not_graded.map((n) => `${names[n.student_id] || "Child"} (${SPEAKING_WHY[n.reason] ?? n.reason})`).join("; ")}
+                  </p>
+                )}
+              </Section>
+            )}
 
             <Section title="For parents">
               <h3 className="text-sm font-medium">Tips for home</h3>
