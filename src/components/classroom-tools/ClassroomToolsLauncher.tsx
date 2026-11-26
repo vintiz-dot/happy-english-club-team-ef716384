@@ -22,6 +22,7 @@ import {
   Disc3,
   HelpCircle,
   LayoutGrid,
+  Mic,
   Music4,
   TrafficCone,
   Timer as TimerIcon,
@@ -38,6 +39,7 @@ import { useIvory } from "@/hooks/useIvory";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useTimer } from "@/contexts/TimerContext";
 import { useNoiseMeter } from "@/contexts/NoiseMeterContext";
+import { OPEN_VOICE_TOOL_EVENT, useVoiceAward } from "@/contexts/VoiceAwardContext";
 
 // Each tool is its own chunk: it loads when the panel renders it, not on
 // every page the launcher sits on. lazyRetry retries once after a deploy.
@@ -52,6 +54,7 @@ const RandomPicker = lazyRetry(() => import("./RandomPicker").then((m) => ({ def
 const CoinFlip = lazyRetry(() => import("./RandomPicker").then((m) => ({ default: m.CoinFlip })));
 const AttendanceTool = lazyRetry(() => import("./AttendanceTool").then((m) => ({ default: m.AttendanceTool })));
 const LeaderboardTool = lazyRetry(() => import("./LeaderboardTool").then((m) => ({ default: m.LeaderboardTool })));
+const VoiceAwardTool = lazyRetry(() => import("./VoiceAwardTool").then((m) => ({ default: m.VoiceAwardTool })));
 const BackgroundMusic = lazyRetry(() => import("./BackgroundMusic").then((m) => ({ default: m.BackgroundMusic })));
 import { Deferred } from "./studio/Deferred";
 import { ClassScreenContainerContext, keepOpenForClassScreen } from "./studio/ClassScreen";
@@ -79,6 +82,7 @@ const TOOLS: ToolEntry[] = [
   { id: "voice", label: "Voice", icon: TrafficCone, render: () => <TrafficLight /> },
   { id: "chime", label: "Chime", icon: Bell, render: () => <FocusChime /> },
   { id: "noise", label: "Noise", icon: Volume2, render: () => <NoiseMeter /> },
+  { id: "voiceaward", label: "Voice points", icon: Mic, wide: true, render: () => <VoiceAwardTool /> },
   { id: "teams", label: "Teams", icon: Users, wide: true, defer: true, render: () => <TeamMaker /> },
   {
     id: "attendance",
@@ -151,6 +155,18 @@ export function ClassroomToolsLauncher() {
     const el = scrollRef.current?.querySelector<HTMLElement>(`[data-tool="${id}"]`);
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  // Voice points: staff only; the status pill opens the panel on it.
+  const { allowed: voiceAllowed } = useVoiceAward();
+  const tools = voiceAllowed ? TOOLS : TOOLS.filter((t) => t.id !== "voiceaward");
+  useEffect(() => {
+    const h = () => {
+      setOpen(true);
+      window.setTimeout(() => jumpTo("voiceaward"), 300);
+    };
+    window.addEventListener(OPEN_VOICE_TOOL_EVENT, h);
+    return () => window.removeEventListener(OPEN_VOICE_TOOL_EVENT, h);
+  }, [jumpTo]);
 
   // A ringing timer opens the panel on the timer, wherever the teacher is.
   useEffect(() => {
@@ -259,7 +275,7 @@ export function ClassroomToolsLauncher() {
                   : "scrollbar-hide -mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1"
               }
             >
-              {TOOLS.map((tool) => (
+              {tools.map((tool) => (
                 <button
                   key={tool.id}
                   type="button"
@@ -282,7 +298,7 @@ export function ClassroomToolsLauncher() {
                 three columns there squeezed every card title onto two lines
                 and truncated the controls. */}
             <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {TOOLS.map((tool) => (
+              {tools.map((tool) => (
                 <div
                   key={tool.id}
                   data-tool={tool.id}

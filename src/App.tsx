@@ -24,6 +24,7 @@ const AnnouncementRenderer = lazyRetry(() => import("./components/announcements/
 const RecorderBoot = lazyRetry(() => import("./components/recorder/RecorderBoot").then((m) => ({ default: m.RecorderBoot })));
 import { AuthProvider } from "@/hooks/useAuth";
 import { IvoryScope } from "@/components/theme/IvoryScope";
+import { VoiceAwardProvider, useVoiceAward } from "./contexts/VoiceAwardContext";
 
 // Lazy-load every route — keeps initial bundle small and speeds up navigation
 const Index = lazy(() => import("./pages/Index"));
@@ -124,6 +125,9 @@ function AppContent() {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            {/* Voice points ("HEC add 30 to Minh for writing"): staff only; the listener loads when switched on. */}
+            <VoiceAwardProvider>
+            <Suspense fallback={null}><StaffVoiceAwardOverlay /></Suspense>
             {/* The "Ivory" design system on migrated routes + the theme choice (src/lib/ivoryScope.ts) */}
             <IvoryScope>
             <NavProgress />
@@ -223,11 +227,19 @@ function AppContent() {
             </StartupGuard>
             </AgeBandRoot>
             </IvoryScope>
+            </VoiceAwardProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </StudentProfileProvider>
   );
+}
+
+const VoiceAwardOverlay = lazyRetry(() => import("./components/voiceAward/VoiceAwardOverlay").then((m) => ({ default: m.VoiceAwardOverlay })));
+/** The board overlay plays saved voice awards, on staff screens only. */
+function StaffVoiceAwardOverlay() {
+  const { allowed } = useVoiceAward();
+  return allowed ? <VoiceAwardOverlay /> : null;
 }
 
 const App = () => (
