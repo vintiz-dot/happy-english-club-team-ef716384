@@ -28,8 +28,11 @@ import pilot_common as pc
 MODELS = {
     "ecapa": {"path": "speechbrain/spkrec-ecapa-voxceleb", "kind": "speechbrain",
               "desc": "SpeechBrain ECAPA-TDNN, VoxCeleb"},
+    # TitaNet's ONNX graph has a fixed 12288-frame mask (about 2 minutes at 10 ms a frame): a longer clip
+    # fails inside onnxruntime ("broadcast ... 12288 by 46067", Jupiter 26 Nov 2026, a 7.7-minute line).
+    # So clips longer than max_s are embedded in pieces and averaged.
     "titanet": {"path": "sherpa/nemo_en_titanet_large.onnx", "kind": "sherpa",
-                "desc": "NVIDIA NeMo TitaNet-Large"},
+                "desc": "NVIDIA NeMo TitaNet-Large", "max_s": 60},
     "wespeaker_resnet34": {"path": "sherpa/wespeaker_en_voxceleb_resnet34_LM.onnx", "kind": "sherpa",
                            "desc": "WeSpeaker ResNet34, English VoxCeleb"},
     "wespeaker_campp": {"path": "sherpa/wespeaker_en_voxceleb_CAM++.onnx", "kind": "sherpa",
@@ -52,16 +55,37 @@ def available() -> list[str]:
     return [n for n in MODELS if _file(n).exists()]
 
 
-class Embedder:
-    """name, dims, and embed(16 kHz mono float32) -> unit-length float64 vector."""
+def _unit(v) -> np.ndarray:
+    v = np.asarray(v, dtype=np.float64).reshape(-1)
+    n = np.linalg.norm(v)
+    return v / n if n else v
 
-    def __init__(self, name: str, fn, dims: int):
-        self.name, self._fn, self.dims = name, fn, dims
+
+def pieces(n: int, max_n: int | None) -> list[tuple[int, int]]:
+    """Cut n samples into spans of at most max_n, as even as possible (no tiny last piece). Pure."""
+    if not max_n or n <= max_n:
+        return [(0, n)]
+    k = -(-n // max_n)
+    step = -(-n // k)
+    return [(a, min(n, a + step)) for a in range(0, n, step)]
+
+
+class Embedder:
+    """name, dims, and embed(16 kHz mono float32) -> unit-length float64 vector.
+
+    max_s: a model that cannot take longer clips gets them in pieces of at most max_s seconds; each piece's
+    unit vector is weighted by its length, and the mean is normalised again. None = the whole clip at once."""
+
+    def __init__(self, name: str, fn, dims: int, max_s: float | None = None):
+        self.name, self._fn, self.dims, self.max_s = name, fn, dims, max_s
 
     def embed(self, x: np.ndarray) -> np.ndarray:
-        v = np.asarray(self._fn(np.ascontiguousarray(x, dtype=np.float32)), dtype=np.float64).reshape(-1)
-        n = np.linalg.norm(v)
-        return v / n if n else v
+        x = np.ascontiguousarray(x, dtype=np.float32)
+        spans = pieces(len(x), int(self.max_s * SR) if self.max_s else None)
+        if len(spans) == 1:
+            return _unit(self._fn(x))
+        total = sum((_unit(self._fn(np.ascontiguousarray(x[a:b]))) * (b - a) for a, b in spans))
+        return _unit(total)
 
 
 def _speechbrain(path):
@@ -101,4 +125,4 @@ def load(name: str) -> Embedder:
         raise FileNotFoundError(f"embedder {name!r}: model file missing: {path}")
     fn = (_speechbrain if MODELS[name]["kind"] == "speechbrain" else _sherpa)(path)
     dims = len(np.asarray(fn(np.random.default_rng(0).standard_normal(SR).astype(np.float32) * 0.1)).reshape(-1))
-    return Embedder(name, fn, dims)
+    return Embedder(name, fn, dims, MODELS[name].get("max_s"))
