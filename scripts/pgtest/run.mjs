@@ -409,6 +409,7 @@ const SUITES = [
   { name: "lesson report speaking grade", file: "lesson-report-speaking.test.mjs", migrations: [] },
   // Schedule -> class report page: which transcript belongs to a lesson, talk-time share, per-child rows.
   { name: "session class report", file: "session-class-report.test.mjs", migrations: [] },
+  { name: "voice admin page", file: "voice-admin.test.mjs", migrations: ["20261126090000_voice_admin_overview.sql"] },
   { name: "recorded lesson state", file: "recorded-lesson-state.test.mjs", migrations: [] },
   {
     name: "assistant absence",

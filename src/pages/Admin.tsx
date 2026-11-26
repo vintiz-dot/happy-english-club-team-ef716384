@@ -17,6 +17,7 @@ import StarsSyncTab from "@/components/admin/tabs/StarsSyncTab";
 import AiActionsTab from "@/components/admin/tabs/AiActionsTab";
 import AuditClipsTab from "@/components/admin/tabs/AuditClipsTab";
 import ReceptionTab from "@/components/admin/tabs/ReceptionTab";
+import VoicesTab from "@/components/admin/tabs/VoicesTab";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIvory } from "@/hooks/useIvory";
 import { dur, useMotionLevel } from "@/components/fx/motion";
@@ -62,6 +63,8 @@ const Admin = ({ defaultTab }: { defaultTab?: string } = {}) => {
         return <AuditClipsTab />;
       case "reception":
         return <ReceptionTab />;
+      case "voices":
+        return <VoicesTab />;
       default:
         return <OverviewTab />;
     }

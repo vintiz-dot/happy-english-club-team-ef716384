@@ -37,7 +37,7 @@ ok('teacher: without the pilot flag everything else is still there', TEACHER_BEF
 
 const a = nav.navGroupsFor('admin');
 ok('admin: every old route is reachable', ADMIN_BEFORE.every((p) => paths(a).includes(p)), ADMIN_BEFORE.filter((p) => !paths(a).includes(p)));
-ok('admin: 26 entries, no route listed twice', nav.allMembers(a).length === 26 && dups(paths(a)).length === 0, dups(paths(a)));
+ok('admin: 27 entries, no route listed twice', nav.allMembers(a).length === 27 && dups(paths(a)).length === 0, dups(paths(a)));
 ok('admin: six headings, as agreed', JSON.stringify(a.map((g) => g.label)) === JSON.stringify(['Overview', 'People', 'Teaching', 'Money', 'Front desk', 'System']));
 ok('admin: one page per entry (no tab strip)', a.every((g) => g.sections.every((s) => s.members.length === 1)));
 ok('other roles get no menu', nav.navGroupsFor('student').length === 0 && nav.navGroupsFor(null).length === 0);

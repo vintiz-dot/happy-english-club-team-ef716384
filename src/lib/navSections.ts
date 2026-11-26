@@ -112,6 +112,7 @@ export const ADMIN_GROUPS: NavGroup[] = [
     one("Data", "/admin?tab=data", "HardDrive"),
     one("Stars Sync", "/admin?tab=stars-sync", "Plug"),
     one("Audit clips", "/admin?tab=audit-clips", "AudioLines"),
+    one("Voices", "/admin?tab=voices", "Mic"),
   ] },
 ];
 

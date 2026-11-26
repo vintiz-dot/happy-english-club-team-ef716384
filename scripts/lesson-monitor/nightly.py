@@ -391,7 +391,18 @@ def prepare_voice(api) -> dict | None:
         pc.log(f"voices: {old} unanswered lessons' voice groups past 30 days deleted")
     ctx = {"allowed": allowed, "embedders": None}
     learn_from_answers(api, ctx)
+    publish_voice_stats(api)
     return ctx
+
+
+def publish_voice_stats(api) -> None:
+    """The numbers behind Admin > Voices: each model's accuracy and each child's seconds of voice. Never a voiceprint.
+    Best effort: a database without the page's migration (20261126090000) or a failed call only logs a code."""
+    try:
+        import voice_admin
+        voice_admin.publish(api)
+    except Exception as e:  # noqa: BLE001 - the report never waits on a statistics page
+        pc.log(f"voices: numbers not published: error_{type(e).__name__.lower()}"[:120])
 
 
 def _calibration_rows(rid: str, a: dict, g: dict | None, shown_model: str) -> list[dict]:
@@ -756,6 +767,8 @@ def _run_batch(api, a, step0, model, progress, transcribe):
         prog.finish(r["recording_id"], outcomes[-1])
     prog.end()
     pc.log(f"done: {', '.join(outcomes) or 'nothing processed'}")
+    if VOICE is not None:
+        publish_voice_stats(api)
     return model
 
 

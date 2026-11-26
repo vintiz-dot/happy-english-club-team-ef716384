@@ -108,6 +108,24 @@ def format_accuracy(res: dict) -> list[str]:
     return lines
 
 
+def build_snapshot(rows: list[dict], vps: dict, s: dict = voice.SETTINGS) -> dict:
+    """What Admin > Voices shows from this laptop: each model's accuracy (counts and rates), each child's SECONDS of
+    voice on file, and the settings. No voiceprint, no embedding, no audio, no name: the database refuses anything else."""
+    return {
+        "accuracy": accuracy(rows, s),
+        "enrolment": [{"student_id": sid, "seconds": round(vp.seconds(), 1), "samples": len(vp.samples)}
+                      for sid, vp in sorted(vps.items())],
+        "settings": {"shown_model": s["shown_model"], "thresholds": dict(s["thresholds"]), "margin": s["margin"],
+                     "group_min_s": s["group_min_s"], "enrol_min_s": s["enrol_min_s"],
+                     "models": list(s["models"]) if s["models"] else None},
+    }
+
+
+def publish(api) -> dict:
+    snap = build_snapshot(voiceprints.read_calibration(), voiceprints.load_all())
+    return api.rpc("lesson_monitor_publish_voice_stats", {"p_stats": snap})
+
+
 def _confirm(text: str, yes: bool) -> bool:
     return yes or input(f"{text} Type YES: ").strip() == "YES"
 
@@ -127,12 +145,13 @@ def main(argv=None) -> int:
     c1.add_argument("--note", required=True)
     ls = sp.add_parser("list")
     sp.add_parser("accuracy")
+    pb = sp.add_parser("publish")
     d = sp.add_parser("delete")
     who = d.add_mutually_exclusive_group(required=True)
     who.add_argument("--student-id")
     who.add_argument("--all", action="store_true")
     d.add_argument("--yes", action="store_true")
-    for p in (ca, c1, ls):
+    for p in (ca, c1, ls, pb):
         p.add_argument("--token", action="store_true")
     a = ap.parse_args(argv)
     pc.check_root()
@@ -159,6 +178,10 @@ def main(argv=None) -> int:
 
     import supa
     api = supa.open_api(getattr(a, "token", False))
+    if a.cmd == "publish":
+        res = publish(api)
+        print(f"published to Admin > Voices (snapshot {res.get('id')})")
+        return 0
     if a.cmd == "consent-all":
         today = date.today().isoformat()
         rows = api.select("enrollments", {"class_id": f"eq.{a.class_id}", "start_date": f"lte.{today}",
