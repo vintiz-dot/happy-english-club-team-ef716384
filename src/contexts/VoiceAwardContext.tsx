@@ -534,7 +534,8 @@ export function VoiceAwardProvider({ children }: { children: ReactNode }) {
   const handleResponse = useCallback(
     (res: VoiceAwardResponse) => {
       if (!res.ok) {
-        const msg = failureSentence(res);
+        // The app is not strict, so `!res.ok` does not narrow the union by itself.
+        const msg = failureSentence(res as Extract<VoiceAwardResponse, { ok: false }>);
         setNotice(msg);
         log("error", msg);
         return;

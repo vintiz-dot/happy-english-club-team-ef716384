@@ -51,6 +51,8 @@ const SUITES = [
   { name: "speaker board", file: "speaker-board.test.mjs", migrations: [] },
   { name: "voice award", file: "voice-award.test.mjs", migrations: [] },
   { name: "voice award overlay", file: "voice-award-overlay.test.mjs", migrations: [] },
+  { name: "voice award flow", file: "voice-award-flow.test.mjs", migrations: [] },
+  { name: "voice listener", file: "voice-listener.test.mjs", migrations: [] },
   { name: "lesson monitor voices view", file: "lesson-monitor-voices-view.test.mjs", migrations: [] },
   // Vocabulary: 10 new words a Hanoi day, held by the database; the word bank only through save-word.
   { name: "vocab daily cap", file: "vocab-daily-cap.test.mjs", migrations: [] },
