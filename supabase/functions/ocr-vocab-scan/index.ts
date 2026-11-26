@@ -47,6 +47,7 @@ import { downloadFile, fileStoreEnvFromDeno } from "../_lib/file-store.ts";
 import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson } from "../_lib/text.ts";
+import { askClaudeJson } from "../_lib/claude-json.ts";
 import { callerHoldsClass } from "../_lib/auth.ts";
 import { requireSpender, STAFF_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 
@@ -66,6 +67,99 @@ interface ParsedEntry {
   example: string;
   is_grammatical: boolean;
   corrected_example: string | null;
+}
+
+const ENTRY_RULES =
+  "RULES:\n" +
+  "1. NEVER invent. Every word, meaning and example must be written on the page. If a word " +
+  "has no meaning or example written, return empty strings for those - do NOT make one up.\n" +
+  "2. Children's handwriting splits and misspells words ('inger dients', 'Aca de my', " +
+  "'Cinamon'): read them as the English word the child meant ('ingredient', 'academy', " +
+  "'cinnamon'). Drop only what you truly cannot read as an English word.\n" +
+  "3. Ignore anything that is NOT a vocabulary item: page headers, dates, the student's " +
+  "name, unit/lesson titles, numbering, decorations, scores.\n" +
+  "4. One entry per distinct word. A short phrase the child wrote as one item ('nutrition " +
+  "facts') may stay a phrase. Use the lowercase dictionary headword (singular, base form) as " +
+  "`word`, but keep the meaning/example as written.\n" +
+  "5. Keep Vietnamese meanings in Vietnamese - do not translate or 'improve' them.\n" +
+  "6. Judge the example sentence: is_grammatical=false only for a genuine grammar error, " +
+  "and then give the smallest correction that fixes it in corrected_example (else empty string).\n" +
+  "7. A page of handwritten vocabulary almost always has words on it: list every one you can read.";
+
+const ENTRY_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["entries"],
+  properties: {
+    entries: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["word", "meaning", "example", "is_grammatical", "corrected_example"],
+        properties: {
+          word: { type: "string" },
+          meaning: { type: "string" },
+          example: { type: "string" },
+          is_grammatical: { type: "boolean" },
+          corrected_example: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
+function cleanEntries(entries: any[]): ParsedEntry[] {
+  const seen = new Set<string>();
+  return entries
+    .map((e) => ({
+      word: String(e.word || "").toLowerCase().trim(),
+      meaning: String(e.meaning || "").trim(),
+      example: String(e.example || "").trim(),
+      is_grammatical: e.is_grammatical !== false,
+      corrected_example: e.corrected_example ? String(e.corrected_example).trim() || null : null,
+    }))
+    .filter((e) => /^[a-z][a-z' -]{1,40}$/.test(e.word))
+    .filter((e) => (seen.has(e.word) ? false : (seen.add(e.word), true)))
+    .slice(0, MAX_WORDS_PER_SCAN);
+}
+
+/**
+ * Claude reads the PHOTO, with Vision's text beside it as a hint. Until
+ * 26 Nov 2026 only the OCR text was structured (gpt-4o-mini, "return an
+ * empty list rather than guess"): a mixed Vietnamese/English page with
+ * split-up handwriting came back with no words twice running, and with 4
+ * of its ~10 words on the third try. The text-only pass stays as the
+ * fallback when Claude is unavailable or fails.
+ */
+async function structurePage(ocrText: string, imageB64: string, mediaType: string): Promise<ParsedEntry[]> {
+  const imageOk = imageB64.length > 0 && imageB64.length < 5_000_000 &&
+    ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(mediaType);
+  try {
+    const content: unknown[] = [];
+    if (imageOk) content.push({ type: "image", source: { type: "base64", media_type: mediaType, data: imageB64 } });
+    content.push({
+      type: "text",
+      text: (imageOk ? "The photo above is the page. " : "") +
+        `Google Vision's OCR of it (noisy, use it only as a hint):\n\n${ocrText.slice(0, 8000)}`,
+    });
+    const { data } = await askClaudeJson<{ entries: any[] }>({
+      system:
+        "You extract vocabulary study entries from a photo of a Vietnamese child's handwritten " +
+        "English vocabulary notebook page. The page lists English words, each usually with a " +
+        "meaning (English or Vietnamese) and sometimes an example sentence.\n\n" + ENTRY_RULES,
+      content,
+      schema: ENTRY_SCHEMA,
+      maxTokens: 8000,
+      effort: "medium",
+    });
+    const entries = cleanEntries(Array.isArray(data?.entries) ? data.entries : []);
+    if (entries.length > 0) return entries;
+    console.warn("ocr-vocab-scan: Claude found no words; trying the text-only pass");
+  } catch (e) {
+    console.warn("ocr-vocab-scan: Claude pass failed, using the text-only pass:", (e as Error).message);
+  }
+  return structureWithLLM(ocrText);
 }
 
 async function structureWithLLM(ocrText: string): Promise<ParsedEntry[]> {
@@ -115,16 +209,7 @@ async function structureWithLLM(ocrText: string): Promise<ParsedEntry[]> {
   const content = data.choices?.[0]?.message?.content;
   const parsed = safeParseJson(content || "{}");
   const entries: any[] = Array.isArray(parsed.entries) ? parsed.entries : [];
-  return entries
-    .map((e) => ({
-      word: String(e.word || "").toLowerCase().trim(),
-      meaning: String(e.meaning || "").trim(),
-      example: String(e.example || "").trim(),
-      is_grammatical: e.is_grammatical !== false,
-      corrected_example: e.corrected_example ? String(e.corrected_example).trim() : null,
-    }))
-    .filter((e) => /^[a-z][a-z' -]{1,40}$/.test(e.word))
-    .slice(0, MAX_WORDS_PER_SCAN);
+  return cleanEntries(entries);
 }
 
 async function awardVocabPoints(
@@ -182,7 +267,7 @@ Deno.serve(async (req) => {
 
     const { data: work } = await sb
       .from("student_work")
-      .select("id, storage_path, uploaded_by, class_id, status, workflow")
+      .select("id, storage_path, uploaded_by, class_id, status, workflow, mime_type")
       .eq("id", workId)
       .single();
     if (!work) return respond({ success: false, error: "work row not found" }, 404);
@@ -242,11 +327,15 @@ Deno.serve(async (req) => {
     for (let i = 0; i < buf.length; i += CHUNK) {
       binary += String.fromCharCode(...buf.subarray(i, i + CHUNK));
     }
-    const { text: ocrText, confidence } = await visionDocumentOcr(btoa(binary));
+    const imageB64 = btoa(binary);
+    const { text: ocrText, confidence } = await visionDocumentOcr(imageB64);
     if (!ocrText.trim()) throw new Error("Vision returned no text for this image");
 
-    // ── 2. Structure + grammar-validate via LLM ──────────────────────────
-    const entries = await structureWithLLM(ocrText);
+    // ── 2. Structure + grammar-validate: Claude reads the photo ──────────
+    const typeOf = (t: unknown) => String(t || "").split(";")[0].trim().toLowerCase();
+    const mediaType = typeOf(file.type).startsWith("image/") ? typeOf(file.type)
+      : typeOf(work.mime_type).startsWith("image/") ? typeOf(work.mime_type) : "image/jpeg";
+    const entries = await structurePage(ocrText, imageB64, mediaType);
 
     // ── 3. Duplicate check against the personal word bank ────────────────
     const existing = await wordsInBank(sb, student.id, linkedUserId, entries.map((e) => e.word));
