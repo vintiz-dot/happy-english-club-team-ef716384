@@ -186,10 +186,16 @@ export interface CseImage {
   url: string;
   thumb: string;
   alt: string;
-  source: "google";
+  source: "google" | "pexels" | "unsplash" | "openverse" | "pixabay";
+  credit?: string;
 }
 
 /**
+ * DEPRECATED - not called by any function any more. Google closed the Custom
+ * Search JSON API to new customers (20 Jan 2026) and ends it on 1 Jan 2027;
+ * this project gets 403 PERMISSION_DENIED. Word pictures now come from
+ * _lib/word-images.ts. Kept only until the CUSTOMIMAGE secret is retired.
+ *
  * Fetch context-appropriate images for a word using the CUSTOMIMAGE
  * credentials. Supports both auth shapes; falls back to the legacy
  * GOOGLE_CSE_API_KEY secret so existing deployments keep working.

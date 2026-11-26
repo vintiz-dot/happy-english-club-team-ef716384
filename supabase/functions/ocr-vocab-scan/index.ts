@@ -7,8 +7,8 @@
  *   2. OpenAI structures it into [word, meaning, example sentence] triples
  *      and validates grammatical correctness of each example.
  *   3. Duplicate check against the student's personal word bank.
- *   4. Google Custom Search (CUSTOMIMAGE credentials) fetches 2-3
- *      kid-safe, context-appropriate images per new word.
+ *   4. _lib/word-images.ts (Pexels / Unsplash / Openverse / Pixabay, all
+ *      with safe-search on) fetches up to 3 child-safe images per new word.
  *   5. The proposed words wait, staff-only, in student_work_vocab_drafts and
  *      the page goes to needs_review (review N-8: nothing a model read off
  *      the page reaches the child before a teacher approves it).
@@ -44,7 +44,8 @@
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { downloadFile, fileStoreEnvFromDeno } from "../_lib/file-store.ts";
-import { visionDocumentOcr, customSearchImages } from "../_lib/google.ts";
+import { visionDocumentOcr } from "../_lib/google.ts";
+import { fetchWordImages } from "../_lib/word-images.ts";
 import { fireProfileRefresh } from "../_lib/profile.ts";
 import { safeParseJson } from "../_lib/text.ts";
 import { askClaudeJson } from "../_lib/claude-json.ts";
@@ -344,15 +345,13 @@ Deno.serve(async (req) => {
     // Review N-8: nothing the model read off the page reaches the child -
     // no word, point, error-log entry or practice card - until a teacher
     // approves the words in Smart Upload (approve: true, below).
-    const proposed: any[] = [];
-    for (const entry of entries) {
-      if (existing.has(entry.word)) {
-        proposed.push({ ...entry, status: "duplicate", images: [] });
-        continue;
-      }
-      const images = await customSearchImages(entry.word, IMAGES_PER_WORD).catch(() => []);
-      proposed.push({ ...entry, status: "new", images });
-    }
+    const newWords = entries.filter((e) => !existing.has(e.word)).map((e) => e.word);
+    const pictures = await fetchWordImages(newWords, IMAGES_PER_WORD);
+    const proposed: any[] = entries.map((entry) =>
+      existing.has(entry.word)
+        ? { ...entry, status: "duplicate", images: [] }
+        : { ...entry, status: "new", images: pictures.get(String(entry.word).trim()) ?? [] }
+    );
 
     const { error: draftErr } = await sb.from("student_work_vocab_drafts").upsert(
       {
