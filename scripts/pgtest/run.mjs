@@ -49,6 +49,8 @@ const SUITES = [
   { name: "cash entry", file: "cash-entry.test.mjs", migrations: [] },
   // Who's speaking on the recorder screen: tap on / off, two or more = conversation, present children only.
   { name: "speaker board", file: "speaker-board.test.mjs", migrations: [] },
+  { name: "voice award", file: "voice-award.test.mjs", migrations: [] },
+  { name: "voice award overlay", file: "voice-award-overlay.test.mjs", migrations: [] },
   { name: "lesson monitor voices view", file: "lesson-monitor-voices-view.test.mjs", migrations: [] },
   // Vocabulary: 10 new words a Hanoi day, held by the database; the word bank only through save-word.
   { name: "vocab daily cap", file: "vocab-daily-cap.test.mjs", migrations: [] },

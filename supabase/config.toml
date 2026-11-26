@@ -201,6 +201,9 @@ verify_jwt = true
 [functions.get-speech-token]
 verify_jwt = true
 
+[functions.voice-award]
+verify_jwt = true
+
 [functions.guarded-change-refresh]
 verify_jwt = true
 
