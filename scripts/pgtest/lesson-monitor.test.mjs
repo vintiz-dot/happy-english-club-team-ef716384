@@ -29,6 +29,7 @@ const TA_MIG = MIGS.find((f) => f.includes("20261111110000"));
 const REC_MIG = MIGS.find((f) => f.includes("class_recorder"));
 const LM_MIG = MIGS.find((f) => f.includes("lesson_monitor_pilot"));
 const COVER_MIG = MIGS.find((f) => f.includes("lesson_monitor_cover_earlier"));
+const VOICE_MIG = MIGS.find((f) => f.includes("lesson_monitor_report_voice_part")); // 27 Nov 2026, optional
 if (!PIPE_MIG || !TA_MIG || !REC_MIG || !LM_MIG || !COVER_MIG) {
   console.log("usage: lesson-monitor.test.mjs <20260717090000_...> <20261111110000_...> <20261112100000_class_recorder.sql> <20261117090000_lesson_monitor_pilot.sql> <20261120090000_lesson_monitor_cover_earlier.sql>");
   console.log("0 passed, 1 failed");
@@ -102,10 +103,14 @@ await db.exec(`GRANT EXECUTE ON FUNCTION public.is_teacher_of_class(uuid, uuid) 
 await db.exec(readFileSync(REC_MIG, "utf8"));
 await db.exec(readFileSync(LM_MIG, "utf8"));
 await db.exec(readFileSync(COVER_MIG, "utf8"));
+if (VOICE_MIG) await db.exec(readFileSync(VOICE_MIG, "utf8"));
 ok("applies on top of the class recorder", true);
 {
   let again = null;
-  try { await db.exec(readFileSync(LM_MIG, "utf8")); await db.exec(readFileSync(COVER_MIG, "utf8")); } catch (e) { again = e.message; }
+  try {
+    await db.exec(readFileSync(LM_MIG, "utf8")); await db.exec(readFileSync(COVER_MIG, "utf8"));
+    if (VOICE_MIG) await db.exec(readFileSync(VOICE_MIG, "utf8"));
+  } catch (e) { again = e.message; }
   ok("and both apply a second time unchanged, in that order", again === null, again ?? "");
   const n = (await one(`SELECT count(*)::int n FROM pg_proc WHERE proname = 'lesson_monitor_set_class'`)).n;
   eq("...leaving ONE switch function (pasting the pilot again cannot make calls ambiguous)", n, 1);
@@ -325,7 +330,22 @@ console.log("=== saving a report: the server decides whose it is ===");
   refused("the cover teacher's lesson cannot be saved, by anyone", await save(ADMIN, rVcover), /pilot's own teacher did not teach this lesson/);
   refused("a parent cannot save", await save(PARENT, rV1), /Not a recording you may listen to/);
   refused("an uploading recording cannot be saved", await save(ADMIN, rVup), /not a complete lesson recording/);
-  eq("the admin saves Victor's lesson", await save(ADMIN, rV1), null);
+  // The voice part (20261127110000): the shape voice.py body_part() writes is saved; anything that could carry
+  // an embedding or another model's guess is not. Without that migration a voice part is an unknown part.
+  const VOICE = { model: "speechbrain/spkrec-ecapa-voxceleb", settings: { line_min_s: 1, group_threshold: 0.5 },
+    groups: [{ key: "G1", seconds: 42.5, lines: 9, suggested: k1, score: 0.71 }], samples_seconds: { [k1]: 63.2 } };
+  if (VOICE_MIG) {
+    refused("a voice part carrying embeddings is refused", await save(ADMIN, rV1,
+      BODY({ voice: { ...VOICE, groups: [{ ...VOICE.groups[0], vecs: [[0.1, 0.2]] }] } })), /may not carry voice embeddings/);
+    refused("a voice part naming other models is refused", await save(ADMIN, rV1, BODY({ voice: { ...VOICE, models: ["titanet"] } })), /voice part carries an unknown part: models/);
+    refused("a voice part that is not an object is refused", await save(ADMIN, rV1, BODY({ voice: [] })), /voice part is not in the expected shape/);
+    eq("the admin saves Victor's lesson, voice groups included", await save(ADMIN, rV1, BODY({ voice: VOICE })), null);
+    eq("and the voice groups are kept", (await one(
+      `SELECT body -> 'voice' -> 'groups' -> 0 ->> 'key' k FROM public.lesson_monitor_reports WHERE recording_id = $1`, [rV1])).k, "G1");
+  } else {
+    refused("without 20261127110000 a voice part is an unknown part", await save(ADMIN, rV1, BODY({ voice: VOICE })), /unknown part: voice/);
+    eq("the admin saves Victor's lesson", await save(ADMIN, rV1), null);
+  }
   eq("the report is Victor's, made by the admin", (await one(
     `SELECT teacher_user_id = $2 t, made_by = $3 m FROM public.lesson_monitor_reports WHERE recording_id = $1`, [rV1, VICTOR, ADMIN])), { t: true, m: true });
   refused("a second save of the same lesson is refused", await save(ADMIN, rV1), /already been handled/);
