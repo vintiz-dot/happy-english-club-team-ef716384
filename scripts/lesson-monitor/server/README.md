@@ -51,7 +51,8 @@ Nobody else. Transcripts go only to the school's database (the teacher of the le
    role, a long password from your password manager. It is used only by the VM (separate login = every action it
    takes is attributed to it in the audit logs). Signing it out everywhere in the app ends the VM's access at once.
 5. **Paste the migrations** in the Supabase SQL editor, in this order: `20261127090000_recorder_audio_in_r2.sql`,
-   `20261127100000_lesson_report_ready_notice.sql`.
+   `20261127100000_lesson_report_ready_notice.sql`, `20261127110000_lesson_monitor_report_voice_part.sql` (without
+   this last one every report with voice groups is refused: "unknown part: voice").
 
 ## Install (about 20 minutes)
 
