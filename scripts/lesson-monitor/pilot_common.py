@@ -135,13 +135,20 @@ class Guard:
 
     An unreachable database is NOT a yes. A withdrawal or a switch-off made in the app cannot reach a
     laptop that cannot be asked, so silence must not mean "carry on" for hours. The job gets a short
-    grace (`grace` seconds, default 120: a Wi-Fi blip, a slow request) and after that should_stop()
-    is True: the caller stops and deletes its audio copy and any draft. A pasted token (--token)
-    expires in about an hour and cannot be refreshed, so a job on one must finish inside that hour;
-    after it the job stops and wipes rather than go on unchecked."""
+    grace (`grace` seconds, default 900) and after that should_stop() is True: the caller stops and
+    deletes its audio copy and any draft. A pasted token (--token) expires in about an hour and cannot
+    be refreshed, so a job on one must finish inside that hour; after it the job stops and wipes rather
+    than go on unchecked.
 
-    def __init__(self, api, recording_id: str, every: float = 15.0, grace: float = 120.0, clock=time.monotonic):
+    The grace was 2 minutes until 27 Nov 2026: a 2-minute Wi-Fi drop at 04:12 that night cost Jupiter's
+    whole report (built after five hours, dropped at the last look). 15 minutes rides out a router
+    restart; a withdrawal made meanwhile still stops the job the moment the database answers, and
+    nothing is kept until it answers "ok" (final_verdict)."""
+
+    def __init__(self, api, recording_id: str, every: float = 15.0, grace: float = 900.0, clock=time.monotonic,
+                 sleep=time.sleep, retry: float = 30.0):
         self.api, self.rid, self.every, self.grace, self.clock = api, recording_id, every, grace, clock
+        self.sleep, self.retry = sleep, retry
         self._last_at = None
         self._last = "ok"
         self._down_since = None
@@ -173,6 +180,20 @@ class Guard:
         if v == "unreachable":
             return self.clock() - (self._down_since if self._down_since is not None else self.clock()) > self.grace
         return v != "ok"
+
+    def final_verdict(self) -> str:
+        """The last look before anything is kept: ask now, and while the database cannot be reached ask again
+        every `retry` seconds until it answers or `grace` seconds have passed offline. Only "ok" lets a
+        report be kept; any other answer, or still no answer at the end, drops it."""
+        v = self.verdict(force=True)
+        while v == "unreachable" and not stopped():
+            down = self._down_since if self._down_since is not None else self.clock()
+            if self.clock() - down > self.grace:
+                break
+            log(f"{self.rid}: database not reachable at the last look; asking again in {int(self.retry)} s")
+            self.sleep(self.retry)
+            v = self.verdict(force=True)
+        return v
 
     def reason(self) -> str:
         """Why the last answer stopped the job, without asking again."""

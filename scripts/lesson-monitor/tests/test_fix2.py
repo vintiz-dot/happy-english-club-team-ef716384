@@ -92,12 +92,53 @@ def test_an_expired_token_counts_as_unreachable(pilot_root, ask_every_time):
     assert nightly.process_one(api, ROW, FakeModel(), STEP0, keep_local=False) == "stopped"
 
 
+class SleepClock:
+    """A clock that only moves when the code sleeps: the last look's retries, without waiting."""
+
+    def __init__(self):
+        self.t, self.slept = 0.0, []
+
+    def __call__(self) -> float:
+        return self.t
+
+    def sleep(self, s: float) -> None:
+        self.slept.append(s)
+        self.t += s
+
+
+def answer(api, seq):
+    api.may, api.may_calls = list(seq), 0             # from now on, these answers in order
+
+
+@pytest.fixture
+def last_look_clock(monkeypatch):
+    real, c = pc.Guard, SleepClock()
+    monkeypatch.setattr(pc, "Guard", lambda api, rid: real(api, rid, clock=c, sleep=c.sleep))
+    return c
+
+
 @pytest.mark.parametrize("keep_local", [False, True])
-def test_nothing_is_kept_or_saved_when_the_last_look_cannot_reach_the_database(pilot_root, keep_local):
+def test_nothing_is_kept_or_saved_when_the_last_look_cannot_reach_the_database(pilot_root, keep_local, last_look_clock):
     api = FakeApi()
     model = FakeModel(on_segment=lambda i: setattr(api, "may", [0]) if i == 1 else None)
     assert nightly.process_one(api, ROW, model, STEP0, keep_local=keep_local) == "stopped"
     assert api.saved == [] and pc.files_under(pc.drafts_dir()) == [] and pc.files_under(pc.audio_dir()) == []
+    assert sum(last_look_clock.slept) >= 900                      # it asked again for the whole grace first
+
+
+def test_a_wifi_drop_at_the_last_look_waits_and_then_saves(pilot_root, last_look_clock):
+    # 27 Nov 2026: Jupiter's report was built, then dropped because Wi-Fi was down for 2 minutes at the last look.
+    api = FakeApi()
+    model = FakeModel(on_segment=lambda i: answer(api, [0, 0, 0, 0, "ok"]) if i == 1 else None)
+    assert nightly.process_one(api, ROW, model, STEP0, keep_local=False) == "saved"
+    assert len(api.saved) == 1 and 0 < sum(last_look_clock.slept) < 900
+
+
+def test_a_withdrawal_answered_after_a_drop_still_drops_the_report(pilot_root, last_look_clock):
+    api = FakeApi()
+    model = FakeModel(on_segment=lambda i: answer(api, [0, 0, "consent_missing"]) if i == 1 else None)
+    assert nightly.process_one(api, ROW, model, STEP0, keep_local=False) == "stopped"
+    assert api.saved == [] and pc.files_under(pc.drafts_dir()) == []
 
 
 def test_no_upload_keeps_a_report_only_when_the_database_says_ok(pilot_root):

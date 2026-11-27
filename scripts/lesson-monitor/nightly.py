@@ -34,8 +34,9 @@ switched off or a child's consent was withdrawn, it stops and deletes its audio 
 and any draft of that lesson. At the start it also deletes every local draft the
 database no longer allows (lesson_monitor_keep_check), and a STOP file makes it delete
 all local audio and drafts before it exits. A database that cannot be reached is not a yes: after a
-2-minute grace the job stops and deletes the same way, and nothing is kept or saved unless the database
-answers "ok" at that moment (a pasted --token lasts about an hour: finish inside it).
+15-minute grace the job stops and deletes the same way, and nothing is kept or saved unless the database
+answers "ok" at the last look, which asks again every 30 s through that grace (a pasted --token lasts
+about an hour: finish inside it).
 
 progress.py, in a second window, shows a bar for each lesson and the time left. It reads
 pilot\\progress.json, which this writes as it goes: recording ids, steps and numbers only.
@@ -347,8 +348,9 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
     audio_s, proc_s = int(duration), int(time.time() - t_start)
     # The last look before anything is kept or saved: the class may have been stopped, or a child's
     # consent withdrawn, while the laptop worked.
-    # Only a database that says "ok" right now lets anything be kept: an unreachable one is not a yes.
-    final = guard.verdict(force=True)
+    # Only a database that says "ok" lets anything be kept: an unreachable one is not a yes, so the last look
+    # asks again for up to the guard's grace (a Wi-Fi drop at this moment cost Jupiter's report, 27 Nov 2026).
+    final = guard.final_verdict()
     if final != "ok":
         remove_draft(rid)
         pc.log(f"{rid} NOT kept: {guard.reason()}; report dropped, nothing saved")
