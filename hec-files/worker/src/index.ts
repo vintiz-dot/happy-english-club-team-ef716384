@@ -232,7 +232,25 @@ async function handleSign(req: Request, env: Env, now: number, h: Record<string,
         method: "POST", headers: { Prefer: "return=minimal" },
         body: JSON.stringify({ bucket_id: bucket, path, owner, size_bytes: size, mime_type: mime }),
       });
-      if (r.status === 409) return json({ error: "A file with that name is already there" }, 409, h);
+      if (r.status === 409) {
+        // The row is there. Usually so is the file, and nothing may overwrite it. But when the PUT that
+        // followed the row died (school Wi-Fi mid-upload: the recorder's normal bad day), the row stands
+        // with no object behind it, and every retry would get this 409 for ever (the chunk could never
+        // be uploaded, the caller cannot delete the row). So: if R2 has NO object at that key, and the
+        // caller can read the row and it is THEIR row at the SAME size and type, sign the PUT once more.
+        // handlePut still refuses to overwrite an object that exists; anyone else still gets 409.
+        if (!(await env.FILES.head(keyOf(bucket, path)))) {
+          const q = await rest(env, token,
+            `file_objects?bucket_id=eq.${encodeURIComponent(bucket)}&path=eq.${encodeURIComponent(path)}&select=owner,size_bytes,mime_type`,
+            { method: "GET" });
+          const rows = q.ok ? await q.json().catch(() => []) as any[] : [];
+          const row = Array.isArray(rows) && rows.length === 1 ? rows[0] : null;
+          if (row && row.owner === owner && Number(row.size_bytes) === size && row.mime_type === mime) {
+            return json({ url: await signLink(origin, env.LINK_SECRET, "w", bucket, path, now, String(size), mime) }, 200, h);
+          }
+        }
+        return json({ error: "A file with that name is already there" }, 409, h);
+      }
       if (r.status === 401) return json({ error: "Sign in again" }, 401, h);
       if (r.status === 403) return json({ error: "Not allowed to upload there" }, 403, h);
       if (!r.ok) {

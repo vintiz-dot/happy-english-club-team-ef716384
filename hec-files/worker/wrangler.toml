@@ -19,7 +19,7 @@ ALLOWED_ORIGIN_SUFFIX = ".happy-class-mate.pages.dev"
 # The buckets this Worker serves. The app decides separately which buckets it
 # reads from here (src/lib/fileStore.ts), so a bucket can be listed here
 # before its files are copied.
-R2_BUCKETS = "student-work,homework,homework-videos,class-recordings,lesson-resources,course-media"
+R2_BUCKETS = "student-work,homework,homework-videos,class-recordings,lesson-resources,course-media,class-recorder-audio"
 
 # Secrets, set once by the owner and never committed:
 #   npx wrangler secret put LINK_SECRET   (any random text of 32+ characters)

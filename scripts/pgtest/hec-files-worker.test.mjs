@@ -55,6 +55,7 @@ globalThis.fetch = async (url, init) => {
     return Response.json(b._paths.filter((p) => db.allowedRead.includes(p)));
   }
   if (u.includes("/file_objects") && init.method === "POST") return new Response("", { status: db.insert });
+  if (u.includes("/file_objects") && init.method === "GET") return Response.json(db.rows ?? []);
   if (u.includes("/file_objects") && init.method === "DELETE") return Response.json(Array.from({ length: db.deleteRows }, () => ({})));
   return new Response("{}", { status: 500 });
 };
@@ -122,6 +123,21 @@ db.insert = 403;
 eq("the database saying no means no link", (await sign({ op: "write", bucket: "homework", path: "x/y.jpg", size: 1, type: "image/jpeg" })).status, 403);
 db.insert = 409;
 eq("a path already taken is reported", (await sign({ op: "write", bucket: "homework", path: "x/y.jpg", size: 1, type: "image/jpeg" })).status, 409);
+// The PUT that followed the row died (Wi-Fi): the row stands, R2 has nothing. The owner may try again;
+// nobody else may, and an object that exists is never overwritten.
+const ME = "22222222-2222-2222-2222-222222222222";
+db.rows = [{ owner: ME, size_bytes: 1, mime_type: "image/jpeg" }];
+r = await sign({ op: "write", bucket: "homework", path: "x/y.jpg", size: 1, type: "image/jpeg" });
+j = await r.json();
+eq("a row with no object behind it: its owner gets the link again", [r.status, typeof j.url], [200, "string"]);
+eq("and the upload goes in", (await put(j.url, "z")).status, 200);
+eq("once the object is there, a retry is 409 again", (await sign({ op: "write", bucket: "homework", path: "x/y.jpg", size: 1, type: "image/jpeg" })).status, 409);
+db.rows = [{ owner: "33333333-3333-3333-3333-333333333333", size_bytes: 1, mime_type: "image/jpeg" }];
+eq("another person's row with no object stays 409", (await sign({ op: "write", bucket: "homework", path: "x/q.jpg", size: 1, type: "image/jpeg" })).status, 409);
+db.rows = [{ owner: ME, size_bytes: 2, mime_type: "image/jpeg" }];
+eq("own row at another size stays 409", (await sign({ op: "write", bucket: "homework", path: "x/q.jpg", size: 1, type: "image/jpeg" })).status, 409);
+db.rows = [];
+eq("a row the caller cannot read stays 409", (await sign({ op: "write", bucket: "homework", path: "x/q.jpg", size: 1, type: "image/jpeg" })).status, 409);
 db.insert = 201;
 eq("over 100 MB is refused before anything is written", (await sign({ op: "write", bucket: "homework", path: "x/z.mp4", size: 101 * 1048576, type: "video/mp4" })).status, 413);
 

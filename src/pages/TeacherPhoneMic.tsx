@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import { AudioGraph } from "@/lib/recorder/audioGraph";
 import { supabaseBackend, type SupabaseLike } from "@/lib/recorder/backend";
 import { PhoneTeacherTrack, type PhoneStatus } from "@/lib/recorder/phoneTrack";
@@ -27,7 +28,7 @@ import { NativeMicFeed, nativeMicPlugin, type NativeFeedView } from "@/lib/recor
  */
 
 const db = supabase as any;
-const backend = supabaseBackend(supabase as unknown as SupabaseLike);
+const backend = supabaseBackend(supabase as unknown as SupabaseLike, { files });
 const COLS = "id,class_id,session_id,armed_session_id,session_date,scheduled_start,scheduled_end,capture_opens_at,capture_closes_at,status,format,chunk_ms,max_duration_ms,min_bytes_per_sec,clock_tolerance_ms,purpose,started_at,ended_at,stop_reason,stop_requested_at,late_after_ms,manifest_path,manifest_sha256,pre_start_ms,started_by,client_info,classes(name)";
 const TICK_MS = 3000;
 /** Inside the iPhone app (ios-phone-mic/): its own microphone, which keeps recording with the screen locked. */

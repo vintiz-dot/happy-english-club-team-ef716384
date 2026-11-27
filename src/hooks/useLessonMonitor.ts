@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { files } from "@/lib/files";
 import type { ChunkRow } from "@/lib/lessonMonitor";
 import type { GroupRow, VoiceAnswer } from "@/lib/lessonMonitorVoices";
 
@@ -72,9 +73,13 @@ export function useRoomChunks(recordingId: string | null) {
 }
 
 export async function downloadChunk(path: string): Promise<Blob> {
-  const { data, error } = await db.storage.from("class-recorder-audio").download(path);
-  if (error || !data) throw error ?? new Error("The recording is no longer kept.");
-  return data as Blob;
+  // R2 first (the recorder bucket is in R2_BUCKETS since 27 Nov 2026); a chunk recorded before the move is
+  // still in Supabase, and files.download falls back to it.
+  try {
+    return await files.download("class-recorder-audio", path);
+  } catch {
+    throw new Error("The recording is no longer kept.");
+  }
 }
 
 export function useMyLessons(from: string, to: string, enabled: boolean) {
