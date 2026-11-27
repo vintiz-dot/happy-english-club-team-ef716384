@@ -145,7 +145,7 @@ def test_voiceprints_are_encrypted_tagged_and_deleted_on_withdrawal(pilot_root):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="DPAPI is Windows only")
 def test_dpapi_round_trip_on_this_laptop():
-    d = voiceprints.Dpapi()
+    d = voiceprints.seal.codec("hec-voiceprint")  # DPAPI on Windows
     secret = b'{"student_id":"x"}'
     sealed = d.protect(secret)
     assert sealed != secret and secret not in sealed and d.unprotect(sealed) == secret

@@ -47,17 +47,15 @@ PENDING_DAYS = 30        # as long as a report is kept
 
 
 # ------------------------------------------------------------------ encryption
-from dpapi import Dpapi  # noqa: E402  (Windows DPAPI, current user)
+import seal  # noqa: E402  (Windows DPAPI on the laptop; the systemd credential key on the Linux server)
 
-CODEC = None  # tests put a stand-in here; production uses DPAPI and nothing else
+CODEC = None  # tests put a stand-in here; production uses seal.codec and nothing else
 
 
 def codec():
     global CODEC
     if CODEC is None:
-        if sys.platform != "win32":
-            raise RuntimeError("voiceprints are kept only on the school's Windows laptop (DPAPI)")
-        CODEC = Dpapi("hec-voiceprint")
+        CODEC = seal.codec("hec-voiceprint")
     return CODEC
 
 

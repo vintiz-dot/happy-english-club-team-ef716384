@@ -54,6 +54,8 @@ def mmss(s: float) -> str:
 
 
 def unsure(seg: dict) -> bool:
+    if seg.get("force_unsure"):  # the reconciler: two transcribers and the beam-5 re-check did not agree
+        return True
     if (seg.get("avg_logprob") is not None and seg["avg_logprob"] < UNSURE_LOGPROB) \
             or (seg.get("no_speech_prob") or 0) > UNSURE_NO_SPEECH \
             or (seg.get("compression_ratio") or 0) > UNSURE_COMPRESSION:

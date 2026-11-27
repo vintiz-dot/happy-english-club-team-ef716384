@@ -50,6 +50,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 import time
@@ -67,6 +68,10 @@ import voiceprints  # noqa: E402
 # The voice step (24 Nov 2026). None = off: the voiceprint migration (20261124120000) is not pasted,
 # or this run could not reach its consent list. main() sets it; tests set it directly.
 VOICE: dict | None = None
+
+# The remote transcribers (27 Nov 2026, the Oracle server): [Groq, Cloudflare] when --remote and their credentials
+# are on this machine; None = the local transcriber only, as on the laptop. main() sets it; tests set it directly.
+REMOTE: list | None = None
 
 FINAL_REFUSALS = ("consent_missing", "other_teacher", "no_teacher")
 
@@ -194,6 +199,7 @@ def purge_local_drafts(api) -> int:
 def write_draft(rec: dict, body: dict, audio_s: int, proc_s: int, html_copy: bool) -> Path:
     f = pc.out(pc.drafts_dir() / f"{rec['recording_id']}.json")
     f.write_text(json.dumps({"recording_id": rec["recording_id"], "session_date": rec["session_date"],
+                             "session_id": rec.get("session_id"),
                              "audio_seconds": audio_s, "processing_seconds": proc_s, "body": body}), encoding="utf-8")
     if html_copy:
         f.with_suffix(".html").write_text(report.render_html(body, f"Lesson report {rec['session_date']}"), encoding="utf-8")
@@ -295,8 +301,13 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         t_tr = time.time()
         if prog:
             prog.step(rid, "transcribing", 0, duration)
-        segs = transcribe.transcribe(model, str(folder / "room16k.wav"), should_stop=guard.should_stop,
-                                     on_progress=(lambda t: prog.step(rid, "transcribing", t, duration)) if prog else None)
+        if REMOTE is not None:
+            segs, tsettings = transcribe_remote(rid, folder / "room16k.wav", model, guard,
+                                                (lambda t: prog.step(rid, "transcribing", t, duration)) if prog else None)
+        else:
+            segs = transcribe.transcribe(model, str(folder / "room16k.wav"), should_stop=guard.should_stop,
+                                         on_progress=(lambda t: prog.step(rid, "transcribing", t, duration)) if prog else None)
+            tsettings = transcribe.settings()
         if prog:
             prog.transcribed(rid, time.time() - t_tr, duration)
             prog.step(rid, "saving")
@@ -305,7 +316,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
                    "room_db": lv_room["db"], "room_cov": lv_room["cov"]},
             duration, targets, markers, step0,
             {"room_until_s": lv_room["until_s"], "teacher_until_s": lv_teacher["until_s"]},
-            dict(transcribe.settings(), job=pc.JOB_VERSION, step0_talk=bool(step0.get("talk_pass"))),
+            dict(tsettings, job=pc.JOB_VERSION, step0_talk=bool(step0.get("talk_pass"))),
             offset_s=window[0])
         vres = run_voice(api, row, folder / "room16k.wav", body, lv_teacher, lv_room, window, duration, guard)
     except transcribe.Stopped:
@@ -373,6 +384,57 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             return "draft"
         pc.log(f"{rid} refused by the database: {e.message}; nothing kept")
         return "refused"
+
+
+# ------------------------------------------------------------------ remote transcription
+def may_send_for(guard):
+    """Asked before EVERY upload to Groq or Cloudflare: lesson_monitor_may_continue, fresh, must say "ok". An
+    unreachable database is not a yes: that piece is then transcribed here instead (and the guard's grace decides
+    whether the job goes on at all). Thread-safe: both providers upload at once."""
+    import threading
+    lock = threading.Lock()
+
+    def may_send() -> bool:
+        with lock:
+            return guard.verdict(force=True) == "ok"
+    return may_send
+
+
+def _shift(seg: dict, off: float) -> dict:
+    s = dict(seg, start=round(seg["start"] + off, 3), end=round(seg["end"] + off, 3))
+    s["words"] = [dict(w, start=round(w["start"] + off, 3), end=round(w["end"] + off, 3)) for w in seg.get("words") or []]
+    return s
+
+
+def transcribe_remote(rid: str, wav: Path, model, guard, on_progress=None) -> tuple[list[dict], dict]:
+    """The lesson through Groq + Cloudflare, reconciled, with this machine's beam-5 re-checks (providers/remote.py).
+    Returns the segments and the report's transcription settings."""
+    import transcribe
+    from providers import remote
+    x = transcribe.read_wav16k(str(wav))
+    send = may_send_for(guard)
+    for p in REMOTE or []:
+        p.may_send = send
+
+    def recheck(piece, off):
+        return [_shift(s, off) for s in transcribe.transcribe(model, piece, should_stop=guard.should_stop)]
+
+    segs, st = remote.transcribe_lesson(x, REMOTE or [], recheck if model is not None else None, guard.should_stop,
+                                        transcribe.Stopped, lambda line: pc.log(f"{rid} {line}"), on_progress)
+    st["recheck"] = {"engine": "faster-whisper", "model": transcribe.B2B["model"], "beam_size": transcribe.B2B["beam_size"],
+                     "compute_type": transcribe.B2B["compute_type"]}
+    return segs, st
+
+
+def setup_remote(on: bool) -> list | None:
+    """--remote: the providers this machine has credentials for (none is allowed: then every piece is local)."""
+    if not on:
+        return None
+    from providers import remote
+    provs = remote.build_providers(pc.sub("state"), lambda: False, pc.log)
+    pc.log(f"remote transcription: {', '.join(p.name + ' ' + p.model for p in provs) or 'no provider credentials'}; "
+           f"re-checks with beam {CAREFUL_BEAM}")
+    return provs
 
 
 # ------------------------------------------------------------------ voices
@@ -582,7 +644,10 @@ def finish_voice(api, row: dict, res) -> None:
         pc.log(f"{rid} voices: {n} voice sample(s) of {len(res['samples'])} child(ren) learned from taps")
 
 
-def request_lesson_report(api, row: dict) -> None:
+REPORT_RETRY_WAITS = (30, 120, 600)  # seconds between tries of the class report request (network or 5xx only)
+
+
+def request_lesson_report(api, row: dict, sleep=time.sleep) -> str:
     """Right after the transcript is saved, ask lesson-report-draft for this lesson's class report. The laptop is
     signed in as an admin, who cannot read the transcript through RLS, so the request says from_monitor: the
     function then reads this lesson's own monitor transcript itself (owner's ruling, 22 Nov 2026: no teacher needs
@@ -591,13 +656,27 @@ def request_lesson_report(api, row: dict) -> None:
     call = getattr(api, "function", None)
     sid = row.get("session_id")
     if call is None or not sid:
-        return
+        return "skipped"
     rid = row.get("recording_id", "")
-    try:
-        call("lesson-report-draft", {"session_id": sid, "from_monitor": True})
-        pc.log(f"{rid} lesson report draft requested")
-    except Exception as e:  # noqa: BLE001 - never let the report request fail the run
-        pc.log(f"{rid} lesson report draft not requested (HTTP {getattr(e, 'status', 0)})")
+    # 27 Nov 2026: the teacher should only have to approve, so the request must not be lost to a blip. A dropped
+    # line, a 5xx or a 429 is tried again after REPORT_RETRY_WAITS; a refusal (409: already approved or being built,
+    # 6 builds today; 403; 400) is final and is not repeated.
+    for attempt in range(len(REPORT_RETRY_WAITS) + 1):
+        try:
+            call("lesson-report-draft", {"session_id": sid, "from_monitor": True})
+            pc.log(f"{rid} lesson report draft requested")
+            return "requested"
+        except Exception as e:  # noqa: BLE001 - never let the report request fail the run
+            st = int(getattr(e, "status", 0) or 0)
+            if st not in (0, 429) and st < 500:
+                pc.log(f"{rid} lesson report draft not requested (HTTP {st}); not retried")
+                return f"refused_{st}"
+            if attempt == len(REPORT_RETRY_WAITS):
+                pc.log(f"{rid} lesson report draft not requested (HTTP {st}) after {attempt + 1} tries")
+                return "failed"
+            pc.log(f"{rid} lesson report draft request failed (HTTP {st}); trying again in {REPORT_RETRY_WAITS[attempt]} s")
+            sleep(REPORT_RETRY_WAITS[attempt])
+    return "failed"
 
 
 def upload_drafts(api) -> dict:
@@ -610,6 +689,8 @@ def upload_drafts(api) -> dict:
                                                    "p_body": d["body"], "p_audio_seconds": d.get("audio_seconds"),
                                                    "p_processing_seconds": d.get("processing_seconds")})
             counts["saved"] += 1
+            if d.get("session_id"):  # the class report follows its transcript, as for a report saved at once
+                request_lesson_report(api, {"recording_id": d["recording_id"], "session_id": d["session_id"]})
         except ApiError as e:
             if e.status in (0, 401):
                 counts["kept"] += 1
@@ -637,6 +718,9 @@ def main(argv=None) -> int:
     ap.add_argument("--date", default=None, help="only that lesson day: today, yesterday or YYYY-MM-DD")
     ap.add_argument("--careful", action="store_true", help=f"transcribe with a beam search of {CAREFUL_BEAM} instead of greedy (slower, more careful)")
     ap.add_argument("--stop-after-done", action="store_true", help="with --watch: stop once the first matching recording has been handled")
+    ap.add_argument("--remote", action="store_true",
+                    help="transcribe with Groq + Cloudflare Workers AI, reconciled, re-checking disagreements here at "
+                         f"beam {CAREFUL_BEAM} (the Oracle server; needs their credentials)")
     ap.add_argument("--stop-at", default=None, help="with --watch: stop looking at this local time (hh:mm); the next one after now")
     a = ap.parse_args(argv)
 
@@ -682,7 +766,9 @@ def main(argv=None) -> int:
     except ValueError as e:
         print(f"Not starting: {e}.")
         return 2
-    if a.careful:
+    global REMOTE
+    REMOTE = setup_remote(a.remote or os.environ.get("HEC_TRANSCRIBE") == "remote")
+    if a.careful or REMOTE is not None:
         transcribe.B2B["beam_size"] = CAREFUL_BEAM
         pc.log(f"careful transcription on: beam {CAREFUL_BEAM}")
     stop_at = plan.next_until(datetime.now().astimezone(), a.stop_at) if a.watch and a.stop_at else None

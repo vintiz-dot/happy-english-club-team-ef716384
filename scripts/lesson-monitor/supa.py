@@ -313,14 +313,14 @@ class Api:
 
 
 # ------------------------------------------------------------------ the remembered session
-CODEC = None  # tests put a stand-in here; on the laptop it is DPAPI
+CODEC = None  # tests put a stand-in here; on the laptop it is DPAPI, on the Linux server seal.KeySeal
 
 
 def _codec():
     global CODEC
     if CODEC is None:
-        from dpapi import Dpapi
-        CODEC = Dpapi("hec-pilot-session")
+        import seal
+        CODEC = seal.codec("hec-pilot-session")
     return CODEC
 
 
