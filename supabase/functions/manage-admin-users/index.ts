@@ -340,12 +340,40 @@ Deno.serve(async (req) => {
       });
 
     } else if (action === 'create') {
-      // Create new admin user
+      // Create a new account. `role` picks its role; left out, it is an
+      // administrator (what "Create Admin" has always sent).
       if (!email || !password) {
         return new Response(JSON.stringify({ error: 'Email and password required' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+
+      const newRole = typeof role === 'string' && role ? role : 'admin';
+      if (newRole !== 'admin') {
+        // No administrator role, so no second administrator is needed. The
+        // sign-up trigger (handle_new_user) gives every new account
+        // `student`; that is swapped for the chosen role.
+        const { data: made, error: makeError } = await supabase.auth.admin.createUser({ email, password, email_confirm: true });
+        if (makeError || !made?.user) {
+          console.error('Create user error:', makeError);
+          return reply(400, { error: makeError?.message ?? 'The account could not be created.' });
+        }
+        const newId = made.user.id;
+        if (newRole !== 'student') {
+          const { error: insErr } = await supabase.from('user_roles')
+            .upsert({ user_id: newId, role: newRole }, { onConflict: 'user_id,role' });
+          if (insErr) {
+            console.error('Role insert error:', insErr);
+            const { error: undoError } = await supabase.auth.admin.deleteUser(newId);
+            return reply(400, { error: `The role "${newRole}" could not be given (${insErr.message}), so the account was ${undoError ? 'NOT removed - remove it in Users' : 'removed again'}.`, account_removed: !undoError });
+          }
+          await supabase.from('user_roles').delete().eq('user_id', newId).eq('role', 'student');
+        }
+        await supabase.from('audit_log').insert({
+          actor_user_id: user.id, action: 'create_user', entity: 'user', entity_id: newId, diff: { email, role: newRole },
+        });
+        return reply(200, { success: true, user: { id: newId, email: made.user.email }, role: newRole });
       }
 
       const blocked = await adminGrantBlocked(null);
@@ -533,10 +561,30 @@ Deno.serve(async (req) => {
         });
       }
 
+      // A family's main login cannot go (families.primary_user_id is ON DELETE
+      // RESTRICT): say which family, instead of Auth's "Database error".
+      const { data: famRows } = await supabase.from('families').select('name').eq('primary_user_id', userId);
+      if ((famRows ?? []).length > 0) {
+        return reply(409, {
+          error: `This account is the main login of the family "${famRows!.map((f: { name: string }) => f.name).join('", "')}". Link that family to another login first, or block this account's sign-in instead. Nothing was changed.`,
+          code: 'family_login',
+        });
+      }
+
       const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
 
       if (deleteError) {
         console.error('User delete error:', deleteError);
+        // Auth answers only "Database error deleting user" when a row still
+        // points at the account (before 20261127120000, an audit_log row, an
+        // attendance mark, a payment it recorded...). The history is kept, so
+        // the account is offered for blocking instead.
+        if (/database error/i.test(deleteError.message ?? '')) {
+          return reply(409, {
+            error: 'This account cannot be deleted: records it made (attendance, payments, the activity log) still point at it. You can block its sign-in instead: it keeps the history and can no longer log in. Nothing was changed.',
+            code: 'has_history',
+          });
+        }
         return new Response(JSON.stringify({ error: deleteError.message }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -556,6 +604,26 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+
+    } else if (action === 'deactivate') {
+      // Block sign-in and take every role away; the account and its history stay.
+      if (!userId) return reply(400, { error: 'User ID required' });
+      if (userId === user.id) return reply(400, { error: 'Cannot block your own account' });
+
+      const { error: banError } = await supabase.auth.admin.updateUserById(userId, { ban_duration: '876000h' });
+      if (banError) {
+        console.error('Ban error:', banError);
+        return reply(400, { error: banError.message });
+      }
+      const { data: rolesBefore } = await supabase.from('user_roles').select('role').eq('user_id', userId);
+      const { error: roleDelError } = await supabase.from('user_roles').delete().eq('user_id', userId);
+      if (roleDelError) console.error('Removing roles of the blocked account failed:', roleDelError);
+
+      await supabase.from('audit_log').insert({
+        actor_user_id: user.id, action: 'deactivate_user', entity: 'user', entity_id: userId,
+        diff: { banned: true, roles_removed: (rolesBefore ?? []).map((r: { role: string }) => r.role) },
+      });
+      return reply(200, { success: true, rolesRemoved: !roleDelError });
 
     } else if (action === 'updateEmail') {
       // Update user email

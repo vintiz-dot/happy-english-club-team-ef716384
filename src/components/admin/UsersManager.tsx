@@ -30,11 +30,47 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ReasonField } from "@/components/admin/session-guard/Fields";
+import { requestApproval } from "@/components/admin/approvals/api";
+import { approvalErrorText, grantAdminParams } from "@/lib/approvals";
+import { checkReason, REASON_MIN } from "@/lib/sessionGuard";
+
+/** An error carrying the function's own answer (code, approval offer), not supabase-js's "non-2xx". */
+class FnError extends Error {
+  code?: string;
+  approval?: any;
+  constructor(message: string, code?: string, approval?: any) {
+    super(message);
+    this.code = code;
+    this.approval = approval;
+  }
+}
+
+/** Call manage-admin-users and throw its own sentence on failure. */
+async function callUsersFn(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("manage-admin-users", { body });
+  if (data?.error) throw new FnError(String(data.error), data.code, data.approval);
+  if (error) {
+    let b: any = null;
+    try { b = await (error as any).context?.json?.(); } catch { /* keep the generic message */ }
+    if (b?.error) throw new FnError(String(b.error), b.code, b.approval);
+    throw new FnError(error.message);
+  }
+  return data;
+}
 
 export function UsersManager() {
   const queryClient = useQueryClient();
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState("");
+  /** The account whose administrator role waits for a second administrator's approval. */
+  const [grantFor, setGrantFor] = useState<{ userId: string; email: string } | null>(null);
+  const [grantReason, setGrantReason] = useState("");
+  const [grantBusy, setGrantBusy] = useState(false);
+  const [grantMsg, setGrantMsg] = useState<string | null>(null);
+  /** An account that cannot be deleted, offered for blocking instead. */
+  const [blockFor, setBlockFor] = useState<{ userId: string; email: string; why: string } | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
@@ -96,19 +132,15 @@ export function UsersManager() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string }) => {
-      const response = await supabase.functions.invoke("manage-admin-users", {
-        body: { action: "create", email: data.email, password: data.password },
-      });
-      if (response.error) throw response.error;
-      return response.data;
-    },
+    mutationFn: async (data: { email: string; password: string; role: string }) =>
+      callUsersFn({ action: "create", email: data.email, password: data.password, role: data.role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User created successfully");
       setIsCreateOpen(false);
       setNewUserEmail("");
       setNewUserPassword("");
+      setNewUserRole("");
     },
     onError: (error: any) => {
       toast.error("Failed to create user: " + error.message);
@@ -116,13 +148,8 @@ export function UsersManager() {
   });
 
   const updateEmailMutation = useMutation({
-    mutationFn: async (data: { userId: string; newEmail: string }) => {
-      const response = await supabase.functions.invoke("manage-admin-users", {
-        body: { action: "updateEmail", userId: data.userId, newEmail: data.newEmail },
-      });
-      if (response.error) throw response.error;
-      return response.data;
-    },
+    mutationFn: async (data: { userId: string; newEmail: string }) =>
+      callUsersFn({ action: "updateEmail", userId: data.userId, newEmail: data.newEmail }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("Email updated successfully");
@@ -134,30 +161,35 @@ export function UsersManager() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await supabase.functions.invoke("manage-admin-users", {
-        body: { action: "delete", userId },
-      });
-      if (response.error) throw response.error;
-      return response.data;
-    },
+    mutationFn: async (userId: string) => callUsersFn({ action: "delete", userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: any, userId: string) => {
+      if (error instanceof FnError && (error.code === "has_history" || error.code === "family_login")) {
+        setBlockFor({ userId, email: users?.find((u: any) => u.id === userId)?.email ?? "this account", why: error.message });
+        return;
+      }
       toast.error("Failed to delete user: " + error.message);
     },
   });
 
-  const linkTeacherMutation = useMutation({
-    mutationFn: async (data: { userId: string; teacherId: string }) => {
-      const response = await supabase.functions.invoke("manage-admin-users", {
-        body: { action: "linkToTeacher", userId: data.userId, teacherId: data.teacherId },
-      });
-      if (response.error) throw response.error;
-      return response.data;
+  const blockMutation = useMutation({
+    mutationFn: async (userId: string) => callUsersFn({ action: "deactivate", userId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Sign-in blocked and roles removed; the account's history is kept");
+      setBlockFor(null);
     },
+    onError: (error: any) => {
+      toast.error("Failed to block the account: " + error.message);
+    },
+  });
+
+  const linkTeacherMutation = useMutation({
+    mutationFn: async (data: { userId: string; teacherId: string }) =>
+      callUsersFn({ action: "linkToTeacher", userId: data.userId, teacherId: data.teacherId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["teachers-for-link"] });
@@ -170,13 +202,8 @@ export function UsersManager() {
   });
 
   const linkFamilyMutation = useMutation({
-    mutationFn: async (data: { userId: string; familyId: string }) => {
-      const response = await supabase.functions.invoke("manage-admin-users", {
-        body: { action: "linkToFamily", userId: data.userId, familyId: data.familyId },
-      });
-      if (response.error) throw response.error;
-      return response.data;
-    },
+    mutationFn: async (data: { userId: string; familyId: string }) =>
+      callUsersFn({ action: "linkToFamily", userId: data.userId, familyId: data.familyId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["families-for-link"] });
@@ -189,29 +216,45 @@ export function UsersManager() {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async (data: { userId: string; role: string }) => {
-      const response = await supabase.functions.invoke("manage-admin-users", {
-        body: { action: "updateRole", userId: data.userId, role: data.role },
-      });
-      if (response.error) throw response.error;
-      return response.data;
-    },
+    mutationFn: async (data: { userId: string; role: string }) =>
+      callUsersFn({ action: "updateRole", userId: data.userId, role: data.role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User role updated successfully");
       setIsRoleOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: any, data: { userId: string; role: string }) => {
+      if (error instanceof FnError && error.code === "approval_required" && error.approval?.rpc === "grant_admin_role") {
+        // nothing was changed: offer the grant request instead
+        setIsRoleOpen(false);
+        setGrantFor({ userId: data.userId, email: users?.find((u: any) => u.id === data.userId)?.email ?? "this account" });
+        setGrantReason("");
+        setGrantMsg(error.message);
+        return;
+      }
       toast.error("Failed to update role: " + error.message);
     },
   });
 
-  const handleCreate = () => {
-    if (!newUserEmail || !newUserPassword) {
-      toast.error("Email and password are required");
+  const sendGrant = async () => {
+    if (!grantFor || grantBusy || !checkReason(grantReason, REASON_MIN).ok) return;
+    setGrantBusy(true);
+    const r = await requestApproval("settings", "grant_admin_role", grantAdminParams(grantFor.userId, grantReason), null);
+    setGrantBusy(false);
+    if ("error" in r) {
+      setGrantMsg(approvalErrorText(r.error.code, r.error.detail));
       return;
     }
-    createMutation.mutate({ email: newUserEmail, password: newUserPassword });
+    toast.success(`Sent for approval: ${grantFor.email} becomes an administrator once another administrator approves it in Automation, Approvals.`);
+    setGrantFor(null);
+  };
+
+  const handleCreate = () => {
+    if (!newUserEmail || !newUserPassword || !newUserRole) {
+      toast.error("Email, password and role are required");
+      return;
+    }
+    createMutation.mutate({ email: newUserEmail, password: newUserPassword, role: newUserRole });
   };
 
   const handleUpdateEmail = () => {
@@ -292,9 +335,28 @@ export function UsersManager() {
                     placeholder="Password"
                   />
                 </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select value={newUserRole} onValueChange={setNewUserRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="family">Family</SelectItem>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {newUserRole === "admin" && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      While two-administrator approval is on, an administrator account cannot be made here: create it with another role, then change its role to Admin and send that for approval.
+                    </p>
+                  )}
+                </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleCreate}>Create</Button>
+                <Button onClick={handleCreate} disabled={createMutation.isPending}>Create</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -542,6 +604,41 @@ export function UsersManager() {
           <p className="text-center py-8 text-muted-foreground">No users found</p>
         )}
       </CardContent>
+
+      <AlertDialog open={!!grantFor} onOpenChange={(o) => { if (!o && !grantBusy) setGrantFor(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send for approval?</AlertDialogTitle>
+            <AlertDialogDescription className="break-words">
+              {grantMsg ?? "Giving the administrator role needs a second administrator."} {grantFor ? `Account: ${grantFor.email}.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ReasonField label="Why this account needs the administrator role (required)" value={grantReason} onChange={setGrantReason} min={REASON_MIN} disabled={grantBusy} />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={grantBusy}>Cancel</AlertDialogCancel>
+            <Button onClick={() => sendGrant()} disabled={grantBusy || !checkReason(grantReason, REASON_MIN).ok}>
+              Send for approval
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!blockFor} onOpenChange={(o) => { if (!o && !blockMutation.isPending) setBlockFor(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block {blockFor?.email} instead?</AlertDialogTitle>
+            <AlertDialogDescription className="break-words">
+              {blockFor?.why} Blocking stops this login from signing in and removes all its roles.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={blockMutation.isPending}>Cancel</AlertDialogCancel>
+            <Button variant="destructive" onClick={() => blockFor && blockMutation.mutate(blockFor.userId)} disabled={blockMutation.isPending}>
+              Block sign-in
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
