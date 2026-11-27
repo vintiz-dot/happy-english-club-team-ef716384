@@ -20,8 +20,8 @@ Oracle VM (hec-lesson-monitor.service, nightly.py --watch --remote)
                          ▼
 teacher's bell: "Lesson report ready to review" ──► /teacher/lesson-report/:sessionId ──► Approve
                          ▼
-recorder-retention (hourly): R2 + Supabase copies deleted 3 h after the report,
-                                      or once its voice groups are answered (at most 7 days; 20261127140000)
+recorder-retention (hourly): R2 + Supabase copies deleted 3 h after the report, but only
+                                      once its voice groups are answered (or the report is 7 days old; 20261127140000)
 ```
 
 ## Who receives the audio
