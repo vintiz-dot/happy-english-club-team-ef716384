@@ -20,7 +20,8 @@ Oracle VM (hec-lesson-monitor.service, nightly.py --watch --remote)
                          ▼
 teacher's bell: "Lesson report ready to review" ──► /teacher/lesson-report/:sessionId ──► Approve
                          ▼
-recorder-retention (hourly): R2 + Supabase copies deleted 3 h after the report
+recorder-retention (hourly): R2 + Supabase copies deleted 3 h after the report,
+                                      or once its voice groups are answered (at most 7 days; 20261127140000)
 ```
 
 ## Who receives the audio
@@ -29,7 +30,7 @@ Families consented (owner, 27 Nov 2026) to the lesson audio being processed outs
 
 | Vendor | What | Retention / training |
 | --- | --- | --- |
-| Cloudflare R2 (`hec-files`) | the recorder's chunks (private bucket) | deleted by `recorder-retention` 3 h after the report |
+| Cloudflare R2 (`hec-files`) | the recorder's chunks (private bucket) | deleted by `recorder-retention` 3 h after the report; kept while its voice groups wait for a teacher, at most 7 days (20261127140000) |
 | Groq (`whisper-large-v3`) | 10-minute pieces, 16-bit FLAC, over HTTPS | turn ON Zero Data Retention: console.groq.com > Settings > Data Controls. Groq does not train on API data |
 | Cloudflare Workers AI (`@cf/openai/whisper-large-v3-turbo`) | the same pieces | Cloudflare states Workers AI does not store or train on customer inputs/outputs |
 | Oracle Cloud (the VM) | everything above, in RAM (tmpfs) while one lesson is worked on | wiped after each lesson and at every start |
