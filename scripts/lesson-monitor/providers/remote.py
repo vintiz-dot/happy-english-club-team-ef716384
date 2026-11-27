@@ -21,7 +21,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from . import SR, PIECE_S, OVERLAP_S, ProviderError, core_span, join_pieces, plan_pieces
+from . import SR, PIECE_S, OVERLAP_S, ProviderError, core_span, join_pieces, plan_pieces, safe_code
 from . import reconcile
 
 RECHECK_PAD_S = 1.0
@@ -74,6 +74,10 @@ def transcribe_lesson(audio, providers: list, recheck, should_stop, stopped_exc,
             return p.transcribe_piece(audio[a:b], a / SR)
         except ProviderError as e:
             codes[p.name][e.code] = codes[p.name].get(e.code, 0) + 1
+            return None
+        except Exception as e:      # one bad piece falls back to the local transcriber; it never fails the lesson
+            code = "error_" + safe_code(type(e).__name__, 34)
+            codes[p.name][code] = codes[p.name].get(code, 0) + 1
             return None
 
     with ThreadPoolExecutor(max_workers=max(1, len(providers))) as pool:

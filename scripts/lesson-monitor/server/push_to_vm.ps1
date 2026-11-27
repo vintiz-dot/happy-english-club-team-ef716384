@@ -20,39 +20,52 @@ param(
 )
 $ErrorActionPreference = "Stop"
 function Step($m) { Write-Host "`n== $m" -ForegroundColor Cyan }
+function Run($what) {  # run a native command given as a script block and stop with a clear message if it fails
+  & $what
+  if ($LASTEXITCODE -ne 0) { throw "Failed (exit $LASTEXITCODE): $($what.ToString().Trim())" }
+}
 $repo = (& git -C $PSScriptRoot rev-parse --show-toplevel).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $repo) { throw "Not inside a git repository" }
 $ssh = @("-i", $Key, "-o", "StrictHostKeyChecking=accept-new")
 
 Step "Public settings"
 if (-not $SupabaseUrl -or -not $SupabaseKey) {
-  $envFile = @((Join-Path $repo ".env"), (Join-Path (Split-Path (& git -C $repo rev-parse --git-common-dir).Trim() -Parent) ".env")) |
-    Where-Object { Test-Path $_ } | Select-Object -First 1
+  $candidates = @(Join-Path $repo ".env")
+  $common = (& git -C $repo rev-parse --path-format=absolute --git-common-dir)
+  if ($LASTEXITCODE -eq 0 -and $common) {
+    $mainRoot = Split-Path ($common.Trim()) -Parent
+    if ($mainRoot) { $candidates += (Join-Path $mainRoot ".env") }
+  }
+  $envFile = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
   if (-not $envFile) { throw "No .env found: pass -SupabaseUrl and -SupabaseKey (the VITE_ public values)." }
   $lines = Get-Content $envFile
   $get = { param($n) (($lines | Where-Object { $_ -match "^$n\s*=" } | Select-Object -First 1) -replace "^$n\s*=\s*", "").Trim().Trim('"') }
   if (-not $SupabaseUrl) { $SupabaseUrl = & $get "VITE_SUPABASE_URL" }
   if (-not $SupabaseKey) { $SupabaseKey = & $get "VITE_SUPABASE_PUBLISHABLE_KEY" }
 }
+if (-not $SupabaseUrl -or -not $SupabaseKey) { throw "The Supabase URL or key is empty: pass -SupabaseUrl and -SupabaseKey." }
+$dirty = & git -C $repo status --porcelain -- scripts/lesson-monitor scripts/lesson-eval/common.py
+if ($LASTEXITCODE -ne 0) { throw "git status failed" }
+if ($dirty) { throw "Uncommitted changes in scripts/lesson-monitor or scripts/lesson-eval/common.py (git archive sends HEAD only). Commit first:`n$($dirty -join "`n")" }
 $tmp = Join-Path $env:TEMP ("hec-push-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
 New-Item -ItemType Directory $tmp | Out-Null
 try {
   Set-Content -Path "$tmp\env" -Value "HEC_SUPABASE_URL=$SupabaseUrl`nHEC_SUPABASE_PUBLISHABLE_KEY=$SupabaseKey" -NoNewline -Encoding ascii
   Step "Code (committed HEAD)"
-  & git -C $repo archive --format=tar -o "$tmp\code.tar" HEAD scripts/lesson-monitor scripts/lesson-eval/common.py
-  if ($LASTEXITCODE) { throw "git archive failed" }
-  & ssh @ssh $Vm "sudo install -d -o `$(id -un) /opt/hec-monitor/incoming"
-  & scp @ssh "$tmp\code.tar" "$tmp\env" "${Vm}:/opt/hec-monitor/incoming/"
-  & scp @ssh (Join-Path $repo "scripts\lesson-monitor\server\setup_oracle_vm.sh") "${Vm}:/opt/hec-monitor/incoming/setup_oracle_vm.sh"
-  if (Test-Path $Step0) { & scp @ssh $Step0 "${Vm}:/opt/hec-monitor/incoming/step0.json" } else { Write-Warning "No step 0 result at $Step0" }
+  Run { git -C $repo archive --format=tar -o "$tmp\code.tar" HEAD scripts/lesson-monitor scripts/lesson-eval/common.py }
+  Run { ssh @ssh $Vm "sudo install -d -o `$(id -un) /opt/hec-monitor/incoming" }
+  Run { scp @ssh "$tmp\code.tar" "$tmp\env" "${Vm}:/opt/hec-monitor/incoming/" }
+  Run { scp @ssh (Join-Path $repo "scripts\lesson-monitor\server\setup_oracle_vm.sh") "${Vm}:/opt/hec-monitor/incoming/setup_oracle_vm.sh" }
+  if (Test-Path $Step0) { Run { scp @ssh $Step0 "${Vm}:/opt/hec-monitor/incoming/step0.json" } } else { Write-Warning "No step 0 result at $Step0" }
   if (-not $SkipModels) {
     Step "Models (about 2 GB)"
-    & ssh @ssh $Vm "mkdir -p /opt/hec-monitor/incoming/models/faster-whisper /opt/hec-monitor/incoming/models/speechbrain /opt/hec-monitor/incoming/models/sherpa"
-    & scp @ssh -r (Join-Path $Models "faster-whisper\models--mobiuslabsgmbh--faster-whisper-large-v3-turbo") "${Vm}:/opt/hec-monitor/incoming/models/faster-whisper/"
-    & scp @ssh -r (Join-Path $Models "speechbrain\spkrec-ecapa-voxceleb") "${Vm}:/opt/hec-monitor/incoming/models/speechbrain/"
-    Get-ChildItem (Join-Path $Models "sherpa") -Filter *.onnx | ForEach-Object { & scp @ssh $_.FullName "${Vm}:/opt/hec-monitor/incoming/models/sherpa/" }
+    Run { ssh @ssh $Vm "mkdir -p /opt/hec-monitor/incoming/models/faster-whisper /opt/hec-monitor/incoming/models/speechbrain /opt/hec-monitor/incoming/models/sherpa" }
+    Run { scp @ssh -r (Join-Path $Models "faster-whisper\models--mobiuslabsgmbh--faster-whisper-large-v3-turbo") "${Vm}:/opt/hec-monitor/incoming/models/faster-whisper/" }
+    Run { scp @ssh -r (Join-Path $Models "speechbrain\spkrec-ecapa-voxceleb") "${Vm}:/opt/hec-monitor/incoming/models/speechbrain/" }
+    Get-ChildItem (Join-Path $Models "sherpa") -Filter *.onnx | ForEach-Object { $f = $_.FullName; Run { scp @ssh $f "${Vm}:/opt/hec-monitor/incoming/models/sherpa/" } }
   }
   Step "Install on the VM"
-  & ssh @ssh -t $Vm "sudo bash /opt/hec-monitor/incoming/setup_oracle_vm.sh install"
+  Run { ssh @ssh -t $Vm "sudo bash /opt/hec-monitor/incoming/setup_oracle_vm.sh install" }
 } finally {
   Remove-Item -Recurse -Force $tmp
 }

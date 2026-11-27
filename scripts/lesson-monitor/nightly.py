@@ -649,12 +649,13 @@ def finish_voice(api, row: dict, res) -> None:
 REPORT_RETRY_WAITS = (30, 120, 600)  # seconds between tries of the class report request (network or 5xx only)
 
 
-def request_lesson_report(api, row: dict, sleep=time.sleep) -> str:
+def request_lesson_report(api, row: dict, sleep=time.sleep, retry: bool = True) -> str:
     """Right after the transcript is saved, ask lesson-report-draft for this lesson's class report. The laptop is
     signed in as an admin, who cannot read the transcript through RLS, so the request says from_monitor: the
     function then reads this lesson's own monitor transcript itself (owner's ruling, 22 Nov 2026: no teacher needs
     to be present). Best effort: logs a status code only, never content; a refusal (already approved, a draft is
-    being built, 6 builds today) or an outage changes nothing here, and the teacher's page builds it if missing."""
+    being built, 6 builds today) or an outage changes nothing here, and the teacher's page builds it if missing.
+    retry=False makes ONE try with no sleeping (the watch loop's follow-up keeps its own 15-minute backoff)."""
     call = getattr(api, "function", None)
     sid = row.get("session_id")
     if call is None or not sid:
@@ -663,7 +664,8 @@ def request_lesson_report(api, row: dict, sleep=time.sleep) -> str:
     # 27 Nov 2026: the teacher should only have to approve, so the request must not be lost to a blip. A dropped
     # line, a 5xx or a 429 is tried again after REPORT_RETRY_WAITS; a refusal (409: already approved or being built,
     # 6 builds today; 403; 400) is final and is not repeated.
-    for attempt in range(len(REPORT_RETRY_WAITS) + 1):
+    waits = REPORT_RETRY_WAITS if retry else ()
+    for attempt in range(len(waits) + 1):
         try:
             call("lesson-report-draft", {"session_id": sid, "from_monitor": True})
             pc.log(f"{rid} lesson report draft requested")
@@ -673,12 +675,16 @@ def request_lesson_report(api, row: dict, sleep=time.sleep) -> str:
             if st not in (0, 429) and st < 500:
                 pc.log(f"{rid} lesson report draft not requested (HTTP {st}); not retried")
                 return f"refused_{st}"
-            if attempt == len(REPORT_RETRY_WAITS):
+            if attempt == len(waits):
                 pc.log(f"{rid} lesson report draft not requested (HTTP {st}) after {attempt + 1} tries")
                 return "failed"
-            pc.log(f"{rid} lesson report draft request failed (HTTP {st}); trying again in {REPORT_RETRY_WAITS[attempt]} s")
-            sleep(REPORT_RETRY_WAITS[attempt])
+            pc.log(f"{rid} lesson report draft request failed (HTTP {st}); trying again in {waits[attempt]} s")
+            sleep(waits[attempt])
     return "failed"
+
+
+def _one_try(api, row: dict) -> str:
+    return request_lesson_report(api, row, retry=False)
 
 
 def follow_class_report(api, row: dict) -> None:
@@ -691,10 +697,10 @@ def follow_class_report(api, row: dict) -> None:
     try:
         import classwork
         classwork.follow(sid)
-        classwork.follow_up(api, request_lesson_report)
+        classwork.follow_up(api, _one_try)
     except Exception as e:  # noqa: BLE001
         pc.log(f"{row.get('recording_id', '')} class report follow-up unavailable: error_{type(e).__name__.lower()}"[:120])
-        request_lesson_report(api, row)
+        request_lesson_report(api, row, retry=False)
 
 
 def look_after_class_reports(api) -> None:
@@ -704,7 +710,7 @@ def look_after_class_reports(api) -> None:
     try:
         import classwork
         if classwork.load():
-            c = classwork.follow_up(api, request_lesson_report)
+            c = classwork.follow_up(api, _one_try)
             if c["build"] or c["rebuild"]:
                 pc.log(f"class reports: {c}")
     except Exception as e:  # noqa: BLE001

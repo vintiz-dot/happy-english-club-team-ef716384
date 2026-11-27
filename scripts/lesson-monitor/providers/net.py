@@ -2,6 +2,7 @@
 a dropped line is status 0. Tests replace `request` with a stand-in."""
 from __future__ import annotations
 
+import http.client
 import json
 import uuid
 import urllib.error
@@ -15,7 +16,7 @@ def request(method: str, url: str, headers: dict, body: bytes | None, timeout: f
             return r.status, {k.lower(): v for k, v in r.headers.items()}, r.read()
     except urllib.error.HTTPError as e:
         return e.code, {k.lower(): v for k, v in (e.headers or {}).items()}, e.read()
-    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
+    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError, http.client.HTTPException):
         return 0, {}, json.dumps({"error": "network"}).encode()
 
 

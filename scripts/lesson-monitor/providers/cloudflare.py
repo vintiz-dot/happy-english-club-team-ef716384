@@ -24,7 +24,7 @@ from . import net
 
 MODEL = "@cf/openai/whisper-large-v3-turbo"
 URL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/" + MODEL
-DAILY_CODES = {3036}
+DAILY_CODES = {3036, 4006}     # both are reported for the free daily neuron allocation
 
 
 def read_credentials(name: str = "cloudflare-ai", env: str = "HEC_CF_AI_FILE") -> tuple[str, str]:
@@ -90,9 +90,20 @@ def parse(raw: bytes, offset_s: float) -> list[dict]:
         d = json.loads(raw)
     except ValueError as e:
         raise ProviderError("bad_answer") from e
-    r = d.get("result") if isinstance(d, dict) and "result" in d else d
+    if not isinstance(d, dict):
+        raise ProviderError("bad_answer")
+    r = d.get("result") if "result" in d else d
+    if r is None:
+        r = {}
+    if not isinstance(r, dict):
+        raise ProviderError("bad_answer")
+    segs = r.get("segments") or []
+    if not isinstance(segs, list):
+        raise ProviderError("bad_answer")
     out = []
-    for s in (r or {}).get("segments") or []:
+    for s in segs:
+        if not isinstance(s, dict):
+            raise ProviderError("bad_answer")
         seg = segment(s, offset_s)
         if seg:
             out.append(seg)

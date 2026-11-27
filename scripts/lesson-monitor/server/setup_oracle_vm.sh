@@ -92,7 +92,7 @@ cmd_install() {
   [ -x $PY ] || python3 -m venv $BASE/venv
   $PY -m pip install -q --upgrade pip
   $PY -m pip install -q "faster-whisper==1.2.1" soundfile scipy numpy cryptography onnxruntime sherpa-onnx pytest
-  $PY -m pip install -q --index-url https://download.pytorch.org/whl/cpu torch torchaudio
+  $PY -m pip install -q --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple torch torchaudio
   $PY -m pip install -q speechbrain
   $PY -c "import ctranslate2, onnxruntime, sherpa_onnx, speechbrain, torch, cryptography, soundfile; print('packages ok')"
 
@@ -102,8 +102,14 @@ cmd_install() {
 
   say "SSH and firewall"
   if sshd -T 2>/dev/null | grep -qi '^passwordauthentication yes'; then
-    printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin prohibit-password\n' > /etc/ssh/sshd_config.d/90-hec.conf
+    # sshd takes the FIRST value it reads, so the name must sort before 50-cloud-init.conf.
+    rm -f /etc/ssh/sshd_config.d/90-hec.conf
+    printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin prohibit-password\n' > /etc/ssh/sshd_config.d/01-hec.conf
     systemctl reload ssh || systemctl reload sshd || true
+  fi
+  if sshd -T 2>/dev/null | grep -qi '^passwordauthentication yes'; then
+    echo "ERROR: sshd still allows password login after the change; fix /etc/ssh/sshd_config.d before going on."
+    exit 1
   fi
   echo "ssh: $(sshd -T 2>/dev/null | grep -i '^passwordauthentication')"
   echo "listening (should be only ssh on 22):"; ss -ltnp | awk 'NR>1{print "  "$4}'
@@ -156,10 +162,14 @@ cmd_delete_everything() {
   [ "$ok" = DELETE ] || { echo "nothing deleted"; exit 1; }
   systemctl disable --now hec-lesson-monitor 2>/dev/null || true
   rm -f $UNIT; systemctl daemon-reload
-  mountpoint -q $PILOT/audio && umount $PILOT/audio
+  if mountpoint -q $PILOT/audio && ! umount $PILOT/audio; then
+    echo "Could not unmount $PILOT/audio (something still uses it). Nothing was removed; stop what uses it and run again."
+    exit 1
+  fi
   sed -i "\# $PILOT/audio #d" /etc/fstab
   rm -rf $DATA $BASE $ETC
   rm -f $CRED/seal-key $CRED/groq-key $CRED/cloudflare-ai
+  rmdir $CRED 2>/dev/null || true   # only if empty; the SSH hardening (01-hec.conf) is deliberately kept
   id $USR >/dev/null 2>&1 && userdel $USR
   echo "left: $(ls -d $DATA $BASE $ETC $CRED/seal-key $CRED/groq-key $CRED/cloudflare-ai 2>/dev/null | wc -l) of the job's paths"
   echo "Also: sign the job account out everywhere in the app, revoke the Groq key and the Cloudflare token, then terminate the VM in the Oracle console."

@@ -97,3 +97,8 @@ Every day after that: nothing. `sudo bash $S status` / `logs` shows what it did 
 ids and numbers), `pilot/audio` (tmpfs, empty between lessons), `models/`. Secrets: `/etc/credstore.encrypted/{seal-key,
 groq-key,cloudflare-ai}`, sealed with the machine's key by `systemd-creds`; the service sees them decrypted only in
 its private credential folder while it runs.
+
+Security note: the sealed files are protected against a copy of the data folder, but a full boot-volume image or
+snapshot of the VM also contains systemd's machine credential secret and could open them. So do not enable
+boot-volume backups or share images/snapshots outside the owner's own Oracle account. To retire the VM, run
+`delete-everything` and then terminate the VM.

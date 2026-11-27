@@ -66,19 +66,53 @@ class Groq(Base):
         raise ProviderError(safe_code(f"http_{st}"))
 
 
+def _f(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def parse(raw: bytes, offset_s: float) -> list[dict]:
-    """verbose_json -> segments. Words (top-level in Groq's answer) go to the segment whose span holds them."""
+    """verbose_json -> segments. Each top-level word goes to exactly ONE segment: the first (in order) whose span,
+    widened by 0.05 s, holds the word's middle; a word that fits none goes to the nearest segment by time."""
     try:
         d = json.loads(raw)
     except ValueError as e:
         raise ProviderError("bad_answer") from e
+    if not isinstance(d, dict):
+        raise ProviderError("bad_answer")
+    segs = d.get("segments") or []
     words = d.get("words") or []
+    if not isinstance(segs, list) or not isinstance(words, list):
+        raise ProviderError("bad_answer")
+    if any(not isinstance(s, dict) for s in segs) or any(not isinstance(w, dict) for w in words):
+        raise ProviderError("bad_answer")
+    spans = [(_f(s.get("start")), _f(s.get("end"))) for s in segs]
+    mine: list[list[dict]] = [[] for _ in segs]
+    for w in words:
+        ws = _f(w.get("start"))
+        if ws is None:
+            continue
+        we = _f(w.get("end"))
+        m = (ws + (we if we is not None else ws)) / 2
+        pick, best = None, None
+        for i, (a, b) in enumerate(spans):
+            if a is None or b is None:
+                continue
+            if a - 0.05 <= m <= b + 0.05:
+                pick = i
+                break
+            dist = a - m if m < a else m - b
+            if best is None or dist < best:
+                best, pick_near = dist, i
+        if pick is None and best is not None:
+            pick = pick_near
+        if pick is not None:
+            mine[pick].append(w)
     out = []
-    for s in d.get("segments") or []:
-        a, b = s.get("start"), s.get("end")
-        mine = [w for w in words if a is not None and b is not None and w.get("start") is not None
-                and a - 0.05 <= (float(w["start"]) + float(w.get("end", w["start"]))) / 2 <= b + 0.05]
-        seg = segment(s, offset_s, mine)
+    for s, ws in zip(segs, mine):
+        seg = segment(s, offset_s, ws)
         if seg:
             out.append(seg)
     return out

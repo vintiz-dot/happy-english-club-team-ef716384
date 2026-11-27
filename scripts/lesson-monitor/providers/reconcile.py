@@ -173,6 +173,11 @@ def merge(primary: list[dict], wins: list[tuple[float, float]], rechecked: list[
             if best < AGREE:
                 s["force_unsure"] = True
         out.append(s)
+    # A window the re-check returned nothing for (the local VAD heard no speech): keep what the primary heard
+    # there, unsure, so text both providers heard is not lost.
+    for s, e in wins:
+        if not any(s <= (r["start"] + r["end"]) / 2 < e for r in rechecked):
+            out.extend(dict(p, force_unsure=True) for p in primary if s <= (p["start"] + p["end"]) / 2 < e)
     return sorted(out, key=lambda s: (s["start"], s["end"]))
 
 

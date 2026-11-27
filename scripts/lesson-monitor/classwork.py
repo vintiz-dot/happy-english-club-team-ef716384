@@ -16,8 +16,12 @@ saved, what to do now (pure: `decide`), and `follow_up` does it as the signed-in
            approval on the teacher's screen), or the follow-up is older than FOLLOW_HOURS.
 
 A lesson is followed from the moment its transcript report is saved; the list (state/report-followups.json) holds
-session ids and times only. Requests go through nightly.request_lesson_report (its retries; a 409 "being built" or
-"6 builds today" is final for that try and the next look decides again).
+session ids and times only: per lesson {since, next_at, tries} (an older file holding just the ISO `since` string
+still reads). The follow-up never sleeps: the caller passes a one-try request (nightly.request_lesson_report with
+retry=False), and the waiting is kept here. A request that was not "requested" (failed, or refused such as a 409
+"being built" / "6 builds today") sets next_at = now + 15 min and tries + 1; a draft that is still 'failed' after
+3 such tries is given up (done). A "requested" build sets next_at = now + 12 min. A 'building' draft started over
+12 minutes ago is dead (the claim allows a new build after 10): build.
 """
 from __future__ import annotations
 
@@ -31,6 +35,10 @@ import pilot_common as pc
 AFTER_LESSON_MIN = 30   # = lessonWindow's afterMinutes in supabase/functions/_lib/lesson-report-draft.ts
 OCR_STUCK_MIN = 20
 FOLLOW_HOURS = 36
+BUILD_DEAD_MIN = 12
+ASKED_WAIT_MIN = 12
+RETRY_WAIT_MIN = 15
+MAX_FAILED_TRIES = 3
 HANOI = timezone(timedelta(hours=7))
 
 
@@ -50,10 +58,15 @@ def _ts(v) -> datetime | None:
 
 
 def decide(session: dict, works: list[dict], draft: dict | None, approved: bool, now: datetime,
-           followed_since: datetime) -> str:
-    """'wait' | 'build' | 'rebuild' | 'done'. Pure. works: the class's student_work rows in the window."""
+           followed_since: datetime, next_at: datetime | None = None, tries: int = 0) -> str:
+    """'wait' | 'build' | 'rebuild' | 'done'. Pure. works: the class's student_work rows in the window.
+    next_at / tries: the lesson's own bookkeeping (no new request before next_at; tries = failed requests so far)."""
     if approved or now - followed_since > timedelta(hours=FOLLOW_HOURS):
         return "done"
+    if draft and draft.get("status") == "failed" and tries >= MAX_FAILED_TRIES:
+        return "done"
+    if next_at is not None and now < next_at:
+        return "wait"
     _, w_end = window(str(session["date"]), str(session["start_time"]), str(session["end_time"]))
     if now < w_end:
         return "wait"
@@ -64,7 +77,8 @@ def decide(session: dict, works: list[dict], draft: dict | None, approved: bool,
     if not draft or draft.get("status") == "failed":
         return "build"
     if draft.get("status") == "building":
-        return "wait"
+        b = _ts(draft.get("started_at"))
+        return "build" if b is not None and now - b > timedelta(minutes=BUILD_DEAD_MIN) else "wait"
     started = _ts(draft.get("started_at"))
     if started is None:
         return "build"
@@ -93,20 +107,30 @@ def save(d: dict) -> None:
     os.replace(tmp, f)
 
 
+def _entry(v) -> dict:
+    """One followed lesson as {since, next_at, tries}; the older format is just the ISO `since` string."""
+    if isinstance(v, dict):
+        return {"since": v.get("since"), "next_at": v.get("next_at"), "tries": int(v.get("tries") or 0)}
+    return {"since": v if isinstance(v, str) else None, "next_at": None, "tries": 0}
+
+
 def follow(session_id: str, now: datetime | None = None) -> None:
     d = load()
-    d.setdefault(session_id, (now or datetime.now(timezone.utc)).isoformat())
+    if session_id not in d:
+        d[session_id] = {"since": (now or datetime.now(timezone.utc)).isoformat(), "next_at": None, "tries": 0}
     save(d)
 
 
 def follow_up(api, request, now: datetime | None = None) -> dict:
-    """One look at every followed lesson. `request(api, row)` asks for the draft (nightly.request_lesson_report).
+    """One look at every followed lesson. `request(api, row)` asks for the draft ONCE, without sleeping
+    (nightly.request_lesson_report with retry=False); returns "requested" or another code.
     Returns counts. Reads as the job account (admin): sessions, student_work, lesson_report_drafts, lesson_reports."""
     from supa import ApiError
     now = now or datetime.now(timezone.utc)
     d = load()
     counts = {"wait": 0, "build": 0, "rebuild": 0, "done": 0, "unreadable": 0}
-    for sid, since in list(d.items()):
+    for sid, raw in list(d.items()):
+        e = _entry(raw)
         try:
             s = (api.select("sessions", {"id": f"eq.{sid}", "select": "id,class_id,date,start_time,end_time"}) or [None])[0]
             if not s:
@@ -122,12 +146,23 @@ def follow_up(api, request, now: datetime | None = None) -> dict:
         except ApiError:
             counts["unreadable"] += 1
             continue
-        act = decide(s, works, draft, approved, now, _ts(since) or now)
+        act = decide(s, works, draft, approved, now, _ts(e["since"]) or now, _ts(e["next_at"]), e["tries"])
         counts[act] += 1
         if act == "done":
+            if not approved and draft and draft.get("status") == "failed" and e["tries"] >= MAX_FAILED_TRIES:
+                pc.log(f"class report for lesson {sid} given up after {e['tries']} failed tries")
             d.pop(sid, None)
         elif act in ("build", "rebuild"):
             pc.log(f"class report {act} for lesson {sid} ({len(works)} piece(s) of class work)")
-            request(api, {"recording_id": f"session {sid}", "session_id": sid})
+            res = request(api, {"recording_id": f"session {sid}", "session_id": sid})
+            if res is None or res == "requested":
+                e["next_at"] = (now + timedelta(minutes=ASKED_WAIT_MIN)).isoformat()
+            else:
+                e["tries"] += 1
+                e["next_at"] = (now + timedelta(minutes=RETRY_WAIT_MIN)).isoformat()
+                pc.log(f"class report request for lesson {sid} not made: {res} (try {e['tries']})")
+            d[sid] = e
+        else:
+            d[sid] = e
     save(d)
     return counts

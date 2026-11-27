@@ -384,6 +384,9 @@ if __name__ == "__main__":
         # The server's one-time sign-in (server/setup_oracle_vm.sh signin): the job account's email and password,
         # typed by a person at a hidden prompt; only the sealed refresh token is kept.
         open_api()
+        if not remembered():
+            print("The sealing key could not be used, so nothing was saved: the sign-in is NOT remembered on this machine.")
+            sys.exit(1)
         print("ok: the job account is remembered on this machine")
     else:
         print("usage: supa.py forget | signin")

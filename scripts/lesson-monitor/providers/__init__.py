@@ -160,14 +160,21 @@ class Base:
         return join_pieces([self.transcribe_piece(audio_16k[a:b], offset_s + a / SR) for a, b in p], p)
 
     def transcribe_piece(self, x: np.ndarray, offset_s: float) -> list[dict]:
+        audio_s = len(x) / SR
+        if self.disabled == "quota_exhausted":
+            # A provider object lives for the whole --watch process: allow it again once the allowance is back.
+            w = self.quota.wait_for(audio_s)
+            if w > self.max_wait_s:
+                raise QuotaExhausted("quota_exhausted", retry_after=w)
+            self.disabled = None
         if self.disabled:
             raise ProviderError(self.disabled)
-        audio_s = len(x) / SR
         tries_429 = 0
         tries_5xx = 0
         while True:
             wait = self.quota.wait_for(audio_s)
             if wait > self.max_wait_s:
+                self.disabled = "quota_exhausted"
                 raise QuotaExhausted("quota_exhausted", retry_after=wait)
             if wait > 0:
                 self.log(f"{self.name}: waiting {int(wait)} s for the free allowance")
@@ -185,6 +192,7 @@ class Base:
                 self.quota.block(ra)
                 tries_429 += 1
                 if ra > self.max_wait_s or tries_429 > 3:
+                    self.disabled = "quota_exhausted"
                     raise
                 self.log(f"{self.name}: rate limited (429); waiting {int(ra)} s")
                 continue

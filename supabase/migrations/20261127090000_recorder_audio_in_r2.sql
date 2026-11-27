@@ -111,8 +111,8 @@ INSERT INTO recorder_r2_patch VALUES
    'recorder__object_present(NEW.manifest_path)'),
   ('public.recorder__recording_before_update()',
    $p$NOT\s+EXISTS\s*\(\s*SELECT\s+1\s+FROM\s+storage\.objects\s+o\s+WHERE\s+o\.bucket_id\s*=\s*'class-recorder-audio'\s+AND\s+o\.name\s*=\s*c\.storage_path\s+AND\s+NULLIF\(o\.metadata\s*->>\s*'size',\s*''\)::bigint\s*=\s*c\.stored_size\s*\)$p$,
-   'public.recorder__object_size(c.storage_path) IS DISTINCT FROM c.stored_size',
-   'recorder__object_size(c.storage_path) IS DISTINCT FROM c.stored_size'),
+   'NOT COALESCE(public.recorder__object_size(c.storage_path) = c.stored_size, false)',
+   'recorder__object_size(c.storage_path) = c.stored_size, false)'),
   ('public.recorder__recording_before_update()',
    $p$EXISTS\s*\(\s*SELECT\s+1\s+FROM\s+storage\.objects\s+o\s+WHERE\s+o\.bucket_id\s*=\s*'class-recorder-audio'\s+AND\s+o\.name\s+LIKE\s+OLD\.class_id::text\s*\|\|\s*'/'\s*\|\|\s*OLD\.id::text\s*\|\|\s*'/%'\s*\)$p$,
    'public.recorder__has_objects_under(OLD.class_id::text || ''/'' || OLD.id::text || ''/'')',
@@ -127,8 +127,8 @@ INSERT INTO recorder_r2_patch VALUES
    'recorder__object_present(v_row.storage_path)'),
   ('public.recorder_import_finish(uuid)',
    $p$NOT\s+EXISTS\s*\(\s*SELECT\s+1\s+FROM\s+storage\.objects\s+o\s+WHERE\s+o\.bucket_id\s*=\s*'class-recorder-audio'\s+AND\s+o\.name\s*=\s*c\.storage_path\s+AND\s+NULLIF\(o\.metadata\s*->>\s*'size',\s*''\)::bigint\s*=\s*c\.byte_size\s*\)$p$,
-   'public.recorder__object_size(c.storage_path) IS DISTINCT FROM c.byte_size',
-   'recorder__object_size(c.storage_path) IS DISTINCT FROM c.byte_size');
+   'NOT COALESCE(public.recorder__object_size(c.storage_path) = c.byte_size, false)',
+   'recorder__object_size(c.storage_path) = c.byte_size, false)');
 
 DO $check$
 DECLARE

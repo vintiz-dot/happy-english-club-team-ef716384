@@ -72,7 +72,8 @@ export default function NotificationBell() {
         // Filter to only show notifications for teacher's classes
         const filtered = data?.filter((n: any) => {
           const metadata = n.metadata || {};
-          return classIds.includes(metadata.class_id);
+          // A "report ready" notice is addressed to this teacher (RLS: own rows), also as the class's default teacher.
+          return n.type === "lesson_report_ready" || classIds.includes(metadata.class_id);
         }) || [];
 
         return filtered;

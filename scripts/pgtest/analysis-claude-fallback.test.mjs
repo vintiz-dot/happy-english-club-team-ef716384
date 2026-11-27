@@ -40,7 +40,9 @@ ok("analyze-transcript tries Sonnet inside openaiJson, before the OpenAI fetch",
 // Instant class report (owner, 22 Nov 2026): the laptop asks for the draft with from_monitor right after saving a
 // transcript, and only an admin caller of a lesson that HAS a monitor report gets the service-key read.
 const ld = rd("supabase/functions/lesson-report-draft/index.ts"), ny = rd("scripts/lesson-monitor/nightly.py");
-ok("laptop requests the draft with from_monitor after saving", /"from_monitor": True/.test(ny) && /lesson_monitor_save_report[\s\S]*request_lesson_report\(api, row\)/.test(ny));
+ok("laptop requests the draft with from_monitor after saving", /"from_monitor": True/.test(ny) && /lesson_monitor_save_report[\s\S]*follow_class_report\(api, row\)/.test(ny)
+  // 27 Nov 2026: after saving, the class report is followed (classwork.py: built once the lesson's class work is read)
+  && /def follow_class_report[\s\S]*?request_lesson_report/.test(ny));
 ok("service-key transcript read needs admin-only + from_monitor + no transcript via RLS", /!monitorBody && isAdminOnly && fromMonitor/.test(ld));
 ok("service-key read is one lesson's report only", /from\("lesson_monitor_reports"\)\.select\("body"\)\.eq\("session_id", sid\)/.test(ld));
 
