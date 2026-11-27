@@ -32,7 +32,9 @@ const tNo = nav.navGroupsFor('teacher', { pilot: false });
 ok('teacher: every old route is reachable (pilot on)', TEACHER_BEFORE.every((p) => paths(t).includes(p)), TEACHER_BEFORE.filter((p) => !paths(t).includes(p)));
 ok('teacher: no route listed twice', dups(paths(t)).length === 0, dups(paths(t)));
 ok('teacher: nine sidebar entries instead of seventeen', t.flatMap((g) => g.sections).length === 9);
-ok('teacher: one Lesson reports entry (class and lesson reports merged, 25 Nov 2026), no separate pilot entry', paths(t).includes('/teacher/class-reports') && !paths(t).includes('/teacher/lesson-reports') && !paths(tNo).includes('/teacher/lesson-reports'));
+ok('teacher: one Lesson reports entry (class and lesson reports merged, 25 Nov 2026)', paths(t).includes('/teacher/class-reports'));
+ok('teacher: the lesson monitor is a tab beside Lesson reports for a pilot teacher only (27 Nov 2026), not a sidebar entry of its own',
+  t.flatMap((g) => g.sections).find((s) => s.id === 'class-notes')?.members.some((m) => m.path === '/teacher/lesson-reports') && !paths(tNo).includes('/teacher/lesson-reports'));
 ok('teacher: without the pilot flag everything else is still there', TEACHER_BEFORE.every((p) => paths(tNo).includes(p)));
 
 const a = nav.navGroupsFor('admin');

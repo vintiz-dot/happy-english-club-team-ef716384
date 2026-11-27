@@ -72,6 +72,22 @@ export function useRoomChunks(recordingId: string | null) {
   });
 }
 
+/** Whether the lesson's audio still exists. It is deleted 3 hours after the report is saved (20261125120000), so most
+ *  reports have none: the screen then shows the times as plain text instead of play buttons that fail. */
+export function useRecordingAudioGone(recordingId: string | null) {
+  return useQuery({
+    queryKey: ["lesson-monitor", "recording-status", recordingId],
+    enabled: !!recordingId,
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await db.from("class_recordings").select("status").eq("id", recordingId).maybeSingle();
+      if (error) return false; // unknown: keep the buttons, a failed play still says why
+      return !data || data.status === "deleted";
+    },
+  });
+}
+
 export async function downloadChunk(path: string): Promise<Blob> {
   // R2 first (the recorder bucket is in R2_BUCKETS since 27 Nov 2026); a chunk recorded before the move is
   // still in Supabase, and files.download falls back to it.

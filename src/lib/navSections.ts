@@ -51,6 +51,8 @@ export const TEACHER_GROUPS: NavGroup[] = [{
       members: [
         { label: "Journal", path: "/teacher/journal", icon: "NotebookPen" },
         { label: "Lesson reports", path: "/teacher/class-reports", icon: "ClipboardList" },
+        // The lesson monitor's own reports: voice groups to name, transcript, talk time (owner, 27 Nov 2026: put it on a tab).
+        { label: "Lesson monitor", path: "/teacher/lesson-reports", icon: "FileAudio", keywords: "voices voice groups monitor transcript", pilotOnly: true },
         { label: "Exam reports", path: "/teacher/exam-reports", icon: "FileBarChart2" },
       ],
     },

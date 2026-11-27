@@ -8,7 +8,7 @@ import {
   WORDING, chunkAt, duration, mmss, parseWords, toReportView, transcriptItems, type ReportView,
 } from "@/lib/lessonMonitor";
 import {
-  downloadChunk, useDeleteReport, useFeedback, useLessonRoster, useMyLessons, useMyPilotClasses, useMyReports, useReport, useRoomChunks,
+  downloadChunk, useDeleteReport, useFeedback, useLessonRoster, useMyLessons, useMyPilotClasses, useMyReports, useRecordingAudioGone, useReport, useRoomChunks,
   useSetTargets, useStopPilot, useVoiceGroups, type ReportRow,
 } from "@/hooks/useLessonMonitor";
 import { hasVoices, lineVoices, speakerOf } from "@/lib/lessonMonitorVoices";
@@ -122,6 +122,12 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <Button variant="outline" onClick={onBack}>All reports</Button>
         <h2 className="font-display text-hec-h2 text-hec-ink tabular-nums">Lesson of {q.data.session_date}</h2>
       </div>
+      {player.gone && (
+        <p className="rounded-hec-md border border-hec-line bg-hec-sunken p-3 text-hec-small text-hec-ink-soft">
+          {WORDING_AUDIO_GONE}
+        </p>
+      )}
+      {player.error && <p className="text-hec-small text-hec-danger" role="alert">{player.error}</p>}
       {!view.ok && <p className="rounded-hec-md border border-hec-warn/40 bg-hec-warn-tint p-3 text-hec-small text-hec-warn">This report is in a shape this screen does not know; some parts may be missing.</p>}
 
       <section className={cn(card, "space-y-3")} aria-label="Summary">
@@ -158,7 +164,7 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {groups.data && groups.data.length > 0 && (
         <VoiceGroups reportId={id} rows={groups.data} voices={voices} lines={view.lines} kids={roster.data ?? []}
-          nameOf={nameOf} play={(t) => void player.play(t)} />
+          nameOf={nameOf} play={player.gone ? undefined : (t) => void player.play(t)} />
       )}
 
       <Feedback row={q.data} />
@@ -172,7 +178,6 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
         {showTranscript && (
           <div className="mt-3 space-y-1">
             <p className="text-hec-caption text-hec-ink-faint">Grey: {WORDING.uncertainLine} Faded: {WORDING.fadedLine}{view.talk ? ` "${WORDING.teacherMic}": your microphone carried it.` : ""}</p>
-            {player.error && <p className="text-hec-caption text-hec-danger">{player.error}</p>}
             <ol className="space-y-1">
               {transcriptItems(view).map((it, i) => it.kind === "band" ? (
                 <li key={`b${i}`} className="rounded-hec-sm border border-dashed border-hec-line-strong px-2 py-1 text-hec-caption text-hec-ink-soft">
@@ -180,8 +185,10 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 </li>
               ) : (
                 <li key={`l${i}`} className={cn("flex items-baseline gap-2 text-hec-small", it.line.uncertain ? "text-hec-ink-faint" : "text-hec-ink", it.line.faded && "opacity-60")}>
-                  <button type="button" onClick={() => player.play(it.line.t)} aria-label={`Play ${mmss(it.line.t)}`}
-                    className="shrink-0 tabular-nums text-hec-brass underline-offset-2 hover:underline min-w-[3.5rem] text-left">{mmss(it.line.t)}</button>
+                  {player.gone
+                    ? <span className="shrink-0 tabular-nums text-hec-ink-soft min-w-[3.5rem]">{mmss(it.line.t)}</span>
+                    : <button type="button" onClick={() => player.play(it.line.t)} aria-label={`Play ${mmss(it.line.t)}`}
+                        className="shrink-0 tabular-nums text-hec-brass underline-offset-2 hover:underline min-w-[3.5rem] text-left">{mmss(it.line.t)}</button>}
                   {(() => {
                     const v = voices[lineIndex.get(it.line) ?? -1];
                     const who = v ? speakerOf(v, it.line.teacher, groupRows, nameOf) : null;
@@ -238,15 +245,19 @@ function Timeline({ line }: { line: string }) {
   );
 }
 
+const WORDING_AUDIO_GONE = "This lesson's audio has been deleted: it is kept only until 3 hours after the report is made. The times below can no longer be played.";
+
 type Player = ReturnType<typeof usePlayer>;
 function usePlayer(recordingId: string | null, offsetS: number) {
   const ref = useRef<HTMLAudioElement>(null);
   const url = useRef<string | null>(null);
   const chunks = useRoomChunks(recordingId);
+  const gone = useRecordingAudioGone(recordingId).data === true;
   const [error, setError] = useState<string | null>(null);
   useEffect(() => () => { if (url.current) URL.revokeObjectURL(url.current); }, []);
   const play = async (t: number) => {
     setError(null);
+    if (gone) { setError(WORDING_AUDIO_GONE); return; }
     const hit = chunkAt(chunks.data ?? [], offsetS, t);
     if (!hit || !ref.current) { setError("The recording of this moment is no longer kept."); return; }
     try {
@@ -257,13 +268,14 @@ function usePlayer(recordingId: string | null, offsetS: number) {
       ref.current.currentTime = hit.at;
       await ref.current.play();
     } catch {
-      setError("The recording of this moment could not be played (it may have been deleted after 30 days).");
+      setError("The recording of this moment could not be played. Its audio may already have been deleted.");
     }
   };
-  return { ref, play, error };
+  return { ref, play, error, gone };
 }
 
 function PlayAt({ t, player }: { t: number; player: Player }) {
+  if (player.gone) return <span className="ml-1 tabular-nums text-hec-ink-soft">{mmss(t)}</span>;
   return (
     <button type="button" onClick={() => player.play(t)} className="ml-1 inline-flex items-center gap-0.5 tabular-nums text-hec-brass hover:underline" aria-label={`Play ${mmss(t)}`}>
       <Play className="h-3 w-3" aria-hidden />{mmss(t)}

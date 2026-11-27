@@ -23,7 +23,8 @@ export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play 
   lines: ViewLine[];
   kids: { id: string; name: string }[];
   nameOf: (id: string) => string;
-  play: (t: number) => void;
+  /** Absent when the lesson's audio is gone: the times are shown without a play button. */
+  play?: (t: number) => void;
 }) {
   const name = useNameVoiceGroup();
   const [busy, setBusy] = useState<string | null>(null);
@@ -74,10 +75,12 @@ export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play 
               <ul className="space-y-0.5">
                 {idx.map((i) => lines[i] && (
                   <li key={i} className="flex items-baseline gap-2 text-hec-small text-hec-ink">
-                    <button type="button" onClick={() => play(lines[i].t)} aria-label={`Play ${mmss(lines[i].t)}`}
-                      className="inline-flex shrink-0 items-center gap-0.5 tabular-nums text-hec-brass hover:underline">
-                      <Play className="h-3 w-3" aria-hidden />{mmss(lines[i].t)}
-                    </button>
+                    {play ? (
+                      <button type="button" onClick={() => play(lines[i].t)} aria-label={`Play ${mmss(lines[i].t)}`}
+                        className="inline-flex shrink-0 items-center gap-0.5 tabular-nums text-hec-brass hover:underline">
+                        <Play className="h-3 w-3" aria-hidden />{mmss(lines[i].t)}
+                      </button>
+                    ) : <span className="shrink-0 tabular-nums text-hec-ink-soft">{mmss(lines[i].t)}</span>}
                     <span className="min-w-0 break-words">{lines[i].text}</span>
                   </li>
                 ))}
