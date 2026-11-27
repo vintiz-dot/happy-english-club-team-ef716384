@@ -413,3 +413,32 @@ def test_a_saved_report_starts_the_follow_up(pilot_root, monkeypatch):
     api.select = lambda table, q, _orig=api.select: [dict(LESSON, date="2099-01-01")] if table == "sessions" else _orig(table, q)
     assert nightly.process_one(api, ROW, FakeModel(), STEP0, keep_local=False) == "saved"
     assert "s1" in classwork.load()
+
+
+def test_systemd_credential_key_may_be_group_readable(tmp_path, monkeypatch):
+    # 27 Nov 2026 on the VM: systemd hands LoadCredentialEncrypted files over as 0440 in $CREDENTIALS_DIRECTORY,
+    # and the owner-only rule refused the job's own key. Only there are group bits allowed; never a world bit.
+    import seal
+    creds = tmp_path / "creds"
+    creds.mkdir()
+    k = creds / "seal-key"
+    k.write_bytes(os.urandom(32))
+    monkeypatch.delenv("HEC_SEAL_KEY_FILE", raising=False)
+    monkeypatch.setenv("CREDENTIALS_DIRECTORY", str(creds))
+    assert seal.key_file() == k and seal._from_systemd(k)
+    other = tmp_path / "seal-key"
+    other.write_bytes(os.urandom(32))
+    assert not seal._from_systemd(other)               # a key elsewhere keeps the strict rule
+    monkeypatch.setenv("HEC_SEAL_KEY_FILE", str(k))
+    assert not seal._from_systemd(k)                   # an explicit key file keeps the strict rule
+    if os.name == "posix":
+        monkeypatch.delenv("HEC_SEAL_KEY_FILE")
+        k.chmod(0o440)
+        assert len(seal.read_key()) == 32              # systemd's 0440 is accepted
+        k.chmod(0o444)
+        with pytest.raises(RuntimeError):
+            seal.read_key()                            # a world bit is still refused
+        k.chmod(0o440)
+        monkeypatch.setenv("HEC_SEAL_KEY_FILE", str(k))
+        with pytest.raises(RuntimeError):
+            seal.read_key()                            # the same mode outside systemd's rule is refused

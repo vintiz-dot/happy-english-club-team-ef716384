@@ -27,6 +27,7 @@ KEY_NAME = "seal-key"
 
 
 def key_file() -> Path:
+    """The key's path. A path inside $CREDENTIALS_DIRECTORY is systemd's own (see read_key)."""
     explicit = os.environ.get("HEC_SEAL_KEY_FILE")
     if explicit:
         return Path(explicit)
@@ -36,13 +37,26 @@ def key_file() -> Path:
     return Path("/etc/hec-monitor") / KEY_NAME
 
 
+def _from_systemd(p: Path) -> bool:
+    """True for a key in systemd's credential folder. systemd writes LoadCredentialEncrypted files 0440 into a
+    private memory-only folder that only the unit's user can enter (27 Nov 2026, the VM refused its own key), so
+    there group bits are systemd's and only a world bit is refused. Every other path keeps the owner-only rule."""
+    creds = os.environ.get("CREDENTIALS_DIRECTORY")
+    if not creds or os.environ.get("HEC_SEAL_KEY_FILE"):
+        return False
+    try:
+        return p.resolve().parent == Path(creds).resolve()
+    except OSError:
+        return False
+
+
 def read_key(path: Path | None = None) -> bytes:
     p = path or key_file()
     try:
         st = p.stat()
     except OSError as e:
         raise RuntimeError(f"no sealing key at {p} (install step 'seal key' in scripts/lesson-monitor/server/README.md)") from e
-    if os.name == "posix" and st.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
+    if os.name == "posix" and st.st_mode & (stat.S_IRWXO if _from_systemd(p) else stat.S_IRWXG | stat.S_IRWXO):
         raise RuntimeError(f"the sealing key {p} is readable by others: refused (chmod 600)")
     raw = p.read_bytes()
     if len(raw) != 32:

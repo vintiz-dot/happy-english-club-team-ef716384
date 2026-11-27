@@ -365,7 +365,7 @@ def open_api(pasted_token: bool = False, transport=http) -> Api:
     old = remembered()
     s.on_refresh = remember
     if old and s.sign_in_refresh(old):
-        print("Signed in (remembered on this Windows account; `supa.py forget` removes it).")
+        print(f"Signed in (remembered {_WHERE}; `supa.py forget` removes it).")
         return Api(s)
     if old:
         forget()
@@ -373,13 +373,15 @@ def open_api(pasted_token: bool = False, transport=http) -> Api:
     if not sys.stdin.isatty():
         sys.exit("The pilot signs in interactively: run it in a terminal window")
     s.sign_in_prompt()
-    print("Signed in. You will not be asked again on this Windows account.")
+    print(f"Signed in. You will not be asked again {_WHERE}.")
     return Api(s)
 
 
+_WHERE = "on this Windows account" if sys.platform == "win32" else "on this server (sealed with its key)"
+
 if __name__ == "__main__":
     if sys.argv[1:] == ["forget"]:
-        print("remembered sign-in deleted" if forget() else "no remembered sign-in on this Windows account")
+        print("remembered sign-in deleted" if forget() else f"no remembered sign-in {_WHERE}")
     elif sys.argv[1:] == ["signin"]:
         # The server's one-time sign-in (server/setup_oracle_vm.sh signin): the job account's email and password,
         # typed by a person at a hidden prompt; only the sealed refresh token is kept.
