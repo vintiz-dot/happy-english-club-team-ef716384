@@ -121,9 +121,23 @@ def wipe_drafts() -> int:
 def wipe_work() -> tuple[int, int]:
     """What a stop removes from this laptop: every audio copy and every local draft. Returns (audio files, draft files)."""
     a = len(files_under(audio_dir()))
-    if audio_dir().exists():
-        shutil.rmtree(audio_dir(), ignore_errors=True)
+    empty_dir(audio_dir())
     return a, wipe_drafts()
+
+
+def empty_dir(folder: Path) -> None:
+    """Delete everything INSIDE folder, keeping the folder itself. On the Linux server the audio folder is a tmpfs
+    mount (audio never touches a disk there), and a mount point cannot be removed, only emptied."""
+    if not folder.exists():
+        return
+    for p in folder.iterdir():
+        if p.is_dir() and not p.is_symlink():
+            shutil.rmtree(p, ignore_errors=True)
+        else:
+            try:
+                p.unlink()
+            except OSError:
+                pass
 
 
 class Guard:

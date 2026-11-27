@@ -63,7 +63,7 @@ export default function NotificationBell() {
         const { data, error } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.homework_submitted,type.eq.journal_collaboration,type.eq.economy_request`)
+          .or(`type.eq.homework_submitted,type.eq.journal_collaboration,type.eq.economy_request,type.eq.lesson_report_ready`)
           .order("created_at", { ascending: false })
           .limit(50);
 
@@ -116,7 +116,10 @@ export default function NotificationBell() {
     const metadata = notification.metadata || {};
     
     // Handle different notification types
-    if (notification.type === 'class_access_request' && metadata.class_id) {
+    if (notification.type === 'lesson_report_ready' && metadata.session_id) {
+      // The class report a lesson's transcript and class work built (20261127100000): review and approve it.
+      navigate(`/teacher/lesson-report/${metadata.session_id}`);
+    } else if (notification.type === 'class_access_request' && metadata.class_id) {
       // A teacher's "Contact Admin" (request_class_access): open the class.
       navigate(`/admin/classes/${metadata.class_id}`);
     } else if (notification.type === 'economy_request' && metadata.class_id) {

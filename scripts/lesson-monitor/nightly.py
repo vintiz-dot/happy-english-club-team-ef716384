@@ -138,8 +138,7 @@ def wipe_audio() -> int:
     """Delete every audio copy left in pilot\\audio (a crash, a power cut). Returns files removed."""
     d = pc.audio_dir()
     n = len(pc.files_under(d))
-    if d.exists():
-        shutil.rmtree(d)
+    pc.empty_dir(d)  # the folder stays: on the server it is a tmpfs mount
     return n
 
 
@@ -318,7 +317,10 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             {"room_until_s": lv_room["until_s"], "teacher_until_s": lv_teacher["until_s"]},
             dict(tsettings, job=pc.JOB_VERSION, step0_talk=bool(step0.get("talk_pass"))),
             offset_s=window[0])
+        t_voice = time.time()
         vres = run_voice(api, row, folder / "room16k.wav", body, lv_teacher, lv_room, window, duration, guard)
+        pc.log(f"{rid} timing: download {int(t_tr - t_start)} s, transcription {int(t_voice - t_tr)} s, "
+               f"voices {int(time.time() - t_voice)} s, lesson {int(duration)} s")
     except transcribe.Stopped:
         left = delete_audio_copy(folder, room)
         remove_draft(rid)
@@ -375,7 +377,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
                                                "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
         pc.log(f"{rid} report saved for the lesson's teacher")
         finish_voice(api, row, vres)
-        request_lesson_report(api, row)
+        follow_class_report(api, row)
         return "saved"
     except ApiError as e:
         if e.status in (0, 401):
@@ -679,6 +681,36 @@ def request_lesson_report(api, row: dict, sleep=time.sleep) -> str:
     return "failed"
 
 
+def follow_class_report(api, row: dict) -> None:
+    """The transcript is saved: from now on the class report is built as soon as the lesson's class work has been
+    read, and rebuilt (until approved) when more arrives (classwork.py). Asks once now; the watch loop keeps looking.
+    Never fails the run: if the follow-up list cannot be kept, the draft is simply asked for at once, as before."""
+    sid = row.get("session_id")
+    if not sid or getattr(api, "function", None) is None:
+        return
+    try:
+        import classwork
+        classwork.follow(sid)
+        classwork.follow_up(api, request_lesson_report)
+    except Exception as e:  # noqa: BLE001
+        pc.log(f"{row.get('recording_id', '')} class report follow-up unavailable: error_{type(e).__name__.lower()}"[:120])
+        request_lesson_report(api, row)
+
+
+def look_after_class_reports(api) -> None:
+    """Each watch cycle: build / rebuild the class reports of lessons whose transcript was saved (classwork.py)."""
+    if getattr(api, "function", None) is None:
+        return
+    try:
+        import classwork
+        if classwork.load():
+            c = classwork.follow_up(api, request_lesson_report)
+            if c["build"] or c["rebuild"]:
+                pc.log(f"class reports: {c}")
+    except Exception as e:  # noqa: BLE001
+        pc.log(f"class reports: follow-up failed: error_{type(e).__name__.lower()}"[:120])
+
+
 def upload_drafts(api) -> dict:
     from supa import ApiError
     counts = {"saved": 0, "kept": 0, "deleted": 0}
@@ -690,7 +722,7 @@ def upload_drafts(api) -> dict:
                                                    "p_processing_seconds": d.get("processing_seconds")})
             counts["saved"] += 1
             if d.get("session_id"):  # the class report follows its transcript, as for a report saved at once
-                request_lesson_report(api, {"recording_id": d["recording_id"], "session_id": d["session_id"]})
+                follow_class_report(api, {"recording_id": d["recording_id"], "session_id": d["session_id"]})
         except ApiError as e:
             if e.status in (0, 401):
                 counts["kept"] += 1
@@ -794,6 +826,7 @@ def main(argv=None) -> int:
         if pc.stopped():
             return 0
         api.rpc("lesson_monitor_expire")  # also keeps the sign-in warm; the session renews itself
+        look_after_class_reports(api)
 
 
 _SEEN: set[str] = set()  # --watch only: recordings this run has already taken up
@@ -857,6 +890,8 @@ def _run_batch(api, a, step0, model, progress, transcribe):
     pc.log(f"done: {', '.join(outcomes) or 'nothing processed'}")
     if VOICE is not None:
         publish_voice_stats(api)
+    if not a.watch:
+        look_after_class_reports(api)  # --watch looks after them every cycle
     return model
 
 

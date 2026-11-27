@@ -380,5 +380,10 @@ def open_api(pasted_token: bool = False, transport=http) -> Api:
 if __name__ == "__main__":
     if sys.argv[1:] == ["forget"]:
         print("remembered sign-in deleted" if forget() else "no remembered sign-in on this Windows account")
+    elif sys.argv[1:] == ["signin"]:
+        # The server's one-time sign-in (server/setup_oracle_vm.sh signin): the job account's email and password,
+        # typed by a person at a hidden prompt; only the sealed refresh token is kept.
+        open_api()
+        print("ok: the job account is remembered on this machine")
     else:
-        print("usage: supa.py forget")
+        print("usage: supa.py forget | signin")

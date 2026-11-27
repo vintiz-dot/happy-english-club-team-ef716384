@@ -316,7 +316,7 @@ def test_the_class_report_request_retries_blips_but_not_refusals():
 
 def test_uploading_a_draft_asks_for_its_class_report(pilot_root, monkeypatch):
     asked = []
-    monkeypatch.setattr(nightly, "request_lesson_report", lambda api, row, **kw: asked.append(row["session_id"]))
+    monkeypatch.setattr(nightly, "follow_class_report", lambda api, row, **kw: asked.append(row["session_id"]))
     nightly.write_draft(ROW, {"schema": "x", "lines": []}, 90, 10, html_copy=False)
     assert nightly.upload_drafts(FakeApi()) == {"saved": 1, "kept": 0, "deleted": 0} and asked == ["s1"]
 
@@ -345,3 +345,71 @@ def test_linux_seal_round_trip_and_refusals(tmp_path, monkeypatch):
         k.chmod(0o644)
         with pytest.raises(RuntimeError):
             seal.KeySeal("x")
+
+
+# ------------------------------------------------------------------ the class report waits for class work
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+import classwork  # noqa: E402
+
+LESSON = {"id": "s1", "class_id": "c1", "date": "2026-11-27", "start_time": "17:30:00", "end_time": "19:00:00"}
+END = datetime(2026, 11, 27, 12, 0, tzinfo=timezone.utc)          # 19:00 in Hanoi
+SINCE = END
+
+
+def at(minutes):
+    return END + timedelta(minutes=minutes)
+
+
+def test_decide_waits_for_the_upload_window_and_the_ocr_then_builds():
+    d = classwork.decide
+    assert d(LESSON, [], None, False, at(10), SINCE) == "wait"                    # uploads still allowed
+    reading = [{"status": "processing", "created_at": at(25).isoformat()}]
+    assert d(LESSON, reading, None, False, at(31), SINCE) == "wait"               # a page is being read
+    assert d(LESSON, reading, None, False, at(46), SINCE) == "build"              # stuck past 20 minutes: not waited for
+    assert d(LESSON, [{"status": "needs_review", "updated_at": at(5).isoformat()}], None, False, at(31), SINCE) == "build"
+    assert d(LESSON, [], {"status": "failed"}, False, at(40), SINCE) == "build"
+    assert d(LESSON, [], {"status": "building", "started_at": at(30).isoformat()}, False, at(40), SINCE) == "wait"
+
+
+def test_decide_rebuilds_an_unapproved_draft_for_work_read_after_it_and_never_touches_an_approved_one():
+    d = classwork.decide
+    draft = {"status": "ready", "started_at": at(31).isoformat()}
+    early = {"status": "needs_review", "updated_at": at(20).isoformat()}
+    late = {"status": "needs_review", "updated_at": at(33).isoformat()}
+    approved_by_teacher = {"status": "approved", "updated_at": at(50).isoformat()}
+    assert d(LESSON, [early], draft, False, at(60), SINCE) == "wait"
+    assert d(LESSON, [early, late], draft, False, at(60), SINCE) == "rebuild"
+    assert d(LESSON, [early, approved_by_teacher], draft, False, at(60), SINCE) == "wait"
+    assert d(LESSON, [early, late], draft, True, at(60), SINCE) == "done"
+    assert d(LESSON, [], draft, False, at(60 * 40), SINCE) == "done"
+
+
+class FollowApi:
+    def __init__(self, works, draft=None, approved=False):
+        self.works, self.draft, self.approved, self.asked = works, draft, approved, []
+
+    def select(self, table, q):
+        return {"sessions": [LESSON], "student_work": self.works, "lesson_report_drafts": [self.draft] if self.draft else [],
+                "lesson_reports": [{"session_id": "s1"}] if self.approved else []}[table]
+
+    def function(self, name, args):
+        self.asked.append(args)
+
+
+def test_follow_up_builds_once_and_forgets_an_approved_lesson(pilot_root):
+    classwork.follow("s1", SINCE)
+    api = FollowApi([{"status": "needs_review", "updated_at": at(5).isoformat()}])
+    req = []
+    assert classwork.follow_up(api, lambda a, row: req.append(row["session_id"]), now=at(31))["build"] == 1 and req == ["s1"]
+    api.approved = True
+    assert classwork.follow_up(api, lambda a, row: req.append(row), now=at(40))["done"] == 1
+    assert classwork.load() == {} and len(req) == 1
+
+
+def test_a_saved_report_starts_the_follow_up(pilot_root, monkeypatch):
+    api = FakeApi()
+    api.function = lambda name, args: None
+    api.select = lambda table, q, _orig=api.select: [dict(LESSON, date="2099-01-01")] if table == "sessions" else _orig(table, q)
+    assert nightly.process_one(api, ROW, FakeModel(), STEP0, keep_local=False) == "saved"
+    assert "s1" in classwork.load()

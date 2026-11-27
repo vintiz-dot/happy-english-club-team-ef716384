@@ -1,0 +1,50 @@
+# The lesson monitor on the Oracle server: watches for finished lesson recordings, transcribes them with Groq +
+# Cloudflare (reconciled, beam-5 re-checks here), runs the six voice models, saves the report and builds the class
+# report. Installed by setup_oracle_vm.sh; `systemctl stop hec-lesson-monitor` stops it, `... start` starts it.
+[Unit]
+Description=HEC lesson monitor (transcripts and class reports)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=hecmon
+Group=hecmon
+WorkingDirectory=/opt/hec-monitor/code
+EnvironmentFile=/etc/hec-monitor/env
+Environment=HEC_EVAL_ROOT=/var/lib/hec-monitor
+Environment=HEC_PILOT_ROOT=/var/lib/hec-monitor/pilot
+Environment=HEC_SESSION_FILE=/var/lib/hec-monitor/session.bin
+Environment=HF_HOME=/var/lib/hec-monitor/models/hf
+Environment=HF_HUB_OFFLINE=1
+Environment=PYTHONUNBUFFERED=1
+# Secrets: sealed on disk by systemd-creds with this machine's key; decrypted only into the service's private,
+# memory-only credential folder ($CREDENTIALS_DIRECTORY) while it runs. Never in the repo, never in the env.
+LoadCredentialEncrypted=seal-key:/etc/credstore.encrypted/seal-key
+LoadCredentialEncrypted=groq-key:/etc/credstore.encrypted/groq-key
+LoadCredentialEncrypted=cloudflare-ai:/etc/credstore.encrypted/cloudflare-ai
+ExecStart=/opt/hec-monitor/venv/bin/python scripts/lesson-monitor/nightly.py --watch --remote --poll-minutes 3
+Restart=on-failure
+RestartSec=120
+# Hardening: the job writes only its own folder; the audio folder inside it is a tmpfs (see setup).
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/hec-monitor
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+UMask=0077
+MemoryMax=20G
+CPUWeight=90
+# Logs (journald) carry recording ids, counts and codes only: never transcript text, a name or a token.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
