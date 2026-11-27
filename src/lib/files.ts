@@ -13,11 +13,15 @@ import { makeFileStore, type StorageLike } from "./fileStore";
  *   course-media  22 Nov 2026: the course books' videos and audio, uploaded
  *              straight to R2 (scripts/upload-course-media.mjs); Supabase never
  *              had them, and a slide falls back to the Google Drive copy.
+ *   class-recorder-audio  27 Nov 2026: lesson audio (the recorder, the phone
+ *              mic, the lesson monitor). Needs 20261127090000 live (it is):
+ *              the recorder's SQL looks for a chunk in file_objects as well as
+ *              storage.objects. Supabase had no recorder audio left to copy.
  */
 // Paused for a few hours on 18 Nov 2026: uploads failed with "No bucket
 // called ..." until migration 20261118110000; re-enabled after it, with 121
 // real upload records by 10 accounts checked (all recorded, then undone).
-export const R2_BUCKETS: ReadonlySet<string> = new Set<string>(["homework", "student-work", "course-media"]);
+export const R2_BUCKETS: ReadonlySet<string> = new Set<string>(["homework", "student-work", "course-media", "class-recorder-audio"]);
 
 const DEFAULT_WORKER = "https://hec-files.vintizfjes.workers.dev";
 const WORKER: string = (import.meta.env.VITE_HEC_FILES_URL as string | undefined) ?? DEFAULT_WORKER;
