@@ -75,6 +75,21 @@ sudo bash $S enable
 
 Every day after that: nothing. `sudo bash $S status` / `logs` shows what it did (ids, counts, timings, codes).
 
+## Retiring the laptop pilot (owner, 27 Nov 2026: no laptop fallback)
+
+Once the server has saved its first real report (`sudo bash $S logs` shows "report saved"), on the PC, in PowerShell as
+administrator, from the repo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\lesson-monitor\retire_laptop.ps1 -ServerHasSavedAReport -RemoveUser
+```
+
+It refuses while any `nightly.py` runs, removes the scheduled task, deletes the laptop's audio copies, drafts, voiceprints
+and logs (`delete_pilot.py --local-only`: the app's reports, switches and consents are NOT touched), the remembered
+sign-in, `C:\hec-pilot` and, with `-RemoveUser`, the `hec-pilot` Windows account. `-DryRun` shows what would go.
+The laptop's voiceprints are not moved (sealed to that Windows account): the server learns voices again from the
+teachers' taps and answers.
+
 ## Stop, kill switch, delete everything
 
 - `sudo bash $S stop` / `start`: the service.
