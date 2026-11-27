@@ -69,11 +69,17 @@ cmd_install() {
   say "code"
   rm -rf $BASE/code.new && install -d $BASE/code.new
   tar -xf $BASE/incoming/code.tar -C $BASE/code.new
+  # A code.tar made before .gitattributes (27 Nov 2026) on a Windows checkout carries CRLF: bash and systemd refuse it.
+  find $BASE/code.new -type f \( -name '*.sh' -o -name '*.service' \) -exec sed -i 's/\r$//' {} +
   rm -rf $BASE/code && mv $BASE/code.new $BASE/code
   chown -R root:root $BASE/code && chmod -R go-w $BASE/code
 
   say "models (faster-whisper large-v3-turbo, ECAPA, TitaNet, WeSpeaker x2, 3D-Speaker x2)"
   if [ -d $BASE/incoming/models ]; then
+    if [ -f $BASE/incoming/models.sha256 ]; then  # push_to_vm.ps1's list of the PC's hashes
+      (cd $BASE/incoming/models && tr -d '\r' < ../models.sha256 | sha256sum -c --quiet -) \
+        || { echo "a model differs from the PC's copy: run push_to_vm.ps1 again"; exit 1; }
+    fi
     cp -a $BASE/incoming/models/. $DATA/models/
     chown -R $USR:$USR $DATA/models
   fi

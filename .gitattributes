@@ -1,0 +1,4 @@
+# Files that run on Linux keep LF in every checkout and in `git archive` (push_to_vm.ps1 sends git archive HEAD).
+# A Windows checkout with core.autocrlf=true wrote CRLF and bash refused them ("set: pipefail: invalid option name").
+*.sh text eol=lf
+*.service text eol=lf

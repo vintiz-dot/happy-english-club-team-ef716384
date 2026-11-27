@@ -62,6 +62,10 @@ On the PC, from the repo:
 powershell -ExecutionPolicy Bypass -File scripts\lesson-monitor\server\push_to_vm.ps1 -Vm ubuntu@<VM IP> -Key $HOME\.ssh\hec-oracle
 ```
 
+It sends the committed code and only a list of the models' sha256 hashes: the VM downloads the public models from
+Hugging Face at pinned revisions (`fetch_models.sh`), keeps each only if its hash is the PC's, and the PC copies just
+what is still missing (the sherpa voice models, always: the public release files differ from the PC's).
+
 Then on the VM (`ssh -i $HOME\.ssh\hec-oracle ubuntu@<VM IP>`), `S=/opt/hec-monitor/code/scripts/lesson-monitor/server/setup_oracle_vm.sh`:
 
 ```
