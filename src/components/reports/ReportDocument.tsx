@@ -46,10 +46,61 @@ export function BrandHeader({ studentName, periodStart, periodEnd, title = "Prog
   );
 }
 
+type Bi = { en: string; vi?: string | null } | null | undefined;
+function BiText({ t, className = "" }: { t: Bi; className?: string }) {
+  if (!t?.en) return null;
+  return (
+    <div className={className}>
+      <p className="text-sm">{t.en}</p>
+      {t.vi && <p lang="vi" className="text-xs text-muted-foreground print-muted">{t.vi}</p>}
+    </div>
+  );
+}
+
+/**
+ * The family page (report.parent, English with Vietnamese) as the Family PDF
+ * prints it, so the teacher reads what parents will get before handing it out.
+ */
+export function FamilyPagePreview({ report }: { report: any }) {
+  const p = report?.parent;
+  const f = report?.facts;
+  if (!p) return null;
+  const list = (title: string, vi: string, items: any[] | undefined, render: (x: any, i: number) => React.ReactNode) =>
+    items?.length ? (
+      <div>
+        <p className="text-sm font-bold">{title} <span lang="vi" className="font-normal text-muted-foreground">· {vi}</span></p>
+        <ul className="mt-1 space-y-2">{items.map((x, i) => <li key={i}>{render(x, i)}</li>)}</ul>
+      </div>
+    ) : null;
+  return (
+    <div className="rounded-2xl border border-emerald-500/30 p-4 space-y-3 print-avoid-break">
+      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Family page · what parents read</p>
+      {p.headline && <BiText t={p.headline} className="rounded-xl bg-emerald-500/5 p-3" />}
+      {f?.lessons_held > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Lessons {f.lessons_attended}/{f.lessons_attended + f.lessons_absent} · {f.words_added} new words ·{" "}
+          {f.homework_submitted} homework · {f.work_reviewed} work reviewed · {f.lesson_reports} lesson reports · {f.points_earned} points
+        </p>
+      )}
+      {list("What your child can do now", "Những điều con đã làm được", p.can_do, (c) => (
+        <><BiText t={c.text} />{c.evidence && <BiText t={c.evidence} className="opacity-70" />}</>
+      ))}
+      {list("Our next goals", "Mục tiêu tiếp theo", p.next_goals, (g) => (
+        <><BiText t={g.goal} className="font-semibold" /><BiText t={g.why} />{g.in_class && <BiText t={g.in_class} className="opacity-80" />}</>
+      ))}
+      {list("How you can help at home", "Bố mẹ đồng hành cùng con", p.at_home, (t) => <BiText t={t} />)}
+      {list("Ask your child", "Hỏi con", p.ask_your_child, (t) => <BiText t={t} />)}
+      {p.next_period && <BiText t={p.next_period} />}
+      {p.teacher_note && <BiText t={p.teacher_note} className="rounded-xl bg-emerald-500/5 p-3" />}
+    </div>
+  );
+}
+
 /** All report sections — shared by the on-screen dialog, print and PDF. */
 export function ReportBody({ report, latest }: { report: any; latest: any }) {
   return (
     <div className="space-y-4">
+      <FamilyPagePreview report={report} />
       {/* CEFR headline */}
       {report.cefr && (
         <div className="rounded-2xl border bg-gradient-to-br from-violet-500/5 to-indigo-500/5 p-4 flex items-center gap-4 print-avoid-break">

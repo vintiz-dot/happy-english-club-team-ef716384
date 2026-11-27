@@ -1,8 +1,8 @@
 {
   "type": "progress-report",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Progress Report",
-  "description": "The AI student progress report: CEFR estimate, skill matrix, strengths and growth areas, learning styles, next steps, narrative and evidence counts. Replaces the bulk PDF/ZIP export (BulkReportExport.tsx + reportPdf.ts) and the browser-print copy (AIReportDialog.tsx); content from ReportDocument.tsx.",
+  "description": "The AI student progress report: CEFR estimate, skill matrix, strengths and growth areas, learning styles, next steps, narrative and evidence counts. Replaces the bulk PDF/ZIP export (BulkReportExport.tsx + reportPdf.ts) and the browser-print copy (AIReportDialog.tsx); content from ReportDocument.tsx. 1.1.0 adds the family copy (variant family): English with Vietnamese, the approved level only, no staff analysis.",
   "output": "pdf",
   "documentTitle": "{{ data.studentName }} - Progress Report",
   "lang": "en",
@@ -14,11 +14,44 @@
     },
     "compact": {
       "description": "Tighter layout aimed at fewer pages: three-column skill matrix, learning styles beside next steps. Same text, same order."
+    },
+    "family": {
+      "description": "The family's copy, English with Vietnamese: a proud moment, the period's figures, the approved level only, can-do statements with evidence, at most two next goals with what the teacher does in class, things to do at home, questions to ask, the next period's goal and the teacher's note. No model estimate, confidence, growth areas, teacher next steps or evidence counts."
     }
   },
   "filename": "progress-report",
   "keyField": "studentName",
   "brandStrings": [
-    "Reporting period"
+    "Reporting period",
+    "Báo cáo tiến bộ",
+    "Class · Lớp",
+    "Teacher · Giáo viên",
+    "Reporting period · Giai đoạn",
+    "A moment to be proud of · Khoảnh khắc đáng tự hào",
+    "This period at a glance",
+    "Tổng kết giai đoạn",
+    "Lessons attended · Buổi học tham gia",
+    "New words · Từ mới",
+    "Homework handed in · Bài tập đã nộp",
+    "Work reviewed by teachers · Bài làm được chấm",
+    "Lesson reports sent · Báo cáo buổi học",
+    "Points earned · Điểm thưởng",
+    "English level",
+    "Trình độ tiếng Anh",
+    "confirmed by the teacher",
+    "giáo viên xác nhận",
+    "What your child can do now",
+    "Những điều con đã làm được",
+    "Our next goals",
+    "Mục tiêu tiếp theo",
+    "In class",
+    "Trên lớp",
+    "How you can help at home",
+    "Bố mẹ đồng hành cùng con",
+    "Ask your child",
+    "Hỏi con",
+    "Next period",
+    "Giai đoạn tới",
+    "From the teacher · Lời cô/thầy"
   ]
 }

@@ -12,6 +12,153 @@
 {% set hasPeriod = data.period_start and data.period_end %}
 {% set runningTitle = data.studentName ~ " · Progress Report" %}
 {% block body %}
+{% if variant == "family" %}
+{#
+  The family's copy (1.1.0). New content, so no parity capture; every label
+  is registered in template.json brandStrings. Order follows what the
+  research behind docs/AI_PROGRESS_REPORT.md says families act on: a
+  specific moment first, the work done made visible, can-do statements with
+  evidence, at most two next goals with what the teacher will do, things to
+  do at home, and the teacher's own words last. Staff-only parts (the
+  model's level and confidence, growth areas, teacher next steps, evidence
+  counts) are never printed here; the level shown is the APPROVED one only.
+#}
+{% import "ui/bilingual.njk" as b %}
+{% import "ui/stat-tile.njk" as st %}
+{% set p = report.parent %}
+{% set f = report.facts %}
+{% set CEFR_PLAIN = {
+  "Pre-A1": { en: "Starting out: knows first words and phrases.", vi: "Bắt đầu làm quen: biết những từ và cụm từ đầu tiên." },
+  "A1": { en: "Beginner: understands and uses everyday words and simple sentences.", vi: "Sơ cấp: hiểu và dùng được từ ngữ, câu đơn giản hằng ngày." },
+  "A1+": { en: "Strong beginner: simple sentences about self, family and school.", vi: "Sơ cấp vững: nói câu đơn giản về bản thân, gia đình, trường lớp." },
+  "A2": { en: "Elementary: short conversations and short texts on familiar topics.", vi: "Tiền trung cấp: hội thoại ngắn và đọc, viết đoạn ngắn về chủ đề quen thuộc." },
+  "A2+": { en: "Strong elementary: tells short stories and explains simply.", vi: "Tiền trung cấp vững: kể chuyện ngắn và giải thích đơn giản." },
+  "B1": { en: "Intermediate: handles most everyday situations and gives reasons.", vi: "Trung cấp: xử lý hầu hết tình huống hằng ngày và nêu được lý do." },
+  "B1+": { en: "Strong intermediate: discusses topics with growing confidence.", vi: "Trung cấp vững: thảo luận chủ đề ngày càng tự tin." },
+  "B2": { en: "Upper intermediate: speaks fluently on a wide range of topics.", vi: "Trên trung cấp: nói trôi chảy về nhiều chủ đề." },
+  "B2+": { en: "Strong upper intermediate: argues a point clearly.", vi: "Trên trung cấp vững: trình bày quan điểm rõ ràng." },
+  "C1": { en: "Advanced: flexible, precise English.", vi: "Cao cấp: dùng tiếng Anh linh hoạt, chính xác." }
+} %}
+{{ ui.header(tenant, "Báo cáo tiến bộ", "Progress Report") }}
+
+{% set rows = [] %}
+{% if data.className %}{% set rows = rows.concat([{ label: "Class · Lớp", value: data.className }]) %}{% endif %}
+{% if data.teacherName %}{% set rows = rows.concat([{ label: "Teacher · Giáo viên", value: data.teacherName }]) %}{% endif %}
+{% if hasPeriod %}{% set rows = rows.concat([{ label: "Reporting period · Giai đoạn", value: data.period_start ~ " → " ~ data.period_end }]) %}{% endif %}
+{{ ui.identity(data.studentName, rows) }}
+
+{% if p and p.headline %}
+<section aria-label="A moment to be proud of">
+  {% call ui.callout("praise", "A moment to be proud of · Khoảnh khắc đáng tự hào") %}{{ b.bi(p.headline) }}{% endcall %}
+</section>
+{% endif %}
+
+{% if f and f.lessons_held %}
+<section aria-label="This period at a glance">
+  {{ b.bi_section("This period at a glance", "Tổng kết giai đoạn") }}
+  <div class="stat-row">
+    {{ st.stat_tile(f.lessons_attended ~ "/" ~ (f.lessons_attended + f.lessons_absent), "Lessons attended · Buổi học tham gia", "star") }}
+    {% if f.words_added %}{{ st.stat_tile(f.words_added, "New words · Từ mới", "bolt") }}{% endif %}
+    {% if f.homework_submitted %}{{ st.stat_tile(f.homework_submitted, "Homework handed in · Bài tập đã nộp", "star") }}{% endif %}
+    {% if f.work_reviewed %}{{ st.stat_tile(f.work_reviewed, "Work reviewed by teachers · Bài làm được chấm", "star") }}{% endif %}
+    {% if f.lesson_reports %}{{ st.stat_tile(f.lesson_reports, "Lesson reports sent · Báo cáo buổi học", "star") }}{% endif %}
+    {% if f.points_earned %}{{ st.stat_tile(f.points_earned, "Points earned · Điểm thưởng", "flame") }}{% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if data.approvedLevel %}
+<section aria-label="English level">
+  {{ b.bi_section("English level", "Trình độ tiếng Anh") }}
+  <div class="level">
+    <div class="level__mark">{{ data.approvedLevel }}</div>
+    <div class="level__body">
+      <p class="level__title">CEFR {{ data.approvedLevel }} <span class="level__aside">· confirmed by the teacher · <span lang="vi">giáo viên xác nhận</span></span></p>
+      {% if CEFR_PLAIN[data.approvedLevel] %}{{ b.bi(CEFR_PLAIN[data.approvedLevel]) }}{% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if p and p.can_do | length %}
+<section aria-label="What your child can do now">
+  {{ b.bi_section("What your child can do now", "Những điều con đã làm được") }}
+  <ul class="bullets">
+    {% for c in p.can_do %}<li class="bullets__item">{{ b.bi(c.text) }}{% if c.evidence %}<div class="muted">{{ b.bi(c.evidence) }}</div>{% endif %}</li>{% endfor %}
+  </ul>
+</section>
+{% elif (report.strengths or []) | length %}
+<section aria-label="Strengths">
+  {{ ui.section("Strengths") }}
+  <ul class="bullets">
+    {% for s in report.strengths %}<li class="bullets__item"><strong>{{ s.area }}</strong>{% if s.evidence %}<br><span class="muted">{{ s.evidence }}</span>{% endif %}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if p and p.next_goals | length %}
+<section aria-label="Our next goals">
+  {{ b.bi_section("Our next goals", "Mục tiêu tiếp theo") }}
+  <ul class="bullets">
+    {% for g in p.next_goals %}
+    <li class="bullets__item"><strong>{{ g.goal.en }}</strong>{% if g.goal.vi %}<p class="bilingual__sub" lang="vi">{{ g.goal.vi }}</p>{% endif %}
+      {% if g.why %}{{ b.bi(g.why) }}{% endif %}
+      {% if g.in_class %}<div class="eyebrow">In class · <span lang="vi">Trên lớp</span></div>{{ b.bi(g.in_class) }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if p and p.at_home | length %}
+<section aria-label="How you can help at home">
+  {{ b.bi_section("How you can help at home", "Bố mẹ đồng hành cùng con") }}
+  <ul class="bullets">
+    {% for t in p.at_home %}<li class="bullets__item">{{ b.bi(t) }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if p and p.ask_your_child | length %}
+<section aria-label="Ask your child">
+  {{ b.bi_section("Ask your child", "Hỏi con") }}
+  <ul class="bullets">
+    {% for t in p.ask_your_child %}<li class="bullets__item">{{ b.bi(t) }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if p and p.next_period %}
+<section aria-label="Next period">
+  {{ b.bi_section("Next period", "Giai đoạn tới") }}
+  {{ b.bi(p.next_period) }}
+</section>
+{% endif %}
+
+{% if p and p.teacher_note %}
+<section aria-label="From the teacher">
+  {% call ui.callout("praise", "From the teacher · Lời cô/thầy") %}{{ b.bi(p.teacher_note) }}{% endcall %}
+</section>
+{% elif not p and data.narrative %}
+<section aria-label="Report narrative">
+  {{ ui.section("Report narrative") }}
+  <div class="prose">
+    {% for para in data.narrative | preLineParagraphs %}<p>{% for line in para %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="closing">
+  {% call ui.callout("note") %}{{ tenant.reassurance.report }}{% endcall %}
+  {{ ui.encourage(brand) }}
+  <div class="closing-row">
+    {{ ui.signature(tenant, true) }}
+    {{ ui.qr_footer(brand) }}
+  </div>
+  {% call ui.colophon() %}Happy English Club · hanoienglish.com · {{ doc.generatedAt | date("en-US") }}{% endcall %}
+</div>
+{% else %}
 {# BrandHeader: the shared header lockup, with the letterhead's own sub line. #}
 <header class="hdr" role="banner">
   <div class="hdr__lockup">
@@ -139,4 +286,5 @@
   </div>
   {% call ui.colophon() %}Generated by Happy English Club · hanoienglish.com · {{ doc.generatedAt | date("en-US") }}{% endcall %}
 </div>
+{% endif %}
 {% endblock %}

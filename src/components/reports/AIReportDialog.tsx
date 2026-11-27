@@ -10,8 +10,10 @@
  * draft until a teacher approves it (CefrDraftsCard). A published report
  * reaches the child only through get_my_published_reports (20261117152000),
  * which shows the APPROVED level for that report, or none, and never the
- * model's estimate or rationale. The PDF you print or download is your copy
- * and shows the model's estimate: check it before handing it out.
+ * model's estimate or rationale. Two PDFs: "Family PDF" is the parents' copy
+ * (report.parent in English with Vietnamese, the period's figures, the
+ * APPROVED level only); "Teacher copy" is the full analysis with the model's
+ * estimate, for staff.
  *
  * Printing: the report renders twice — once inside the dialog (scrollable)
  * and once into a hidden print-only portal attached under <body>
@@ -36,6 +38,7 @@ import { Brain, Loader2, Sparkles, Printer } from "lucide-react";
 // PDF exporter can never drift apart.
 import { BrandHeader, ReportBody } from "./ReportDocument";
 import { tryMakeDocument, progressReportData, downloadBlob } from "@/lib/hecDocs";
+import { familyReportContext } from "@/lib/reports/familyReportContext";
 
 interface Props {
   studentId: string;
@@ -66,16 +69,21 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
   const latest = reports.find((r) => r.status === "ready");
 
   // The premium PDF from HEC Docs; the browser's print view stays as the fallback.
-  const [making, setMaking] = useState(false);
-  const downloadOrPrint = async () => {
+  // "family": the parents' copy (English with Vietnamese, approved level
+  // only, no staff analysis). "staff": the full analysis, for teachers.
+  const [making, setMaking] = useState<null | "family" | "staff">(null);
+  const downloadOrPrint = async (copy: "family" | "staff") => {
     if (!latest?.report) return window.print();
-    setMaking(true);
+    setMaking(copy);
     try {
-      const doc = await tryMakeDocument("progress-report", progressReportData(studentName, latest));
+      const data = copy === "family"
+        ? progressReportData(studentName, latest, await familyReportContext(latest))
+        : progressReportData(studentName, latest);
+      const doc = await tryMakeDocument("progress-report", data);
       if (doc) downloadBlob(doc.blob, doc.filename);
       else window.print();
     } finally {
-      setMaking(false);
+      setMaking(null);
     }
   };
 
@@ -165,8 +173,13 @@ export function AIReportDialog({ studentId, studentName, classId, trigger }: Pro
           </Button>
           {latest && (
             <>
-              <Button variant="outline" className="gap-2" disabled={making} onClick={downloadOrPrint}>
-                {making ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Printer className="h-4 w-4" aria-hidden />}PDF
+              <Button variant="outline" className="gap-2" disabled={!!making} onClick={() => downloadOrPrint("family")}
+                title="For parents: English with Vietnamese, the level you approved, no staff analysis">
+                {making === "family" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Printer className="h-4 w-4" aria-hidden />}Family PDF
+              </Button>
+              <Button variant="ghost" className="gap-2" disabled={!!making} onClick={() => downloadOrPrint("staff")}
+                title="For staff: the full analysis, including the AI's level estimate">
+                {making === "staff" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Printer className="h-4 w-4" aria-hidden />}Teacher copy
               </Button>
               <label className="ml-auto flex min-h-hec-target cursor-pointer items-center gap-2">
                 <span className="text-hec-small text-hec-ink-soft">Visible to student</span>

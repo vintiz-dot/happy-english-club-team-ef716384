@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { ReportDocument } from "./ReportDocument";
 import { tryMakeDocument, progressReportData } from "@/lib/hecDocs";
+import { familyReportContext } from "@/lib/reports/familyReportContext";
 import {
   nodeToPdfBlob, downloadBlob, safeFileName, A4_CONTENT_WIDTH_PX,
 } from "@/lib/reportPdf";
@@ -59,6 +60,7 @@ interface ReportRow {
   period_end: string | null;
   source_counts: any;
   created_at: string;
+  class_id?: string | null;
 }
 
 type RunState =
@@ -77,6 +79,9 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
   const [classId, setClassId] = useState<string>(fixedClassId ?? "");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generateMissing, setGenerateMissing] = useState(true);
+  // The parents' copy by default: English with Vietnamese, the approved
+  // level only. Off = the teacher copy (the full analysis, the AI's estimate).
+  const [familyCopy, setFamilyCopy] = useState(true);
   const [run, setRun] = useState<RunState>({ phase: "idle" });
   const [failures, setFailures] = useState<{ name: string; reason: string }[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -127,7 +132,7 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("student_reports")
-        .select("id, student_id, report, narrative, period_start, period_end, source_counts, created_at")
+        .select("id, student_id, class_id, report, narrative, period_start, period_end, source_counts, created_at")
         .in("student_id", studentIds)
         .eq("status", "ready")
         .order("created_at", { ascending: false });
@@ -203,7 +208,10 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
   const renderPdf = async (student: RosterStudent, row: ReportRow, bulk: boolean): Promise<Blob> => {
     // HEC Docs first (premium, text-based PDF); the rasterised copy below
     // stays as the fallback.
-    const doc = await tryMakeDocument("progress-report", progressReportData(student.full_name, row), { bulk });
+    const data = familyCopy
+      ? progressReportData(student.full_name, row, await familyReportContext({ id: row.id, class_id: row.class_id ?? (classId || null) }))
+      : progressReportData(student.full_name, row);
+    const doc = await tryMakeDocument("progress-report", data, { bulk });
     if (doc) return doc.blob;
     const host = document.createElement("div");
     host.style.width = `${A4_CONTENT_WIDTH_PX}px`;
@@ -258,7 +266,7 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
     // Re-read after generation so newly created reports are included.
     const { data: fresh } = await (supabase as any)
       .from("student_reports")
-      .select("id, student_id, report, narrative, period_start, period_end, source_counts, created_at")
+      .select("id, student_id, class_id, report, narrative, period_start, period_end, source_counts, created_at")
       .in("student_id", selectedStudents.map((s) => s.id))
       .eq("status", "ready")
       .order("created_at", { ascending: false });
@@ -422,6 +430,23 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
             {/* Generate toggle */}
             <label className="flex cursor-pointer items-start gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-4">
               <Switch
+                checked={familyCopy}
+                onCheckedChange={setFamilyCopy}
+                disabled={busy}
+                className="mt-0.5"
+              />
+              <div className="min-w-0">
+                <p className="text-hec-small font-semibold text-hec-ink">Family copy (for parents)</p>
+                <p className="text-hec-caption text-hec-ink-soft">
+                  English with Vietnamese: a proud moment, the period in figures, what the child can do now,
+                  the next goals, ideas for home and the teacher&apos;s note. Shows only a level you approved.
+                  Turn off for the teacher copy with the full analysis and the AI&apos;s level estimate.
+                </p>
+              </div>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-hec-md border border-hec-line bg-hec-surface p-4">
+              <Switch
                 checked={generateMissing}
                 onCheckedChange={setGenerateMissing}
                 disabled={busy}
@@ -431,7 +456,7 @@ export function BulkReportExport({ classId: fixedClassId, className }: Props) {
                 <p className="text-hec-small font-semibold text-hec-ink">Generate reports that are missing first</p>
                 <p className="text-hec-caption text-hec-ink-soft">
                   Runs the AI profiling engine for selected students who have no report yet. This
-                  takes roughly half a minute each and uses your OpenAI quota. Students who already
+                  takes roughly half a minute each and uses the school's AI quota. Students who already
                   have a report are never regenerated.
                   {missingCount > 0 && (
                     <span className="font-medium text-hec-warn">

@@ -201,10 +201,31 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export function progressReportData(
   studentName: string,
   latest: { report: unknown; narrative?: unknown; period_start?: unknown; period_end?: unknown; source_counts?: unknown },
+  /**
+   * The family copy (variant "family"): English with Vietnamese, the APPROVED
+   * level only. Its report carries no model level: `cefr` is dropped, so the
+   * estimate cannot reach a family's paper even by a template slip.
+   */
+  family?: { className?: string | null; teacherName?: string | null; approvedLevel?: string | null },
 ): Record<string, unknown> {
+  const report = (latest.report ?? {}) as Record<string, unknown>;
+  if (family) {
+    const { cefr: _model, ...rest } = report;
+    return {
+      variant: "family",
+      studentName,
+      className: family.className ?? null,
+      teacherName: family.teacherName ?? null,
+      approvedLevel: family.approvedLevel ?? null,
+      report: rest,
+      narrative: latest.narrative ?? null,
+      period_start: latest.period_start ?? null,
+      period_end: latest.period_end ?? null,
+    };
+  }
   return {
     studentName,
-    report: latest.report ?? {},
+    report,
     narrative: latest.narrative ?? null,
     period_start: latest.period_start ?? null,
     period_end: latest.period_end ?? null,

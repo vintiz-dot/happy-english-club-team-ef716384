@@ -1,0 +1,341 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:">
+<title>Progress Report</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>:root {
+  --color-paper: #FBF8F1;
+  --color-surface: #F4EEE0;
+  --color-surface-strong: #ECE3CE;
+  --color-ink: #14213D;
+  --color-ink-soft: #34405E;
+  --color-muted: #59617A;
+  --color-accent: #FFF200;
+  --color-accent-deep: #E9B300;
+  --color-gold: #B8975A;
+  --color-gold-ink: #7A5C1E;
+  --color-rule: #DCCFB4;
+  --color-positive: #2E6A4C;
+  --color-negative: #9A2F2A;
+  --font-family-display: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-family-body: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --size-xs: 7.5pt;
+  --size-sm: 8.5pt;
+  --size-base: 9.5pt;
+  --size-md: 11.5pt;
+  --size-lg: 14.5pt;
+  --size-xl: 18pt;
+  --size-2xl: 22.5pt;
+  --size-3xl: 28pt;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
+  --leading-loose: 1.7;
+  --space-1: 8pt;
+  --space-2: 16pt;
+  --space-3: 24pt;
+  --space-4: 32pt;
+  --space-5: 40pt;
+  --space-6: 48pt;
+  --space-8: 64pt;
+  --space-0-5: 4pt;
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 20mm;
+  --page-margin-bottom: 22mm;
+  --page-margin-inner: 18mm;
+  --page-margin-outer: 18mm;
+  --border-hairline: 0.5pt;
+  --border-rule: 0.75pt;
+  --border-strong: 1.5pt;
+  --border-radius: 3pt;
+}
+</style>
+<link rel="stylesheet" href="/components/hec.css">
+<link rel="stylesheet" href="/components/css/addressee.css">
+<link rel="stylesheet" href="/components/css/avatar.css">
+<link rel="stylesheet" href="/components/css/bilingual.css">
+<link rel="stylesheet" href="/components/css/block-head.css">
+<link rel="stylesheet" href="/components/css/bullets.css">
+<link rel="stylesheet" href="/components/css/cell.css">
+<link rel="stylesheet" href="/components/css/closing-row.css">
+<link rel="stylesheet" href="/components/css/code-box.css">
+<link rel="stylesheet" href="/components/css/copy-mark.css">
+<link rel="stylesheet" href="/components/css/evidence-list.css">
+<link rel="stylesheet" href="/components/css/field.css">
+<link rel="stylesheet" href="/components/css/keepsake-card.css">
+<link rel="stylesheet" href="/components/css/level-badge.css">
+<link rel="stylesheet" href="/components/css/meta-stack.css">
+<link rel="stylesheet" href="/components/css/money-summary.css">
+<link rel="stylesheet" href="/components/css/money-table.css">
+<link rel="stylesheet" href="/components/css/name-line.css">
+<link rel="stylesheet" href="/components/css/ornament.css">
+<link rel="stylesheet" href="/components/css/payment-panel.css">
+<link rel="stylesheet" href="/components/css/photo-grid.css">
+<link rel="stylesheet" href="/components/css/phrases.css">
+<link rel="stylesheet" href="/components/css/prose.css">
+<link rel="stylesheet" href="/components/css/pull-quote.css">
+<link rel="stylesheet" href="/components/css/question-list.css">
+<link rel="stylesheet" href="/components/css/reorder-grid.css">
+<link rel="stylesheet" href="/components/css/sender.css">
+<link rel="stylesheet" href="/components/css/skill-matrix.css">
+<link rel="stylesheet" href="/components/css/stat-tile.css">
+<link rel="stylesheet" href="/components/css/steps.css">
+<link rel="stylesheet" href="/components/css/teacher-panel.css">
+<link rel="stylesheet" href="/components/css/tiers.css">
+<link rel="stylesheet" href="/components/css/title-aside.css">
+<link rel="stylesheet" href="/components/css/title-block.css">
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  background: #FBF8F1;
+  @top-left {
+    content: "";
+    width: 9mm;
+    margin-bottom: 4mm;
+    background: url("/tenant/assets/logo.svg") left bottom / contain no-repeat;
+  }
+  @top-right {
+    content: "Nguyễn Thị Minh Anh · Progress Report";
+    vertical-align: bottom;
+    margin-bottom: 5mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    letter-spacing: 0.04em;
+    color: #59617A;
+  }
+  @bottom-left {
+    content: "Learning, an endless journey to perfection";
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Cormorant Garamond", "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-style: italic;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: #34405E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    vertical-align: top;
+    margin-top: 6mm;
+    font-family: "Be Vietnam Pro", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Emoji";
+    font-size: 7.5pt;
+    color: #59617A;
+  }
+}
+@page :first {
+  @top-left { content: none; background: none; }
+  @top-right { content: none; }
+}
+</style>
+</head>
+<body class="doc doc--progress-report variant--family">
+
+<header class="hdr" role="banner">
+  <div class="hdr__lockup">
+    <img class="hdr__logo" src="/tenant/assets/logo.svg" alt="Happy English Club logo">
+    <div class="hdr__brand">
+      <div class="hdr__name">Happy English Club</div>
+<div class="hdr__sub" lang="vi">Câu lạc bộ Tiếng Anh</div>    </div>
+  </div>
+  <div class="hdr__doc">
+<div class="eyebrow">Báo cáo tiến bộ</div><div class="hdr__title">Progress Report</div>  </div>
+</header>
+<div class="hdr__rule" aria-hidden="true"><span></span></div>
+
+
+<section class="ident" aria-label="Student">
+  <div class="ident__who">
+    <div class="ident__name">Nguyễn Thị Minh Anh</div>
+  </div>
+  <dl class="ident__rows">
+<div class="kv"><dt>Class · Lớp</dt><dd>Jupiter</dd></div><div class="kv"><dt>Teacher · Giáo viên</dt><dd>Ms. Lan</dd></div><div class="kv"><dt>Reporting period · Giai đoạn</dt><dd>2026-08-15 → 2026-11-12</dd></div>  </dl>
+</section>
+
+
+<section aria-label="A moment to be proud of">
+<aside class="callout callout--praise">
+<div class="callout__title">A moment to be proud of · Khoảnh khắc đáng tự hào</div>  <div class="callout__body"><div class="bilingual">
+  <p class="bilingual__en">In the &#39;My Hometown&#39; lesson, Minh Anh gave a one-minute talk about Hoan Kiem Lake without notes.</p>
+<p class="bilingual__sub" lang="vi">Trong bài &#39;My Hometown&#39;, Minh Anh đã tự nói một phút về Hồ Hoàn Kiếm mà không cần nhìn giấy.</p></div>
+</div>
+</aside>
+</section>
+
+<section aria-label="This period at a glance">
+  <h2 class="sec sec--2">This period at a glance <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Tổng kết giai đoạn</span></h2>
+
+  <div class="stat-row">
+    <div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+  </span>
+  <span class="stat-tile__value">22/23</span>
+  <span class="stat-tile__label">Lessons attended · Buổi học tham gia</span>
+</div>
+
+<div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+  </span>
+  <span class="stat-tile__value">58</span>
+  <span class="stat-tile__label">New words · Từ mới</span>
+</div>
+<div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+  </span>
+  <span class="stat-tile__value">11</span>
+  <span class="stat-tile__label">Homework handed in · Bài tập đã nộp</span>
+</div>
+<div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+  </span>
+  <span class="stat-tile__value">6</span>
+  <span class="stat-tile__label">Work reviewed by teachers · Bài làm được chấm</span>
+</div>
+<div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+  </span>
+  <span class="stat-tile__value">9</span>
+  <span class="stat-tile__label">Lesson reports sent · Báo cáo buổi học</span>
+</div>
+<div class="stat-tile">
+  <span class="stat-tile__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 22c4 0 7-2.8 7-7 0-3-1.6-5-3.2-6.8-.6 1.3-1.3 2-2.3 2.3C14 7 12.8 4 10 2 10 6 5 8.4 5 15c0 4.2 3 7 7 7z"/></svg>
+  </span>
+  <span class="stat-tile__value">340</span>
+  <span class="stat-tile__label">Points earned · Điểm thưởng</span>
+</div>
+  </div>
+</section>
+
+<section aria-label="English level">
+  <h2 class="sec sec--2">English level <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Trình độ tiếng Anh</span></h2>
+
+  <div class="level">
+    <div class="level__mark">A2</div>
+    <div class="level__body">
+      <p class="level__title">CEFR A2 <span class="level__aside">· confirmed by the teacher · <span lang="vi">giáo viên xác nhận</span></span></p>
+<div class="bilingual">
+  <p class="bilingual__en">Elementary: short conversations and short texts on familiar topics.</p>
+<p class="bilingual__sub" lang="vi">Tiền trung cấp: hội thoại ngắn và đọc, viết đoạn ngắn về chủ đề quen thuộc.</p></div>
+    </div>
+  </div>
+</section>
+
+<section aria-label="What your child can do now">
+  <h2 class="sec sec--2">What your child can do now <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Những điều con đã làm được</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Talk about past weekends using the past simple.</p>
+<p class="bilingual__sub" lang="vi">Kể về cuối tuần đã qua bằng thì quá khứ đơn.</p></div>
+<div class="muted"><div class="bilingual">
+  <p class="bilingual__en">&quot;Last Sunday I visited my grandma and we cooked pho.&quot;</p>
+</div>
+</div></li><li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Read a short graded story and answer questions about it.</p>
+<p class="bilingual__sub" lang="vi">Đọc truyện ngắn theo trình độ và trả lời câu hỏi.</p></div>
+<div class="muted"><div class="bilingual">
+  <p class="bilingual__en">8 of 10 correct on the &#39;Lost Kite&#39; reading.</p>
+<p class="bilingual__sub" lang="vi">Đúng 8/10 câu bài đọc &#39;Lost Kite&#39;.</p></div>
+</div></li><li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Ask classmates follow-up questions in pair work.</p>
+<p class="bilingual__sub" lang="vi">Đặt câu hỏi tiếp nối khi làm việc cặp.</p></div>
+</li>  </ul>
+</section>
+
+<section aria-label="Our next goals">
+  <h2 class="sec sec--2">Our next goals <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Mục tiêu tiếp theo</span></h2>
+
+  <ul class="bullets">
+    <li class="bullets__item"><strong>Join two ideas with because and so.</strong><p class="bilingual__sub" lang="vi">Nối hai ý bằng because và so.</p><div class="bilingual">
+  <p class="bilingual__en">Longer sentences make her answers clearer.</p>
+<p class="bilingual__sub" lang="vi">Câu dài hơn giúp câu trả lời của con rõ ràng hơn.</p></div>
+<div class="eyebrow">In class · <span lang="vi">Trên lớp</span></div><div class="bilingual">
+  <p class="bilingual__en">A short sentence-joining drill at the start of each lesson.</p>
+<p class="bilingual__sub" lang="vi">Luyện nối câu ngắn đầu mỗi buổi học.</p></div>
+    </li>
+  </ul>
+</section>
+
+<section aria-label="How you can help at home">
+  <h2 class="sec sec--2">How you can help at home <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Bố mẹ đồng hành cùng con</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Ask Minh Anh to teach you three words from this week&#39;s word list.</p>
+<p class="bilingual__sub" lang="vi">Nhờ Minh Anh dạy bố mẹ ba từ trong danh sách từ tuần này.</p></div>
+</li><li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">At dinner, let her tell you about her day in English for one minute. Just listen and smile.</p>
+<p class="bilingual__sub" lang="vi">Trong bữa tối, để con kể về một ngày của con bằng tiếng Anh trong một phút. Bố mẹ chỉ cần lắng nghe và khích lệ.</p></div>
+</li>  </ul>
+</section>
+
+<section aria-label="Ask your child">
+  <h2 class="sec sec--2">Ask your child <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Hỏi con</span></h2>
+
+  <ul class="bullets">
+<li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">What was the funniest part of &#39;The Lost Kite&#39;?</p>
+<p class="bilingual__sub" lang="vi">Đoạn nào trong truyện &#39;The Lost Kite&#39; buồn cười nhất?</p></div>
+</li><li class="bullets__item"><div class="bilingual">
+  <p class="bilingual__en">Which new word do you like most this week?</p>
+<p class="bilingual__sub" lang="vi">Tuần này con thích từ mới nào nhất?</p></div>
+</li>  </ul>
+</section>
+
+<section aria-label="Next period">
+  <h2 class="sec sec--2">Next period <span class="sec__vi" lang="vi"><span class="ornament" aria-hidden="true">·</span> Giai đoạn tới</span></h2>
+
+  <div class="bilingual">
+  <p class="bilingual__en">Our shared goal: a two-minute talk on a topic she chooses, using because and so.</p>
+<p class="bilingual__sub" lang="vi">Mục tiêu chung: con nói hai phút về chủ đề con chọn, có dùng because và so.</p></div>
+
+</section>
+
+<section aria-label="From the teacher">
+<aside class="callout callout--praise">
+<div class="callout__title">From the teacher · Lời cô/thầy</div>  <div class="callout__body"><div class="bilingual">
+  <p class="bilingual__en">Minh Anh brings real curiosity to every lesson. Her talk about Hoan Kiem Lake made the whole class want to visit. I am proud of how much braver she has become.</p>
+<p class="bilingual__sub" lang="vi">Minh Anh luôn mang đến sự tò mò trong mỗi buổi học. Bài nói về Hồ Hoàn Kiếm của con khiến cả lớp muốn đến thăm. Cô rất tự hào vì con ngày càng tự tin hơn.</p></div>
+</div>
+</aside>
+</section>
+
+<div class="closing">
+<aside class="callout callout--note">
+  <div class="callout__body">This report celebrates progress and points to next steps. Your child&#39;s teachers are glad to talk it through with you.</div>
+</aside>
+  <p class="encourage">Keep going: confidence grows with practice.</p>
+
+  <div class="closing-row">
+    <div class="sign">
+  <div class="sign__closing">With warm regards, <span lang="vi">/ Thân mến,</span></div>
+  <div class="sign__name">Teacher Victor</div>
+  <div class="sign__role">Happy English Club</div>
+</div>
+
+    <footer class="qrf">
+  <div class="qrf__code"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path stroke="#14213D" d="M0 0.5h7m2 0h2m1 0h2m2 0h1m1 0h7M0 1.5h1m5 0h1m3 0h3m2 0h1m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h4m2 0h3m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m1 0h5m3 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m1 0h1m1 0h1m1 0h2m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h5m1 0h1m1 0h1M0 8.5h1m1 0h5m6 0h3m2 0h5M0 9.5h5m4 0h3m1 0h1m2 0h1m2 0h1m3 0h1M0 10.5h2m2 0h1m1 0h3m1 0h2m3 0h1m2 0h1m2 0h1m1 0h2M2 11.5h4m1 0h2m7 0h3m1 0h1m3 0h1M0 12.5h1m2 0h2m1 0h1m1 0h1m4 0h1m3 0h2m1 0h1m1 0h3M0 13.5h3m4 0h1m1 0h1m2 0h2m2 0h1m2 0h1m1 0h1m1 0h1M0 14.5h1m1 0h7m4 0h5m1 0h3m1 0h2M0 15.5h1m1 0h1m1 0h1m7 0h1m2 0h2m2 0h2m3 0h1M0 16.5h1m2 0h1m1 0h6m1 0h9m1 0h1M8 17.5h2m5 0h2m3 0h2M0 18.5h7m2 0h1m1 0h3m2 0h1m1 0h1m1 0h1m1 0h3M0 19.5h1m5 0h1m1 0h2m1 0h1m2 0h1m1 0h1m3 0h2m2 0h1M0 20.5h1m1 0h3m1 0h1m1 0h1m2 0h10m1 0h1M0 21.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h2m3 0h2m1 0h5M0 22.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h4m4 0h2m1 0h1M0 23.5h1m5 0h1m2 0h1m4 0h4m1 0h3m2 0h1M0 24.5h7m1 0h7m2 0h1m1 0h6"/></svg>
+</div>
+  <div class="qrf__text">
+    <div class="qrf__site">hanoienglish.com</div>
+  </div>
+</footer>
+
+  </div>
+<div class="colophon">Happy English Club · hanoienglish.com · 11/13/2026</div>
+</div>
+</body>
+</html>

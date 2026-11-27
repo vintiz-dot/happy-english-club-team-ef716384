@@ -5,6 +5,12 @@ All notable changes to HEC Docs: the engine, and each template with its own semv
 - **Minor:** new variant or optional field.
 - **Patch:** visual change with the same data.
 
+## 2026-11-27: progress-report 1.1.0 (family copy)
+
+- **New variant `family`**: the parents' copy of the AI progress report, English with Vietnamese: a moment to be proud of, the period at a glance (stat tiles counted by the school), the CEFR level only when a teacher approved it (with a plain description), what the child can do now with evidence, at most two next goals with what the teacher does in class, ideas for home, questions to ask the child, the next period's goal and the teacher's note. The model's level, its confidence, growth areas, teacher next steps and evidence counts are never printed in it. Made by "Family PDF" in the report dialog and by the bulk export's "Family copy" switch (on by default).
+- Optional fields: `className`, `teacherName`, `approvedLevel`, `report.parent`, `report.facts`, `report.narrative`, `report.cefr.approved`, and the newer `source_counts` keys. `full` and `compact` are unchanged (parity fixtures still pass).
+- Fixture `family.json`.
+
 ## 2026-11-25: class-report 1.0.0 (new type)
 
 - **New document type `class-report`**: one child's copy of one approved lesson report, made in bulk by the staff's "Download all children's reports" (one PDF per child, zipped). The child's own part comes first (attendance, points, highlight, their work, the teacher's comment, next focus), then the class part every family sees (goals with how far they were met, what was learned, words, sentence patterns, activities, photos, class focus, tips for home, questions to ask, homework, next lesson). English with the Vietnamese under it throughout. One variant, `family`.
