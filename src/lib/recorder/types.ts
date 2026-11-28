@@ -93,8 +93,10 @@ export interface Discontinuity {
    * local_store_failed: the browser would not store this track's chunk at t_ms; the track ends there.
    * page_reload: the page was reloaded (or crashed) while capturing; capture resumed in the same recording after wall_gap_ms with no audio.
    * pre_start_trimmed: the server stamped its start wall_gap_ms after the page asked; that audio is not part of the recording.
+   * audio_slip: the audio fell wall_gap_ms (under 1 s) behind the monotonic clock without stopping (the browser
+   *   dropped input samples a few at a time); filled with silence (padded_ms) so the timeline stays on real time.
    */
-  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed" | "pre_start" | "page_reload";
+  kind: "context_stall" | "clock_change" | "device_lost" | "device_restored" | "local_store_failed" | "pre_start_trimmed" | "pre_start" | "page_reload" | "audio_slip";
   wall_gap_ms: number;
   /** context_stall: how much of the gap was filled with silence (C2 round 3, N-M2). pre_start: wall_gap_ms is the audio before the server's Start. */
   padded_ms?: number;

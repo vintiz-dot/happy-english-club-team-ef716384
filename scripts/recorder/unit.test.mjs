@@ -962,6 +962,42 @@ console.log("=== M6: a busy main thread is not a stall (no false gap markers) ==
   await r.stop(); await r.settle();
 }
 
+console.log("=== Slips: audio lost a few samples at a time is filled, so the timeline stays on real time ===");
+{
+  // Owner's pilot, 28 Nov 2026: the room track lost 0.7 s over 23 minutes, never a 1 s step.
+  const { src, r, errors, row, w } = await started();
+  r.tick(); await r.settle();
+  await src.play(10, r);
+  for (let i = 0; i < 20; i++) { await src.play(3, r); clock += 40; }   // 40 ms of wall time with no audio, 20 times
+  await src.play(12, r);
+  const cur = await r.current();
+  const slips = cur.discontinuities.filter((d) => d.kind === "audio_slip");
+  const filled = slips.reduce((n, d) => n + (d.padded_ms ?? 0), 0);
+  ok("slips: 800 ms lost is filled to within 100 ms", filled >= 700 && filled <= 800, `${filled} ms in ${slips.length} fills`);
+  ok("slips: every fill is at least SLIP_PAD_MS", slips.every((d) => d.padded_ms >= 100), JSON.stringify(slips));
+  ok("slips: no stall, no gap marker, no error", !errors.some((e) => e.code === "capture_stalled") && !cur.discontinuities.some((d) => d.kind === "context_stall") && ![...w.server.markers.values()].some((m) => m.recording_id === row.id && m.kind === "gap"), JSON.stringify(cur.discontinuities));
+  await r.stop(); await r.settle();
+  eq("slips: it completes", w.server.recordings.get(row.id).status, "complete");
+  const tr = [...w.server.tracks?.values?.() ?? []].filter((t) => t.recording_id === row.id);
+  if (tr.length) ok("slips: the filled silence is stated per track", tr.every((t) => t.padded_ms === filled), JSON.stringify(tr.map((t) => t.padded_ms)));
+  ok("slips: both tracks still contiguous", contiguous(seqs(w, row.id, "teacher")) && contiguous(seqs(w, row.id, "room")));
+}
+
+console.log("=== Slips: a 4 s stall is padded once, not again by the ledger ===");
+{
+  const { src, r, row, w } = await started();
+  r.tick(); await r.settle();
+  await src.play(10, r);
+  clock += 4000; r.tick(); await r.settle();              // nothing for 4 s: the watchdog's stall (under the ledger's 5 s window)
+  await src.play(12, r);
+  const cur = await r.current();
+  const fills = cur.discontinuities.filter((d) => (d.kind === "context_stall" || d.kind === "audio_slip") && (d.padded_ms ?? 0) > 0);
+  const total = fills.reduce((n, d) => n + d.padded_ms, 0);
+  ok("stall: one fill of about 4 s, no second one", fills.length === 1 && total >= 3900 && total <= 4100, JSON.stringify(cur.discontinuities));
+  await r.stop(); await r.settle();
+  eq("stall: it completes", w.server.recordings.get(row.id).status, "complete");
+}
+
 console.log("=== M6: the Worker encoder keeps order and falls back without losing a chunk ===");
 {
   const { createHash } = await import("node:crypto");

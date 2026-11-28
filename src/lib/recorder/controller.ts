@@ -164,6 +164,8 @@ interface Active {
 const ms = (iso: string) => Date.parse(iso);
 /** The scheduled stop is sent this long before capture_closes_at, so it lands inside the window. */
 export const STOP_MARGIN_MS = 5000;
+/** The audio may fall this far behind the monotonic clock before the gap is filled with silence (ledger). */
+export const SLIP_PAD_MS = 100;
 /** Start refusals the server actually stated: final. Anything else is retried (N-B2). */
 const FINAL_START_REFUSALS: ServerRefusal[] = ["window_closed", "switch_off", "consent_missing", "session_canceled", "not_teacher", "no_longer_teaching", "already_live", "recording_closed", "not_your_recording", "session_invalid"];
 /** A stated "this lesson must not be recorded": what was captured before it is deleted at once (R3-M2). */
@@ -956,15 +958,18 @@ export class Recorder {
     const padded = this.padSilence(a, gap);
     a.rec.discontinuities.push({ t_ms: tMs, kind: "context_stall", wall_gap_ms: gap, padded_ms: padded });
     if (a.ledgerBase !== null) a.ledgerBase += gap;   // the ledger counts delivered frames only
+    // The points from before the stall would pull the minimum back under the new base and, once they aged out,
+    // the ledger would see the same gap again and pad it a second time (padding there since 28 Nov 2026).
+    a.ledgerWin = [];
     void this.queueMarker("gap", `no audio for ${Math.round(gap / 1000)} s`);
     this.events.emit("health", { kind: "capture_resumed", tMs, gapMs: gap });
     this.setState(this.capturingState(a));
   }
 
   /** Silence pushed onto the timeline for a gap (at most 30 min), 1 s at a time. Returns the ms padded. */
-  private padSilence(a: Active, gapMs: number): number {
+  private padSilence(a: Active, gapMs: number, minMs = 1000): number {
     const ch = a.chunker;
-    if (!ch?.started || a.rec.format === "opus-webm" || gapMs < 1000) return 0;
+    if (!ch?.started || a.rec.format === "opus-webm" || gapMs < minMs) return 0;
     const sr = a.rec.sampleRate;
     let left = Math.round((Math.min(gapMs, 30 * 60000) * sr) / 1000);
     const total = left;
@@ -1000,12 +1005,23 @@ export class Recorder {
     let min = Infinity;
     for (const x of a.ledgerWin) if (x.d < min) min = x.d;
     if (a.ledgerBase === null || min < a.ledgerBase) { a.ledgerBase = min; return; }
-    if (min - a.ledgerBase > 1000) {
-      const gap = Math.round(min - a.ledgerBase);
+    const gap = Math.round(min - a.ledgerBase);
+    if (gap > 1000) {
       a.ledgerBase = min;
       const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
-      a.rec.discontinuities.push({ t_ms: tMs, kind: "context_stall", wall_gap_ms: gap });
+      // 28 Nov 2026: filled like a stall, so the audio after it stays on real time (it used to be logged only).
+      const padded = this.padSilence(a, gap);
+      a.rec.discontinuities.push({ t_ms: tMs, kind: "context_stall", wall_gap_ms: gap, padded_ms: padded });
       void this.queueMarker("gap", `audio ran ${Math.round(gap / 1000)} s behind the clock`);
+    } else if (gap >= SLIP_PAD_MS) {
+      // Owner's pilot, 28 Nov 2026: the room track lost 0.7 s a few samples at a time between minutes 30 and 53
+      // (measured against four Lark transmitters on their own clocks), never a step the 1 s rule above saw, so
+      // everything after it - the transcript, the teacher's taps, the mics - sat up to 0.8 s off. Each slip of
+      // SLIP_PAD_MS or more is filled with that much silence: the timeline stays within SLIP_PAD_MS of real time.
+      a.ledgerBase = min;
+      const tMs = a.chunker ? frameToMs(a.chunker.position, a.rec.sampleRate) : 0;
+      const padded = this.padSilence(a, gap, SLIP_PAD_MS);
+      a.rec.discontinuities.push({ t_ms: tMs, kind: "audio_slip", wall_gap_ms: gap, padded_ms: padded });
     }
   }
 

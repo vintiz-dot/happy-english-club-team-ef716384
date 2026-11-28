@@ -31,11 +31,11 @@ export function trackCounts(chunks: ChunkMeta[]): TrackCounts {
 /**
  * C2 round 4 (R3-M1): ms of silence the page filled into stall gaps that lie
  * inside chunks which would otherwise count (not below the byte floor):
- * the exact overlap of each `context_stall` fill [t_ms, t_ms + padded_ms)
+ * the exact overlap of each `context_stall` or `audio_slip` fill [t_ms, t_ms + padded_ms)
  * with those chunks. The server subtracts it from the verified figures.
  */
 export function paddedInside(rec: { discontinuities: { kind: string; t_ms: number; padded_ms?: number }[] }, chunks: ChunkMeta[]): number {
-  const fills = rec.discontinuities.filter((d) => d.kind === "context_stall" && (d.padded_ms ?? 0) > 0).map((d) => [d.t_ms, d.t_ms + (d.padded_ms ?? 0)] as const);
+  const fills = rec.discontinuities.filter((d) => (d.kind === "context_stall" || d.kind === "audio_slip") && (d.padded_ms ?? 0) > 0).map((d) => [d.t_ms, d.t_ms + (d.padded_ms ?? 0)] as const);
   let n = 0;
   for (const c of chunks) {
     if (c.belowFloor) continue;
