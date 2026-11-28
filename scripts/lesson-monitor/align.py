@@ -81,40 +81,60 @@ def _frame_db(x: np.ndarray, sr: int, frame_s: float, lo_hz: float | None = None
     return 10 * np.log10(e + 1e-12)
 
 
-def find_claps(x: np.ndarray, sr: int, above_db: float = 12.0, frame_s: float = 0.005) -> list[float]:
-    """Times (s) of sharp broadband spikes. A clap's high band (>2 kHz) stands above_db over the LOUD speech of the
-    30 seconds before it (90th percentile of 50 ms maxima), and has risen 8 dB within 40 ms and fallen 15 dB 40 ms later. A syllable can rise as
-    fast as a clap after a pause, but it is not 12 dB louder than the half-minute of speech around it. A stray loud
-    spike (a dropped book) is fine: only three in a row with matching gaps on both tracks are used."""
-    db = _frame_db(np.asarray(x, dtype=np.float64), sr, frame_s, lo_hz=2000.0)
-    if len(db) < 500:
-        return []
+def _spikes(db: np.ndarray, frame_s: float, above_db: float) -> np.ndarray:
+    """Per frame: a peak standing above_db over the loud sound of the 30 s before (90th percentile of 50 ms maxima),
+    risen 8 dB within 40 ms and fallen 15 dB 40 ms later."""
     from scipy.ndimage import percentile_filter
+    n = len(db)
     per = int(0.05 / frame_s)
-    nb = len(db) // per
+    nb = n // per
+    out = np.zeros(n, dtype=bool)
+    if nb < 4:
+        return out
     blk = db[: nb * per].reshape(nb, per).max(axis=1)
-    hist = 600  # 30 s of blocks before
+    hist = 600  # 30 s of blocks
     ref = percentile_filter(blk, 90, size=hist, mode="nearest")  # centred: ref[j] covers blocks j-300..j+299
     q = int(0.04 / frame_s)  # 40 ms
     i = np.arange(max(per * 2, q + 2), nb * per - q - 3)
     if len(i) == 0:
-        return []
+        return out
     is_peak = (db[i] >= db[i - 1]) & (db[i] > db[i + 1])
-    loud = db[i] - ref[np.maximum(i // per - hist // 2 - 1, hist // 2)] >= above_db  # the 30 s before (the first 30 s at the start)
-    # a clap rises AND falls within 40 ms (a syllable, even a plosive or an "s", lasts 100 ms or more)
+    loud = db[i] - ref[np.maximum(i // per - hist // 2 - 1, hist // 2)] >= above_db  # the 30 s before (or the first 30)
     later = np.maximum(np.maximum(db[i + q], db[i + q + 1]), db[i + q + 2])
     before = np.maximum(db[i - q], db[i - q - 1])
     short = (db[i] - later >= 15.0) & (db[i] - before >= 8.0)  # (before: a clap over speech still stands out)
+    out[i[is_peak & loud & short]] = True
+    return out
+
+
+def find_claps(x: np.ndarray, sr: int, above_db: float = 12.0, frame_s: float = 0.005) -> list[float]:
+    """Times (s) of claps: a spike (see _spikes) in the HIGH band (above 2 kHz) with a spike in the LOW band
+    (500-1500 Hz) within 10 ms. A clap is broadband and over in 40 ms; a syllable is narrower (a vowel is low, an "s"
+    is high), lasts 100 ms or more, and is not 12 dB louder than the half-minute of speech around it. Only spikes within
+    10 dB of the loudest are kept (the claps are the loudest sounds of the lesson). A stray loud
+    broadband spike (a dropped book) is fine: only three in a row with matching gaps on both tracks are used."""
+    x = np.asarray(x, dtype=np.float64)
+    hi = _frame_db(x, sr, frame_s, lo_hz=2000.0)
+    if len(hi) < 500:
+        return []
+    from scipy.signal import butter, sosfilt
+    lo = _frame_db(sosfilt(butter(4, (500.0, 1500.0), "bandpass", fs=sr, output="sos"), x), sr, frame_s)
+    sh, sl = _spikes(hi, frame_s, above_db), _spikes(lo, frame_s, above_db / 2)  # speech is loudest low: 6 dB there
+    near = np.convolve(sl.astype(np.int8), np.ones(5, dtype=np.int8), mode="same") > 0  # within 10 ms
     out, peaks = [], []
-    for k in i[is_peak & loud & short]:
+    for k in np.nonzero(sh & near)[0]:
         t = k * frame_s
         if out and t - out[-1] <= 0.15:
-            if db[k] > peaks[-1]:  # two spikes within 150 ms: the louder one is the clap
-                out[-1], peaks[-1] = t, db[k]
+            if hi[k] > peaks[-1]:  # two spikes within 150 ms: the louder one is the clap
+                out[-1], peaks[-1] = t, hi[k]
             continue
         out.append(t)
-        peaks.append(db[k])
-    return out
+        peaks.append(hi[k])
+    if not out:
+        return out
+    # the teacher's claps are the loudest spikes of the lesson: weaker ones (a syllable, a pencil) are left out
+    top = max(peaks)
+    return [t for t, p in zip(out, peaks) if p >= top - 10.0]
 
 
 def clap_triples(times: list[float], lo: float = 0.2, hi: float = 1.6) -> list[tuple[float, float, float]]:

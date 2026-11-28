@@ -449,11 +449,32 @@ def finish(api, row: dict, body: dict, lk: Lark, embedders: dict, allowed: set[s
                     "enrol": {"turns": len(turns), "groups": [g["key"] for g in egroups], "refused": erefused},
                     "settings": {"segments": dict(segments.SETTINGS, band_hz=list(segments.SETTINGS["band_hz"])),
                                  "vad": lk.act["vad_engine"], "bleed_db": lk.act["bleed"], "timing_s": lk.timing}}
+    note_engine(rid, [g["key"] for g in egroups])
     named = sum(1 for r in results if r["named"])
     log(f"{rid} lark: {len(results)} segments, {named} named, {len(groups)} voice groups, "
         f"{len(sugg)} board correction(s); {lk.timing['attribute']} s")
     return {"groups": groups, "samples": {}, "samples_by_model": {}, "shown_model": voice.SETTINGS["shown_model"],
             "results": results}
+
+
+def engine_file() -> Path:
+    return pc.sub("state") / "lark_engine.json"
+
+
+def note_engine(rid: str, enrol_keys: list[str]) -> None:
+    """Which recordings this engine made (ids and group keys only), so voice_admin.py accuracy --engine lark scores
+    them apart from the old engine and leaves enrolment groups (suggested by a tap, not by a voice) out."""
+    import json
+    p = engine_file()
+    d = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    d[rid] = {"engine": ENGINE, "enrol": enrol_keys}
+    pc.out(p).write_text(json.dumps(d, separators=(",", ":")), encoding="utf-8")
+
+
+def engine_marks() -> dict:
+    import json
+    p = engine_file()
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
 
 
 def read_marks(api, row: dict, window) -> list[dict]:

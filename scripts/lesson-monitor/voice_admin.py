@@ -4,6 +4,7 @@
   PY scripts\\lesson-monitor\\voice_admin.py consent --student-id <id> --withdrawn --note "parent phoned 24 Nov"
   PY scripts\\lesson-monitor\\voice_admin.py list                       # who is known by voice, and how well
   PY scripts\\lesson-monitor\\voice_admin.py accuracy                   # every model scored against the teacher's answers
+  PY scripts\\lesson-monitor\\voice_admin.py accuracy --engine lark       # the Lark-mic engine (28 Nov 2026) on its own
   PY scripts\\lesson-monitor\\voice_admin.py delete --student-id <id>   # one child's voiceprint and pending groups
   PY scripts\\lesson-monitor\\voice_admin.py delete --all --yes         # every voiceprint on this laptop
 
@@ -90,6 +91,61 @@ def accuracy(rows: list[dict], s: dict = voice.SETTINGS) -> dict:
     return out
 
 
+def engine_rows(rows: list[dict], marks: dict, engine: str) -> list[dict]:
+    """The calibration rows of one engine: "lark" = recordings multimic.py made (its enrolment groups left out: a tap
+    suggested them, not a voice), "old" = every other recording, "all" = everything."""
+    if engine == "all":
+        return rows
+    lark = {rid for rid, m in marks.items() if str(m.get("engine", "")).startswith("lark")}
+    enrol = {(rid, k) for rid, m in marks.items() for k in m.get("enrol") or []}
+    if engine == "lark":
+        return [r for r in rows if r.get("rid") in lark and (r.get("rid"), r.get("g")) not in enrol]
+    return [r for r in rows if r.get("rid") not in lark]
+
+
+def accuracy_shown(rows: list[dict], s: dict = voice.SETTINGS) -> dict:
+    """Pure. What the teacher was SHOWN against what they answered, for the shown model, in groups and seconds:
+    named-and-right, named-and-wrong, unsure (a child the teacher named that got no suggestion), per child and in all.
+    Blind groups count as unsure (nothing was shown). The Lark engine names per segment, so its groups are judged by
+    what they suggested, not by re-applying the old group threshold. Target: under 5 % wrong among named."""
+    shown_model = s["shown_model"]
+    last: dict[tuple, dict] = {}
+    for r in rows:
+        if r.get("model", "ecapa") == shown_model:
+            last[(r.get("rid"), r.get("g"))] = r
+    per: dict[str, dict] = {}
+    tot = {"right": 0, "wrong": 0, "unsure": 0, "right_s": 0.0, "wrong_s": 0.0, "unsure_s": 0.0}
+    for r in last.values():
+        if r.get("answer") != "child" or not r.get("student"):
+            continue
+        kid = per.setdefault(r["student"], {"right": 0, "wrong": 0, "unsure": 0, "right_s": 0.0, "wrong_s": 0.0,
+                                            "unsure_s": 0.0})
+        sec = float(r.get("sec") or 0.0)
+        k = "unsure" if not r.get("shown") else ("right" if r.get("best") == r["student"] else "wrong")
+        for d in (kid, tot):
+            d[k] += 1
+            d[k + "_s"] += sec
+    named = tot["right"] + tot["wrong"]
+    tot["wrong_among_named_pct"] = _pct(tot["wrong"], named)
+    named_s = tot["right_s"] + tot["wrong_s"]
+    tot["wrong_among_named_s_pct"] = round(100 * tot["wrong_s"] / named_s, 1) if named_s else None
+    return {"children": per, "total": tot}
+
+
+def format_shown(res: dict) -> list[str]:
+    t = res["total"]
+    lines = [f"{'child':38} {'right':>6} {'wrong':>6} {'unsure':>7} {'right s':>8} {'wrong s':>8} {'unsure s':>9}"]
+    for sid, d in sorted(res["children"].items()):
+        lines.append(f"{sid:38} {d['right']:6d} {d['wrong']:6d} {d['unsure']:7d} {d['right_s']:8.0f} {d['wrong_s']:8.0f} "
+                     f"{d['unsure_s']:9.0f}")
+    lines.append(f"{'all':38} {t['right']:6d} {t['wrong']:6d} {t['unsure']:7d} {t['right_s']:8.0f} {t['wrong_s']:8.0f} "
+                 f"{t['unsure_s']:9.0f}")
+    w = t["wrong_among_named_pct"]
+    lines.append(f"wrong among named: {'-' if w is None else w} % of groups, "
+                 f"{'-' if t['wrong_among_named_s_pct'] is None else t['wrong_among_named_s_pct']} % of seconds (target < 5 %)")
+    return lines
+
+
 def format_accuracy(res: dict) -> list[str]:
     if not res:
         return ["no answered groups with scores yet"]
@@ -144,7 +200,8 @@ def main(argv=None) -> int:
     g.add_argument("--withdrawn", action="store_true")
     c1.add_argument("--note", required=True)
     ls = sp.add_parser("list")
-    sp.add_parser("accuracy")
+    acc = sp.add_parser("accuracy")
+    acc.add_argument("--engine", choices=("all", "old", "lark"), default="all")
     pb = sp.add_parser("publish")
     d = sp.add_parser("delete")
     who = d.add_mutually_exclusive_group(required=True)
@@ -170,7 +227,13 @@ def main(argv=None) -> int:
         pc.log(f"voices: one child's voiceprint deleted by hand ({'1' if gone else '0'} file)")
         return 0
     if a.cmd == "accuracy":
-        for ln in format_accuracy(accuracy(voiceprints.read_calibration())):
+        import multimic
+        rows = engine_rows(voiceprints.read_calibration(), multimic.engine_marks(), a.engine)
+        print(f"engine: {a.engine}; {len(rows)} calibration rows")
+        for ln in format_accuracy(accuracy(rows)):
+            print(ln)
+        print("")
+        for ln in format_shown(accuracy_shown(rows)):
             print(ln)
         print(f"\nshown model: {voice.SETTINGS['shown_model']}; thresholds now: {voice.SETTINGS['thresholds']}, "
               f"margin {voice.SETTINGS['margin']}, at least {voice.SETTINGS['group_min_s']} s")
