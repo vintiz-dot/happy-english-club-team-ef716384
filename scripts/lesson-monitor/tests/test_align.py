@@ -133,6 +133,48 @@ def test_apply_marks_seconds_outside_the_file():
     assert not cov[:19].any() and cov[25:200].all() and not cov[225:].any()
 
 
+def room_dropping_audio(offset=40.0, seconds=600, start=200.0, end=320.0, every=3.0, drop_ms=8):
+    """The owner's pilot (28 Nov 2026): the browser's room track lost about 0.8 s in small pieces mid-lesson, so the
+    lag to every mic was flat, crept, then flat again. Here the room loses drop_ms every `every` seconds."""
+    t, k1, k2, cl, _ = lesson(seconds, False, 0)
+    full = 0.8 * t + 0.3 * k1 + 0.3 * k2
+    at_mic = 0.5 * t + 1.0 * k1 + 0.1 * k2
+    mic = on_mic_clock(at_mic, SR, offset, 0.0, seconds + offset + 5) + hiss(int((seconds + offset + 5) * SR), 0.004, 10)
+    cut = np.ones(len(full), dtype=bool)
+    n = int(drop_ms / 1000 * SR)
+    for c in np.arange(start, end, every):
+        cut[int(c * SR): int(c * SR) + n] = False
+    room = full[cut] + hiss(int(cut.sum()), 0.003, 9)
+    lost = (len(full) - cut.sum()) / SR
+    return room.astype(np.float32), mic, lost
+
+
+def test_room_that_drops_audio_gets_a_piecewise_fit():
+    room, mic, lost = room_dropping_audio()
+    f = align.align_track("mic1", room, mic, SR)
+    assert f.ok, f
+    assert f.knots and f.method.endswith("+gcc-piecewise")
+    assert abs(f.offset_s - 40.0) < 0.01
+    # before the drops the lag is the offset, after them the offset plus what the room lost
+    assert abs(float(f.mic_time(100.0)) - 100.0 - 40.0) < 0.01
+    assert abs(float(f.mic_time(450.0)) - 450.0 - (40.0 + lost)) < 0.015
+    assert f.summary()["knots"] == len(f.knots)
+    y, cov = align.apply(mic, SR, f, len(room))
+    t, k1, k2, _, _ = lesson(600, False, 0)
+    expect = 0.5 * t + 1.0 * k1 + 0.1 * k2
+    fr = lambda v: np.sqrt(np.mean(v[: len(v) // 80 * 80].reshape(-1, 80) ** 2, axis=1))  # noqa: E731
+    a, b = 400 * SR, 500 * SR  # room time 400-500 s is source time 400 + lost onwards
+    sh = int(round(lost * SR))
+    assert np.corrcoef(fr(y[a:b]), fr(expect[a + sh:b + sh]))[0, 1] > 0.97
+
+
+def test_piecewise_never_rescues_an_unrelated_track():
+    room, _, _ = room_dropping_audio()
+    other = voice(600, SR, 99) + hiss(600 * SR, 0.004, 11)
+    f = align.align_track("mic2", room, other, SR)
+    assert not f.ok and not f.knots
+
+
 def test_align_all_report_part():
     room, mic = room_and_mic(5.0, 0.0)
     other = voice(600, SR, 77)

@@ -38,6 +38,15 @@ SETTINGS = {
     "max_drift_ppm": 300.0,   # crystals are tens of ppm; more is a wrong fit
     "clap_check_ms": 25.0,    # the end claps must sit this close to the fitted line
     "ransac_iters": 400,
+    # Piecewise fit, tried only when no straight line fits (owner's pilot, 28 Nov 2026): the ROOM track is the
+    # browser's, and a browser can drop a little audio under load. That lesson's lag sat flat for 30 min, crept
+    # 0.8 s over the next 23 and sat flat again, the same shape on all four mics, so every mic was rejected as
+    # windows_disagree although nearly every window agreed with its neighbours. A window is kept when it is
+    # within pw_tol_ms of the median of its pw_neigh neighbours each side; the kept windows are the map's knots.
+    "pw_neigh": 3,
+    "pw_tol_ms": 15.0,
+    "pw_min_frac": 0.6,       # at least this share of the strong windows must be kept
+    "pw_max_rate_ppm": 3000.0,  # the lag may change at most this fast between knots (0.18 s a minute)
 }
 
 
@@ -53,12 +62,20 @@ class Fit:
     method: str = ""
     reason: str | None = None
     claps: dict = field(default_factory=dict)
+    # Piecewise fits only: [(room time, lag)] in room-time order; mic_time = t + lag(t), held flat past the ends.
+    knots: list | None = None
 
     def mic_time(self, t):
-        return self.offset_s + (1.0 + self.drift_ppm * 1e-6) * np.asarray(t, dtype=np.float64)
+        t = np.asarray(t, dtype=np.float64)
+        if self.knots:
+            kt = np.array([k[0] for k in self.knots])
+            kl = np.array([k[1] for k in self.knots])
+            return t + np.interp(t, kt, kl)
+        return self.offset_s + (1.0 + self.drift_ppm * 1e-6) * t
 
     def summary(self) -> dict:
         d = asdict(self)
+        d["knots"] = len(self.knots) if self.knots else 0  # the report keeps the count, not the map
         for k in ("offset_s",):
             if d[k] is not None:
                 d[k] = round(d[k], 4)
@@ -314,7 +331,7 @@ def align_track(name: str, ref: np.ndarray, sig: np.ndarray, sr: int, meta_offse
     for gname, g in guesses:
         pts = [p for p in window_lags(ref, sig, sr, g, s, should_stop) if p[2] >= s["min_psr"]]
         fit = _fit(name, pts, s)
-        fit.method, fit.claps = gname + "+gcc", claps
+        fit.method, fit.claps = gname + ("+gcc-piecewise" if fit.knots else "+gcc"), claps
         if fit.ok and anchors:
             fit = _check_claps(fit, anchors, s)
         if fit.ok:
@@ -343,7 +360,51 @@ def _fit(name: str, pts, s: dict) -> Fit:
         f.ok, f.reason = False, "residual_too_large"
     elif abs(drift) > s["max_drift_ppm"]:
         f.ok, f.reason = False, "drift_implausible"
+    # A straight line may pass on as few as min_inlier_frac of the windows: when the lag stepped mid-lesson it then
+    # fits one side and maps the other wrongly. So whenever it leaves windows out, the piecewise map is tried too,
+    # and wins when it keeps clearly more of them (a true straight line keeps them all, and so stays).
+    if (not f.ok and f.reason in ("windows_disagree", "residual_too_large")) or (f.ok and f.inliers < len(pts)):
+        pw = _piecewise(name, pts, s)
+        if pw.ok and (not f.ok or pw.inliers >= f.inliers + max(2, int(0.15 * len(pts)))):
+            return pw
     return f
+
+
+def _rolling_median(y: np.ndarray, k: int, skip_self: bool) -> np.ndarray:
+    out = np.empty(len(y))
+    for i in range(len(y)):
+        idx = [j for j in range(max(0, i - k), min(len(y), i + k + 1)) if not (skip_self and j == i)]
+        out[i] = np.median(y[idx]) if idx else y[i]
+    return out
+
+
+def _piecewise(name: str, pts, s: dict) -> Fit:
+    """A lag that changes along the lesson but smoothly: each window must agree with its neighbours (median of
+    pw_neigh each side, itself left out) within pw_tol_ms; a lone window that disagrees is dropped. Rejected when
+    too few are kept, when the kept ones scatter, or when the lag would have to change implausibly fast."""
+    pts = sorted(pts)
+    t = np.array([p[0] for p in pts])
+    y = np.array([p[1] for p in pts])
+    tol = s["pw_tol_ms"] / 1000.0
+    keep = np.abs(y - _rolling_median(y, s["pw_neigh"], True)) <= tol
+    f = Fit(name, False, windows=len(pts), inliers=int(keep.sum()), reason="windows_disagree")
+    if keep.sum() < max(s["min_inliers"], s["pw_min_frac"] * len(pts)):
+        return f
+    kt, ky = t[keep], y[keep]
+    smooth = _rolling_median(ky, 1, False)  # three-window median: a knot is never one window's own jitter
+    rms = float(np.sqrt(np.mean((ky - smooth) ** 2)) * 1000.0)
+    rates = np.abs(np.diff(smooth) / np.diff(kt)) * 1e6 if len(kt) > 1 else np.array([0.0])
+    if rms > s["max_residual_ms"]:
+        f.reason, f.residual_ms = "residual_too_large", rms
+        return f
+    if rates.max() > s["pw_max_rate_ppm"]:
+        f.reason = "drift_implausible"
+        return f
+    knots = [(float(a), float(b)) for a, b in zip(kt, smooth)]
+    span = kt[-1] - kt[0]
+    drift = float((smooth[-1] - smooth[0]) / span * 1e6) if span > 0 else 0.0
+    return Fit(name, True, offset_s=float(np.interp(0.0, kt, smooth)), drift_ppm=drift, residual_ms=rms,
+               windows=len(pts), inliers=int(keep.sum()), knots=knots)
 
 
 def _check_claps(fit: Fit, anchors, s: dict) -> Fit:
@@ -362,12 +423,11 @@ def apply(sig: np.ndarray, sr: int, fit: Fit, n_out: int, block_s: float = 60.0)
     out = np.zeros(n_out, dtype=np.float32)
     secs = int(np.ceil(n_out / sr))
     cov = np.zeros(secs, dtype=bool)
-    rate = 1.0 + fit.drift_ppm * 1e-6
     blk = int(block_s * sr)
     src = np.arange(len(sig))
     for a in range(0, n_out, blk):
         b = min(n_out, a + blk)
-        pos = fit.offset_s * sr + rate * np.arange(a, b, dtype=np.float64)
+        pos = fit.mic_time(np.arange(a, b, dtype=np.float64) / sr) * sr
         lo = max(0, int(np.floor(pos[0])) - 2)
         hi = min(len(sig), int(np.ceil(pos[-1])) + 3)
         if hi <= lo:
