@@ -52,10 +52,21 @@ export function RecordedInClass({ userId, onAddTranscript }: { userId: string; o
       const ids = rows.map((r) => r.id);
       const classIds = [...new Set(rows.map((r) => r.class_id))];
       const soft = async (p: PromiseLike<{ data: any[] | null; error: unknown }>) => { try { const r = await p; return r.error ? null : r.data ?? []; } catch { return null; } };
+      // One read per recording for its LAST confirmed chunk: a single read of every chunk of 30
+      // recordings is thousands of rows, past PostgREST's 1000-row cap, and the newest lesson then
+      // read as "no audio was saved" (28 Nov 2026, SKY 1 with all 364 chunks on the server).
+      const lastChunks = async () => {
+        const per = await Promise.all(ids.map((id) => soft(
+          // Teacher and room only: a Lark mic's chunk times are on that transmitter's own clock.
+          c.from("class_recording_chunks").select("recording_id, t_end_ms").eq("recording_id", id)
+            .in("track", ["teacher", "room"]).not("confirmed_at", "is", null)
+            .order("t_end_ms", { ascending: false }).limit(1),
+        )));
+        return per.some((x) => x === null) ? null : per.flat();
+      };
       const [cls, chunks, reports, runs] = await Promise.all([
         soft(c.from("classes").select("id, name").in("id", classIds)),
-        // Teacher and room only: a Lark mic's chunk times are on that transmitter's own clock.
-        soft(c.from("class_recording_chunks").select("recording_id, t_end_ms, confirmed_at").in("recording_id", ids).in("track", ["teacher", "room"]).not("confirmed_at", "is", null)),
+        lastChunks(),
         soft(c.from("lesson_monitor_reports").select("recording_id").in("recording_id", ids)),
         soft(c.from("lesson_monitor_runs").select("recording_id, outcome, reason").in("recording_id", ids)),
       ]);
