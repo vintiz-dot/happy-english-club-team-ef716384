@@ -86,8 +86,11 @@ eq("a model that says nothing grades nobody", D.cleanSpeaking([], ev).graded.len
 eq("no evidence, no section", D.cleanSpeaking(reply, null), null);
 
 // readTranscript carries who was tapped and how sure the words were
-const read = D.readTranscript({ lines: [{ t: 5, text: "hello there", who: null, m: A, u: true }, { t: 9, text: "good", who: "T" }, { t: 11, text: "dim", f: true }] });
+const LINES = [{ t: 5, text: "hello there", who: null, m: A, u: true }, { t: 9, text: "good", who: "T" }, { t: 11, text: "dim", f: true }];
+const read = D.readTranscript({ lines: LINES, mics: { teacher_worn: true } });
 eq("lines keep m and unsure", read.map((l) => [l.m ?? null, !!l.unsure, l.teacher]), [[A, true, false], [null, false, true], [null, true, false]]);
+eq("without mics.teacher_worn no line is the teacher's (the lapels sat by the children)",
+  D.readTranscript({ lines: LINES }).map((l) => l.teacher), [false, false, false]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

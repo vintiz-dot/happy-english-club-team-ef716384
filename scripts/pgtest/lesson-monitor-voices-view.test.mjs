@@ -32,6 +32,7 @@ const BODY = {
     { t: 16, e: 18, text: "Yes.", g: "bad key", m: "not an id" },
   ],
   voice: { groups: [{ key: "G1" }, { key: "G2" }, { key: "G3" }] },
+  mics: { teacher_worn: true },   // "T" counts only when the teacher wore the lapel (28 Nov 2026)
 };
 const view = M.toReportView(BODY);
 const voices = V.lineVoices(BODY);

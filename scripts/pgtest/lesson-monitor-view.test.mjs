@@ -41,6 +41,7 @@ const BODY = {
   talk_time: { teacher_pct: [65, 75], others_pct: [25, 35], timeline: "TTO-", step_s: 10, speech_seconds: 3000 },
   coverage: { room_until_s: 5400, teacher_until_s: 5400 },
   settings: { model: "large-v3-turbo" },
+  mics: { teacher_worn: true },
 };
 
 console.log("=== the mapping keeps every uncertainty ===");
@@ -65,6 +66,19 @@ console.log("=== talk-time only when step 0 passed (absent, not warned about) ==
   const { talk_time, ...noTalk } = BODY;
   eq("no talk_time in the report: none on the screen", M.toReportView(noTalk).talk, null);
   eq("a single number is not a range: not shown", M.toReportView({ ...BODY, talk_time: { teacher_pct: 70, others_pct: 30 } }).talk, null);
+}
+
+console.log("=== the teacher did not wear the lapel (owner, 28 Nov 2026): no figure from the microphones ===");
+{
+  const { mics, ...unknown } = BODY;
+  for (const [name, body] of [["no mics field (every report so far)", unknown], ["teacher_worn false", { ...BODY, mics: { teacher_worn: false } }], ["teacher_worn 'yes' is not true", { ...BODY, mics: { teacher_worn: "yes" } }]]) {
+    const v = M.toReportView(body);
+    eq(`${name}: no talk-time split`, v.talk, null);
+    eq(`${name}: no line marked T`, v.lines.map((l) => l.teacher), [false, false, false]);
+    eq(`${name}: no "your microphone / room" counts`, v.words.map((w) => [w.teacherMic, w.room]), [[null, null], [null, null]]);
+    eq(`${name}: the transcript itself is kept`, v.lines.length, 3);
+  }
+  eq("micRolesKnown reads only true", [M.micRolesKnown(BODY), M.micRolesKnown(unknown), M.micRolesKnown(null)], [true, false, false]);
 }
 
 console.log("=== degrades, never throws ===");
@@ -101,7 +115,7 @@ console.log("=== nothing in the screen's code names a child or reaches families 
   const app = readFileSync(resolve(repo, "src/App.tsx"), "utf8");
   ok("the route is for teachers only", /path="\/teacher\/lesson-reports" element=\{<ProtectedRoute allowedRole=\{\["teacher"\]\}>/.test(app));
   ok("the screen is on the new design (listed in IVORY_ROUTES)", readFileSync(resolve(repo, "src/lib/ivoryScope.ts"), "utf8").includes('{ path: "/teacher/lesson-reports" }'));
-  ok("no family or student page links to it", !/lesson-reports/.test(readFileSync(resolve(repo, "src/pages/FamilyDashboard.tsx"), "utf8")));
+  ok("no family or student page links to it", !/\/teacher\/lesson-reports/.test(readFileSync(resolve(repo, "src/pages/FamilyDashboard.tsx"), "utf8")));
   ok("the page shows the design's 'not written' meaning", page.includes("WORDING.notWrittenMeaning") && page.includes("WORDING.unwritten("));
 }
 

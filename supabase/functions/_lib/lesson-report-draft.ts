@@ -429,12 +429,16 @@ export function transcriptText(lines: TranscriptLine[]): string {
 
 /** The lesson monitor report's lines, in order. */
 export function readTranscript(body: unknown, maxLines = 2500): TranscriptLine[] {
+  // A line is the teacher's only when the report says the teacher wore the "teacher" microphone
+  // (owner, 28 Nov 2026: until then the lapels sat by the children, so who:"T" meant a child near a lapel).
+  // Mirrors micRolesKnown in src/lib/lessonMonitor.ts.
+  const micsKnown = obj(obj(body).mics).teacher_worn === true;
   return arr(obj(body).lines).flatMap((x) => {
     const l = obj(x);
     const t = typeof l.t === "number" && Number.isFinite(l.t) ? l.t : null;
     const text = str(l.text, 500);
     const m = str(l.m, 40);
-    return t === null || !text ? [] : [{ t, text, teacher: l.who === "T", ...(m ? { m } : {}), ...(l.u === true || l.f === true ? { unsure: true } : {}) }];
+    return t === null || !text ? [] : [{ t, text, teacher: micsKnown && l.who === "T", ...(m ? { m } : {}), ...(l.u === true || l.f === true ? { unsure: true } : {}) }];
   }).sort((a, b) => a.t - b.t).slice(0, maxLines);
 }
 

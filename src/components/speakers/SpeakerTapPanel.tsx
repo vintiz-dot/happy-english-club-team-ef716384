@@ -178,7 +178,7 @@ export function SpeakerTapPanel({ sessionId, embedded = false }: { sessionId: st
         </div>
       ) : null}
       <p className="text-sm text-muted-foreground">
-        Tap the child who starts speaking; tapping the next child ends the last one's turn. No need to tap yourself: your microphone shows when you speak.
+        Tap the child who starts speaking; tapping the next child ends the last one's turn. Tap Teacher when you start speaking, too.
         Hold a name to add a second child (a conversation). To learn a child's voice, tap them and let them talk for about a minute.
       </p>
       {nowLine}

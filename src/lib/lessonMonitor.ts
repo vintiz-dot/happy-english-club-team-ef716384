@@ -70,21 +70,34 @@ const pair = (v: unknown): [number, number] | null => {
   return a.length === 2 && num(a[0]) !== null && num(a[1]) !== null ? [a[0] as number, a[1] as number] : null;
 };
 
+/**
+ * Does the report say the "teacher" track really was the teacher's own microphone?
+ * Owner, 28 Nov 2026: in every lesson recorded so far the lapels sat by the CHILDREN and the
+ * teacher wore none, so "your microphone carried it", the T marks and the talk-time split were
+ * the children's lapels, not the teacher. Those figures are shown only when the report states
+ * `mics.teacher_worn: true` (the job writes it once the teacher wears the lapel); otherwise they
+ * are left out, never shown with a warning.
+ */
+export function micRolesKnown(body: unknown): boolean {
+  return obj(obj(body).mics).teacher_worn === true;
+}
+
 export function toReportView(body: unknown): ReportView {
   const b = obj(body);
   const lesson = obj(b.lesson);
+  const mics = micRolesKnown(b);
   const lines: ViewLine[] = arr(b.lines).flatMap((x) => {
     const l = obj(x);
     const t = num(l.t), text = str(l.text);
     if (t === null || !text) return [];
-    return [{ t, e: num(l.e) ?? t, text, uncertain: l.u === true, faded: l.f === true, teacher: l.who === "T" }];
+    return [{ t, e: num(l.e) ?? t, text, uncertain: l.u === true, faded: l.f === true, teacher: mics && l.who === "T" }];
   });
   const targets = obj(b.targets);
   const words: ViewWord[] = arr(targets.words).flatMap((x) => {
     const w = obj(x);
     if (!str(w.word)) return [];
     return [{ word: str(w.word), heard: w.heard === true, times: arr(w.times).map(num).filter((n): n is number => n !== null),
-      teacherMic: num(w.teacher_mic), room: num(w.room) }];
+      teacherMic: mics ? num(w.teacher_mic) : null, room: mics ? num(w.room) : null }];
   });
   const structures: ViewStructure[] = arr(targets.structures).flatMap((x) => {
     const s = obj(x);
@@ -114,7 +127,7 @@ export function toReportView(body: unknown): ReportView {
       return str(f.text) ? [{ kind: str(f.kind), text: str(f.text), t: num(f.t) }] : [];
     }),
     // Feature B exists only when step 0 passed for it; otherwise it is absent, not warned about.
-    talk: tp && op ? { teacherPct: tp, othersPct: op, timeline: str(tt.timeline), stepS: num(tt.step_s) ?? 10 } : null,
+    talk: mics && tp && op ? { teacherPct: tp, othersPct: op, timeline: str(tt.timeline), stepS: num(tt.step_s) ?? 10 } : null,
     uncertainCount: lines.filter((l) => l.uncertain).length,
   };
 }
