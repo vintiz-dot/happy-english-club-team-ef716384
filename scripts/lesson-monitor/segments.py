@@ -279,7 +279,9 @@ def bench(minutes: float = 120.0, n_tracks: int = 6, use_silero: bool = True) ->
     t_seg = time.time() - t2
     r = {"minutes": minutes, "tracks": len(tracks), "vad_engine": act["vad_engine"], "activity_s": round(t_act, 1),
          "segments_s": round(t_seg, 1), "segments": len(segs), "synth_s": round(t_gen, 1), "cpus": os.cpu_count(),
-         "realtime_factor": round((t_act + t_seg) / (minutes * 60), 4)}
+         "realtime_factor": round((t_act + t_seg) / (minutes * 60), 4),
+         "note": "the tracks are noise: Silero rightly finds no speech, so 0 segments is expected; the time is the "
+                 "cost of levels + Silero over every frame, which does not depend on what is said"}
     return r
 
 
