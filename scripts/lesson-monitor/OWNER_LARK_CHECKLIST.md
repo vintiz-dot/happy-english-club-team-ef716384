@@ -18,6 +18,8 @@ four files up with the room, works out who spoke when, and the report shows talk
    editor, **after** `20261127110000_lesson_monitor_report_voice_part.sql` (and after the Lark import and mic board
    migrations, `20261128090000_lesson_mic_seats.sql` and `20261128120000_recorder_lark_tracks.sql`). Until it is pasted the reports
    still save, but without talk time.
+   Then `supabase/migrations/20261128190000_voice_stats_health.sql` (after `20261126090000_voice_admin_overview.sql`):
+   it lets Admin > Voices show the mics' health (which mics lined up, how well, how long a lesson took).
 
 ## Every lesson
 
@@ -38,7 +40,13 @@ The claps let the server line the files up to the millisecond and check the tran
 If they are forgotten it still tries (from the teacher's voice, heard on every mic), and says in the report's
 settings if a mic could not be lined up; that mic is then left out.
 
-## Voices: "My voice card" (2-3 minutes a child, 3-4 children a lesson)
+## Voices: how the server learns each child
+
+After each lesson the review page shows voice groups **per mic**, with the children the mic board put at that mic
+as the first answers ("On the mic board at mic 2: Bee, Max, Kim"). One answer names many seconds of clean speech:
+that is how the server starts to know the children. Answer them when you can; "Several voices" and "Me" are fine.
+
+## Optional: "My voice card" (2-3 minutes a child, 3-4 children a lesson)
 
 So the server can tell the children apart, each child does this once at their mic, with the teacher tapping the
 child on "Who's speaking" just before they start (and "stop" after):
