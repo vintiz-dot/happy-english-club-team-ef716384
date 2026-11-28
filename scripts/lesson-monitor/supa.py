@@ -79,8 +79,13 @@ def supabase_conf() -> tuple[str, str]:
     return url.rstrip("/"), key
 
 
+# Cloudflare refuses urllib's default "Python-urllib/3.x" with a bare 403 ("error code: 1010") before the hec-files
+# Worker sees the request: every R2 chunk download failed as error_apierror (28 Nov 2026, the first lesson in R2).
+USER_AGENT = "hec-lesson-monitor/1"
+
+
 def http(method: str, url: str, headers: dict, body: bytes | None, timeout: float = 120) -> tuple[int, bytes]:
-    req = urllib.request.Request(url, data=body, method=method, headers=headers)
+    req = urllib.request.Request(url, data=body, method=method, headers={"User-Agent": USER_AGENT, **headers})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, r.read()

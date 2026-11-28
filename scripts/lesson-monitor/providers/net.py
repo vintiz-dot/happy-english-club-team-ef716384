@@ -10,7 +10,8 @@ import urllib.request
 
 
 def request(method: str, url: str, headers: dict, body: bytes | None, timeout: float = 300) -> tuple[int, dict, bytes]:
-    req = urllib.request.Request(url, data=body, method=method, headers=headers)
+    # Cloudflare answers urllib's default user agent with a bare 403 "error code: 1010" on some zones (supa.py).
+    req = urllib.request.Request(url, data=body, method=method, headers={"User-Agent": "hec-lesson-monitor/1", **headers})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, {k.lower(): v for k, v in r.headers.items()}, r.read()
