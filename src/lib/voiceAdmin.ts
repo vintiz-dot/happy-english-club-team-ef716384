@@ -24,9 +24,17 @@ export interface ModelAccuracy {
   sweep?: SweepPoint[];
   shown_vs_blind?: Record<string, { n: number; agreed: number; agreed_pct: number | null }>;
 }
+/** The Lark engine's health part (owner, 28 Nov 2026; 20261128190000, voice_admin.py health). Numbers only. */
+export interface Tally { seconds: number; named_s: number; right_s: number; wrong_s: number; precision: number | null; coverage: number | null; wrong_share: number | null }
+export interface HealthLesson { date: string | null; at: string | null; tracks: string[]; residual_ms: Record<string, number | null>; rejected: Record<string, string>; processing_s: number }
+export interface Health {
+  engine?: string; last_run?: string | null; lessons?: HealthLesson[];
+  precision?: { basis?: "blind" | "all"; model?: string; chosen?: (Tally & { threshold: number }) | null; buckets?: Record<string, Tally>; best?: string | null; min_precision?: number };
+}
 export interface Snapshot {
   published_at: string;
   stats: {
+    health?: Health;
     accuracy?: Record<string, ModelAccuracy>;
     enrolment?: { student_id: string; seconds: number; samples: number }[];
     settings?: { shown_model?: string; thresholds?: Record<string, number>; margin?: number; group_min_s?: number; enrol_min_s?: number; models?: string[] | null };
@@ -41,8 +49,10 @@ export interface Overview {
   snapshot: Snapshot | null;
 }
 
-/** The runbook's rules, in one place: a child is compared after 20 s, a minute is better; judge a model on 150+ answers; wrong more than 1 in 20 is too many. */
-export const VOICE_RULES = { enrolMinS: 20, enrolGoodS: 60, judgeAfter: 150, fewAnswers: 30, wrongPctLimit: 5, staleHours: 36 } as const;
+/** The runbook's rules, in one place: a child is compared after 20 s, a minute is better; judge a model on 150+ answers;
+ * wrong more than 1 in 50 of those named is too many (owner, 28 Nov 2026: precision first, at least 98 %; was 1 in 20);
+ * a mic lined up worse than 12 ms is left out (align.py). */
+export const VOICE_RULES = { enrolMinS: 20, enrolGoodS: 60, judgeAfter: 150, fewAnswers: 30, wrongPctLimit: 2, staleHours: 36, residualMsLimit: 12 } as const;
 
 export const pct = (n: number, d: number): number | null => (d > 0 ? Math.round((1000 * n) / d) / 10 : null);
 export const showPct = (x: number | null | undefined): string => (x === null || x === undefined ? "–" : `${x.toFixed(1)}%`);
@@ -96,7 +106,7 @@ export type Verdict = "no-answers" | "too-few" | "too-many-wrong" | "usable";
 export interface ModelRow {
   model: string; shown: boolean; n: number; threshold: number;
   right: number | null; wrong: number | null; notSure: number | null; verdict: Verdict; sweep: SweepPoint[];
-  /** The lowest swept threshold at which at most 1 in 20 of those named is the wrong child (null: none, or too few). */
+  /** The lowest swept threshold at which at most 1 in 50 of those named is the wrong child (null: none, or too few). */
   saferThreshold: number | null;
 }
 const VERDICT_RANK: Record<Verdict, number> = { usable: 0, "too-many-wrong": 1, "too-few": 2, "no-answers": 3 };
@@ -123,6 +133,43 @@ export function readyToChoose(o: Overview): { ready: boolean; answers: number; b
   const usable = rows.filter((r) => r.verdict === "usable");
   const best = usable.length ? usable.reduce((b, r) => ((r.right ?? 0) > (b.right ?? 0) ? r : b)).model : null;
   return { ready: answers >= VOICE_RULES.judgeAfter && best !== null, answers, best };
+}
+
+// ------------------------------------------------------------------ the Lark engine's health
+export interface HealthView {
+  engine: string | null; lastRun: string | null;
+  lessons: { date: string | null; tracks: string[]; residuals: { mic: string; ms: number | null; rejected: string | null; bad: boolean }[]; minutes: number }[];
+  precision: { basis: "blind" | "all" | null; model: string | null; threshold: number | null; precisionPct: number | null; coveragePct: number | null;
+    meetsTarget: boolean; buckets: { label: string; seconds: number; precisionPct: number | null; coveragePct: number | null }[] } | null;
+}
+const pct1 = (x: number | null | undefined): number | null => (x === null || x === undefined ? null : Math.round(1000 * x) / 10);
+
+/** What the health part says, read for the page. null when the laptop/server has not published one yet. */
+export function healthView(o: Overview): HealthView | null {
+  const h = o.snapshot?.stats.health;
+  if (!h) return null;
+  const lessons = (h.lessons ?? []).map((l) => {
+    const mics = Array.from(new Set([...Object.keys(l.residual_ms ?? {}), ...Object.keys(l.rejected ?? {})])).sort();
+    return {
+      date: l.date, tracks: l.tracks ?? [], minutes: Math.round((l.processing_s ?? 0) / 6) / 10,
+      residuals: mics.map((mic) => {
+        const ms = l.residual_ms?.[mic] ?? null;
+        const rejected = l.rejected?.[mic] ?? null;
+        return { mic, ms, rejected, bad: rejected !== null || (ms !== null && ms > VOICE_RULES.residualMsLimit) };
+      }),
+    };
+  });
+  const p = h.precision;
+  const c = p?.chosen ?? null;
+  const precisionPct = pct1(c?.precision);
+  return {
+    engine: h.engine ?? null, lastRun: h.last_run ?? null, lessons,
+    precision: p ? {
+      basis: p.basis ?? null, model: p.model ?? null, threshold: c?.threshold ?? null, precisionPct, coveragePct: pct1(c?.coverage),
+      meetsTarget: precisionPct !== null && precisionPct >= 100 - VOICE_RULES.wrongPctLimit,
+      buckets: Object.entries(p.buckets ?? {}).map(([label, b]) => ({ label, seconds: b.seconds, precisionPct: pct1(b.precision), coveragePct: pct1(b.coverage) })),
+    } : null,
+  };
 }
 
 // ------------------------------------------------------------------ the snapshot's age

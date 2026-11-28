@@ -5,7 +5,8 @@
 // voiceprint cannot be sent by mistake; (3) the overview counts groups, answers and how often the
 // shown guess matched the teacher; (4) only the last 60 snapshots stay; (5) the page's wording
 // rules: a child is "compared with" after 20 s, a model is judged only after 30 answers, "wrong"
-// above 1 in 20 is too many, and the table is ready to choose from at 150 answers.
+// above 1 in 50 is too many (precision first, 28 Nov 2026), and the table is ready to choose from at 150 answers;
+// (6) the Lark engine's health part (20261128190000) is accepted, and refused when it would name a child.
 // The dependencies (the voice step's tables) are stubbed with the columns this migration reads;
 // lesson-monitor-voiceprints.test.mjs holds the real ones. Everything below is made up.
 import { PGlite } from "@electric-sql/pglite";
@@ -18,6 +19,8 @@ import { tmpdir } from "node:os";
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const MIG = process.argv.slice(2).find((f) => f.includes("20261126090000_voice_admin_overview"))
   ?? resolve(repo, "supabase/migrations/20261126090000_voice_admin_overview.sql");
+const HEALTH_MIG = process.argv.slice(2).find((f) => f.includes("20261128190000_voice_stats_health"))
+  ?? resolve(repo, "supabase/migrations/20261128190000_voice_stats_health.sql");
 
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { console.log(`  ${c ? "PASS" : "FAIL"}  ${n}${x ? " :: " + x : ""}`); c ? pass++ : fail++; };
@@ -67,8 +70,8 @@ const base = () => ({
   eq("a minute of voice fills the bar", rows.find((r) => r.name === "Bee").fraction, 1);
   eq("headline counts the child with 75 s as known, the one with 12 s not", M.headline(o).known, 1);
   const m = Object.fromEntries(M.modelRows(o).map((r) => [r.model, r]));
-  eq("3% wrong with 200 answers is usable", m.titanet.verdict, "usable");
-  eq("3% wrong is usable for ecapa too (6 of 200)", m.ecapa.verdict, "usable");
+  eq("2% wrong with 200 answers is usable", m.titanet.verdict, "usable");
+  eq("3% wrong is too many now that the limit is 2% (6 of 200)", m.ecapa.verdict, "too-many-wrong");
   eq("20 answers are too few to judge", m.campp.verdict, "too-few");
   eq("no answers", m.eres.verdict, "no-answers");
   ok("the shown model is marked", m.ecapa.shown && !m.titanet.shown);
@@ -82,8 +85,24 @@ const base = () => ({
     { threshold: 0.6, named: 90, wrong: 15 }, { threshold: 0.7, named: 60, wrong: 3 }, { threshold: 0.8, named: 20, wrong: 0 }]) } } };
   const r = M.modelRows(o)[0];
   eq("12% wrong is too many", r.verdict, "too-many-wrong");
-  eq("the page names the lowest threshold with 1 in 20 or fewer wrong", r.saferThreshold, 0.7);
+  eq("the page names the lowest threshold with 1 in 50 or fewer wrong (precision first: 98 %)", r.saferThreshold, 0.8);
+  ok("the limit is 2 % wrong", M.VOICE_RULES.wrongPctLimit === 2);
   ok("100 answers are not enough to choose", M.readyToChoose(o).ready === false && M.readyToChoose(o).answers === 100);
+}
+{
+  const o = base();
+  eq("no health part, no health card", M.healthView(o), null);
+  const T = (s, n, r, w) => ({ seconds: s, named_s: n, right_s: r, wrong_s: w, precision: n ? r / n : null, coverage: s ? n / s : null, wrong_share: s ? w / s : null });
+  o.snapshot = { published_at: "2026-11-28T01:00:00Z", stats: { health: {
+    engine: "lark/1", last_run: "2026-11-28T09:00:00+00:00",
+    lessons: [{ date: "2026-11-28", at: "2026-11-28T09:00:00+00:00", tracks: ["mic1", "mic2"], residual_ms: { mic1: 1.4, mic2: 15.2 }, rejected: { mic3: "claps_off_the_line" }, processing_s: 1500 }],
+    precision: { basis: "blind", model: "ecapa", chosen: { ...T(1000, 600, 590, 10), threshold: 0.7 }, buckets: { "<1.2 s": T(100, 0, 0, 0), "3-8 s": T(500, 400, 396, 4) }, best: "ecapa", min_precision: 0.98 } } } };
+  const h = M.healthView(o);
+  eq("health: engine and last run", [h.engine, h.lastRun], ["lark/1", "2026-11-28T09:00:00+00:00"]);
+  eq("health: each mic with its residual; over 12 ms or rejected is flagged", h.lessons[0].residuals.map((r) => [r.mic, r.bad]), [["mic1", false], ["mic2", true], ["mic3", true]]);
+  eq("health: processing in minutes", h.lessons[0].minutes, 25);
+  eq("health: 590 of 600 named is 98.3 %, meets the 98 % target", [h.precision.precisionPct, h.precision.meetsTarget, h.precision.coveragePct], [98.3, true, 60]);
+  eq("health: buckets by length", h.precision.buckets.map((b) => [b.label, b.precisionPct]), [["<1.2 s", null], ["3-8 s", 99]]);
 }
 {
   const o = base();
@@ -184,6 +203,24 @@ refused("an unknown key is refused (nothing but counts, rates and seconds)",
 refused("a child's embedding cannot ride along in the enrolment list",
   await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb)`, [JSON.stringify({ enrolment: [{ student_id: bee, seconds: 5, samples: 1, embedding: [0.1] }] })]), /student_id, seconds and samples only/);
 refused("a snapshot must be an object", await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats('[]'::jsonb)`), /an object/);
+{
+  const health = { engine: "lark/1", last_run: "2026-11-28T09:00:00Z",
+    lessons: [{ date: "2026-11-28", at: "2026-11-28T09:00:00Z", tracks: ["mic1"], residual_ms: { mic1: 1.2 }, rejected: {}, processing_s: 900 }],
+    precision: { basis: "all", model: "ecapa", chosen: null, buckets: {}, best: null, min_precision: 0.98 } };
+  refused("before 20261128190000 a health part is refused", await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb)`,
+    [JSON.stringify({ settings: {}, health })]), /accuracy, enrolment and settings only/);
+  await db.exec(readFileSync(HEALTH_MIG, "utf8"));
+  await db.exec(readFileSync(HEALTH_MIG, "utf8"));
+  ok("the health migration applies twice", true);
+  eq("the admin publishes a snapshot with its health part", (await call(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb) AS r`,
+    [JSON.stringify({ settings: {}, health })])).r.id > 0, true);
+  refused("health may not name a child", await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb)`,
+    [JSON.stringify({ health: { ...health, lessons: [{ ...health.lessons[0], children: [{ student_id: bee }] }] } })]), /may not name a child/);
+  refused("health holds only its four parts", await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb)`,
+    [JSON.stringify({ health: { ...health, audio: "x" } })]), /engine, last_run, lessons and precision only/);
+  refused("the rest is refused as before", await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb)`,
+    [JSON.stringify({ voiceprints: [] })]), /accuracy, enrolment, settings and health only/);
+}
 refused("a huge snapshot is refused",
   await rpc(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats($1::jsonb)`, [JSON.stringify({ accuracy: { x: "y".repeat(310000) } })]), /too large/);
 for (let i = 0; i < 65; i++) await call(ADMIN, `SELECT public.lesson_monitor_publish_voice_stats('{"settings":{}}'::jsonb) AS r`);

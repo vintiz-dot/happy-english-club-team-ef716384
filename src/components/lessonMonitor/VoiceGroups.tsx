@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { mmss, type ViewLine } from "@/lib/lessonMonitor";
 import {
-  VOICE_WORDING, groupsToName, linesOf, tappedIn, type GroupRow, type LineVoice, type VoiceAnswer,
+  VOICE_WORDING, groupsToName, linesOf, tappedIn, type GroupHint, type GroupRow, type LineVoice, type VoiceAnswer,
 } from "@/lib/lessonMonitorVoices";
 import { useNameVoiceGroup } from "@/hooks/useLessonMonitor";
 
@@ -16,7 +16,7 @@ import { useNameVoiceGroup } from "@/hooks/useLessonMonitor";
  * known to the laptop. The computer's suggestion is a question; nothing is
  * named until the teacher answers.
  */
-export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play }: {
+export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play, hints }: {
   reportId: string;
   rows: GroupRow[];
   voices: LineVoice[];
@@ -25,6 +25,8 @@ export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play 
   nameOf: (id: string) => string;
   /** Absent when the lesson's audio is gone: the times are shown without a play button. */
   play?: (t: number) => void;
+  /** The Lark engine's per-group mic and the children the mic board seated there (groupHints); older reports: none. */
+  hints?: Map<string, GroupHint>;
 }) {
   const name = useNameVoiceGroup();
   const [busy, setBusy] = useState<string | null>(null);
@@ -54,6 +56,8 @@ export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play 
           const tapped = tappedIn(voices, g.group_key);
           const hint = g.suggested_student ?? tapped;
           const done = g.answer !== null;
+          const h = hints?.get(g.group_key);
+          const seated = (h?.seated ?? []).filter((k) => k !== hint);
           return (
             <li key={g.group_key} className={cn("rounded-hec-md border p-3 space-y-2", done ? "border-hec-line bg-hec-sunken" : "border-hec-line-strong")}
               data-voice-group={g.group_key}>
@@ -86,6 +90,17 @@ export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play 
                 ))}
               </ul>
               {tapped && !done && <p className="text-hec-caption text-hec-ink-faint">{VOICE_WORDING.tapped} ({nameOf(tapped)})</p>}
+              {h?.enrol && !done && <p className="text-hec-caption text-hec-ink-faint">{VOICE_WORDING.voiceCard}</p>}
+              {!done && h?.mic && seated.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2" data-seated-at={h.mic}>
+                  <span className="text-hec-caption text-hec-ink-soft">{VOICE_WORDING.seatedAt(h.mic)}</span>
+                  {seated.map((k) => (
+                    <Button key={k} type="button" variant="secondary" size="sm" disabled={!!busy} onClick={() => void answer(g.group_key, "child", k)}>
+                      {nameOf(k)}
+                    </Button>
+                  ))}
+                </div>
+              )}
               {done ? (
                 <Button type="button" variant="outline" size="sm" disabled={busy === g.group_key} onClick={() => void answer(g.group_key, null)}>
                   <Undo2 className="h-4 w-4 mr-1" aria-hidden /> Change
@@ -102,7 +117,7 @@ export function VoiceGroups({ reportId, rows, voices, lines, kids, nameOf, play 
                     <span className="sr-only">Another child</span>
                     <select className="min-h-9 rounded-hec-sm border border-hec-line bg-hec-surface px-2 text-hec-small"
                       value="" disabled={!!busy} onChange={(e) => e.target.value && void answer(g.group_key, "child", e.target.value)}>
-                      <option value="">{hint ? "Another child…" : "Which child…"}</option>
+                      <option value="">{hint ? "Another child…" : seated.length ? VOICE_WORDING.someoneElse : "Which child…"}</option>
                       {kids.filter((k) => k.id !== hint).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
                     </select>
                   </label>

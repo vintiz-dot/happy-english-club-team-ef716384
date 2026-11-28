@@ -41,6 +41,17 @@ SETTINGS = {
     "map_min_share": 0.6,       # ... and this share of the child's confident seconds
     "confident_extra": 0.05,    # confident = named with this much over the threshold
     "max_groups": 200,
+    # short utterances (owner, 28 Nov 2026): under short_s a voice alone never names; only a strong mic lead with
+    # exactly ONE child seated at that mic does, else the seconds count for "one of the children at mic N"
+    "short_s": 1.2,
+    "short_mic_lead_db": 10.0,
+    # a mic swap: most confident voices on mic A are children the board seats at mic B, and the other way round
+    "swap_min_s": 20.0,
+    "swap_share": 0.6,
+    # blind answers (owner, 28 Nov 2026): about 1 group in 5 that WOULD get a suggestion is shown without it, so those
+    # answers measure accuracy without the suggestion leading the teacher (kept in the sealed pending file, never in
+    # the database, whose voice part refuses a "blind" key)
+    "blind_fraction": 0.20,
 }
 
 
@@ -127,8 +138,11 @@ def attribute(segments: list[dict], audio: dict[str, np.ndarray], embedders: dic
         a, e = float(seg["a"]), float(seg["e"])
         mics = best_mics(seg, s)
         seated = set().union(*[seats.at(m, (a + e) / 2) for m in mics]) if mics else set()
+        ex = sorted((seg.get("excess") or {}).values(), reverse=True)
+        lead = (ex[0] - ex[1]) if len(ex) > 1 else (ex[0] if ex else 0.0)
         r = {"a": a, "e": e, "mics": mics, "overlap": bool(seg.get("overlap")), "seated": sorted(seated),
-             "named": None, "tier": None, "score": None, "second": None, "vecs": {}, "guesses": {}}
+             "named": None, "tier": None, "score": None, "second": None, "vecs": {}, "guesses": {},
+             "lead_db": round(float(lead), 1), "seated_top": sorted(seats.at(mics[0], (a + e) / 2)) if mics else []}
         src = mics[0] if mics else seg.get("top")
         if e - a >= s["embed_min_s"] and src in audio:
             x = audio[src][int(a * SR): int(e * SR)]
@@ -147,14 +161,62 @@ def attribute(segments: list[dict], audio: dict[str, np.ndarray], embedders: dic
                     r["guesses"][model] = {"best": d["best"], "score": d["score"], "second": d["second"]}
                 if model == shown:
                     r.update(named=d["named"], tier=d["tier"], score=d["score"], second=d["second"])
+        if e - a < s["short_s"]:
+            # too short for a voice to name: a strong mic lead and one child on the board at that mic, or nobody
+            r.update(named=None, tier=None)
+            if mics and r["lead_db"] >= s["short_mic_lead_db"] and len(r["seated_top"]) == 1 \
+                    and (roster is None or r["seated_top"][0] in roster):
+                r.update(named=r["seated_top"][0], tier="seat_short")
         out.append(r)
     return out
+
+
+def mic_swaps(results: list[dict], seats: Seats, s: dict = SETTINGS, shown: str | None = None) -> list[dict]:
+    """Pairs of mics whose confident voices belong to each other's seated children: the transmitters were probably
+    labelled the wrong way round at import. [{"mics": [A, B], "seconds": {A: s, B: s}}]."""
+    shown = shown or voice.SETTINGS["shown_model"]
+    thr = voice.threshold_for(shown) + s["confident_extra"]
+    # seconds of confident voice on mic M whose child the board seats at mic N
+    cross: dict[tuple[str, str], float] = {}
+    on: dict[str, float] = {}
+    for r in results:
+        if r.get("tier") not in ("seat", "class") or r["score"] is None or r["score"] < thr or not r["mics"]:
+            continue
+        m = r["mics"][0]
+        n = seats.mic_of(r["named"], (r["a"] + r["e"]) / 2)
+        d = r["e"] - r["a"]
+        on[m] = on.get(m, 0.0) + d
+        if n:
+            cross[(m, n)] = cross.get((m, n), 0.0) + d
+    out = []
+    mics = sorted(on)
+    for i, a in enumerate(mics):
+        for b in mics[i + 1:]:
+            ab, ba = cross.get((a, b), 0.0), cross.get((b, a), 0.0)
+            if ab >= s["swap_min_s"] and ba >= s["swap_min_s"] and ab >= s["swap_share"] * on[a] \
+                    and ba >= s["swap_share"] * on[b]:
+                out.append({"mics": [a, b], "seconds": {a: round(ab, 1), b: round(ba, 1)}})
+    return out
+
+
+def apply_swaps(results: list[dict], swaps: list[dict]) -> int:
+    """Nothing is named on a mic that looks swapped: the teacher is told instead. Returns segments un-named."""
+    bad = {m for sw in swaps for m in sw["mics"]}
+    n = 0
+    for r in results:
+        if r["mics"] and r["mics"][0] in bad and r["named"]:
+            r.update(named=None, tier="mic_swap")
+            n += 1
+    return n
 
 
 def make_groups(results: list[dict], rid: str | None, s: dict = SETTINGS, shown: str | None = None) -> list[dict]:
     """Voice groups in the shape voice.analyse returns (so finish_voice and learn_from_answers work unchanged), with
     "segments" (indexes into results) instead of lines. Named children first, in the order first heard; then unknown
-    segments that could be embedded, grouped by voice; G1, G2, ... in order of first appearance."""
+    segments that could be embedded, grouped by voice SEPARATELY FOR EACH MIC (usually 2-4 children a mic), so a group
+    is offered with the children the board seats at its mic as the likely answers ("mic", "seated"): one answer
+    then names many seconds of clean speech, which is how voiceprints start (cold start). G1, G2, ... in order of
+    first appearance."""
     shown = shown or voice.SETTINGS["shown_model"]
     buckets: list[tuple[float, str | None, list[int]]] = []
     by_child: dict[str, list[int]] = {}
@@ -168,10 +230,13 @@ def make_groups(results: list[dict], rid: str | None, s: dict = SETTINGS, shown:
             unknown.append(i)
     for sid, idx in by_child.items():
         buckets.append((results[idx[0]]["a"], sid, idx))
-    if unknown:
-        labs = voice.cluster(np.array([results[i]["vecs"][shown] for i in unknown]), s["cluster_distance"])
+    per_mic: dict[str, list[int]] = {}
+    for i in unknown:
+        per_mic.setdefault(results[i]["mics"][0] if results[i]["mics"] else "", []).append(i)
+    for mic, ids in sorted(per_mic.items()):
+        labs = voice.cluster(np.array([results[i]["vecs"][shown] for i in ids]), s["cluster_distance"])
         cl: dict[int, list[int]] = {}
-        for i, lab in zip(unknown, labs):
+        for i, lab in zip(ids, labs):
             cl.setdefault(lab, []).append(i)
         for idx in cl.values():
             buckets.append((results[idx[0]]["a"], None, idx))
@@ -186,7 +251,7 @@ def make_groups(results: list[dict], rid: str | None, s: dict = SETTINGS, shown:
         sug = sid
         score = round(float(np.mean([results[i]["score"] for i in idx if results[i]["score"] is not None])), 3) if sid else None
         blind = False
-        if sug and voice.is_blind(rid, key, voice.SETTINGS):
+        if sug and voice.is_blind(rid, key, dict(voice.SETTINGS, blind_fraction=s.get("blind_fraction", 0.2))):
             sug, score, blind = None, None, True
         guesses = {}
         for m in models:
@@ -198,27 +263,44 @@ def make_groups(results: list[dict], rid: str | None, s: dict = SETTINGS, shown:
                 guesses[m] = {"best": top, "score": round(float(np.mean(sc)), 4), "second": None}
         for i in idx:
             results[i]["group"] = key
+        top = [results[i]["mics"][0] for i in idx if results[i]["mics"]]
+        mic = max(set(top), key=top.count) if top else None
+        seated = sorted({c for i in idx if results[i]["mics"] and results[i]["mics"][0] == mic for c in results[i]["seated_top"]})
         groups.append({"key": key, "segments": idx, "lines": [], "seconds": round(seconds, 1), "vec": vecs.get(shown),
-                       "vecs": vecs, "suggested": sug, "score": score, "blind": blind, "guesses": guesses})
+                       "vecs": vecs, "suggested": sug, "score": score, "blind": blind, "guesses": guesses,
+                       "mic": mic, "seated": seated})
     return groups
 
 
-def speaking_seconds(results: list[dict], teacher_spans: list[tuple[float, float]]) -> dict:
-    """Seconds, never lines: per named child, unknown child speech, teacher, and child speech over the teacher."""
+def speaking_seconds(results: list[dict], teacher_spans: list[tuple[float, float]], s: dict = SETTINGS) -> dict:
+    """Seconds, never lines: per named child, unknown child speech, teacher, child speech over the teacher, and per mic
+    the unnamed seconds with the children the board seats there ("probably one of", NOT a name: the screen must say
+    so). short_share: the share of child speech in segments under short_s, which a voice alone never names."""
     kids: dict[str, float] = {}
-    unknown = overlap = 0.0
+    by_mic: dict[str, dict] = {}
+    unknown = overlap = short = total = 0.0
     for r in results:
         d = r["e"] - r["a"]
+        total += d
+        if d < s["short_s"]:
+            short += d
         if r["named"]:
             kids[r["named"]] = kids.get(r["named"], 0.0) + d
         else:
             unknown += d
+            if r["mics"]:
+                bm = by_mic.setdefault(r["mics"][0], {"seconds": 0.0, "probably": set()})
+                bm["seconds"] += d
+                bm["probably"].update(r.get("seated_top") or [])
         if r["overlap"]:
             overlap += d
     teacher = sum(b - a for a, b in teacher_spans)
     return {"teacher_s": round(teacher, 1), "children_s": {k: round(v, 1) for k, v in sorted(kids.items())},
             "unknown_s": round(unknown, 1), "overlap_s": round(overlap, 1),
-            "named_s": round(sum(kids.values()), 1)}
+            "named_s": round(sum(kids.values()), 1),
+            "by_mic": {m: {"seconds": round(v["seconds"], 1), "probably": sorted(v["probably"]), "not_a_name": True}
+                       for m, v in sorted(by_mic.items())},
+            "short_s": s["short_s"], "short_share": round(short / total, 3) if total else 0.0}
 
 
 def talk_time(results: list[dict], teacher_spans, duration_s: float, step_s: int = 10) -> dict | None:

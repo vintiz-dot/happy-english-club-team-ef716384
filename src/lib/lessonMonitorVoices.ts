@@ -40,7 +40,14 @@ export const VOICE_WORDING = {
   unknown: "Don't know",
   tapped: "You tapped this child on \"Who's speaking\".",
   groupMayMix: "A group can hold more than one child when children talk over each other: listen before you name it.",
+  seatedAt: (mic: string) => `On the mic board at ${mic}:`,
+  someoneElse: "Someone else…",
+  voiceCard: "Voice card: the child you tapped read and answered at their mic.",
 } as const;
+
+/** What the Lark engine says about a group (owner, 28 Nov 2026): its mic, the children the mic board seated there
+ * (offered first as the answer: a HINT, never a name), and whether it is a voice-card (enrolment) group. */
+export interface GroupHint { mic: string | null; seated: string[]; enrol: boolean }
 
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -54,6 +61,20 @@ export function lineVoices(body: unknown): LineVoice[] {
     const ok = typeof l.t === "number" && Number.isFinite(l.t) && typeof l.text === "string" && l.text !== "";
     return ok ? [{ tapped: id(l.m), group: key(l.g) }] : [];
   });
+}
+
+/** The Lark engine's hints per group key, from body.voice.groups[].mic / seated / enrol. Older reports: empty. */
+export function groupHints(body: unknown): Map<string, GroupHint> {
+  const out = new Map<string, GroupHint>();
+  for (const x of arr(obj(obj(body).voice).groups)) {
+    const g = obj(x);
+    const k = key(g.key);
+    if (!k) continue;
+    const mic = typeof g.mic === "string" && /^mic[1-4]$/.test(g.mic) ? `mic ${g.mic.slice(3)}` : null;
+    const seated = arr(g.seated).map(id).filter((v): v is string => v !== null);
+    if (mic || seated.length || g.enrol === true) out.set(k, { mic, seated, enrol: g.enrol === true });
+  }
+  return out;
 }
 
 /** Whether the report carries the voice step at all (older reports and a skipped step do not). */

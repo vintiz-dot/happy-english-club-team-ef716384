@@ -146,6 +146,93 @@ def format_shown(res: dict) -> list[str]:
     return lines
 
 
+# ------------------------------------------------------------------ precision first (owner, 28 Nov 2026)
+BUCKETS = ((0.0, 1.2, "<1.2 s"), (1.2, 3.0, "1.2-3 s"), (3.0, 8.0, "3-8 s"), (8.0, float("inf"), ">8 s"))
+MIN_PRECISION = 0.98          # a model and threshold are chosen for coverage only while wrong <= 2 % of those named
+PRECISION_SWEEP = tuple(round(0.40 + 0.02 * i, 2) for i in range(26))
+BLIND_ENOUGH = 30             # blind groups needed before the figures use only the blind answers
+
+
+def _named_at(r: dict, thr: float, margin: float, short_s: float) -> bool:
+    if r.get("score") is None or float(r.get("sec") or 0) < short_s:
+        return False
+    sc, sec = float(r["score"]), r.get("second")
+    return sc >= thr and (sc - float(sec) >= margin if sec is not None else sc >= thr + margin)
+
+
+def _tally(rows: list[dict], thr: float, margin: float, short_s: float) -> dict:
+    tot = sum(float(r.get("sec") or 0) for r in rows)
+    right = sum(float(r["sec"]) for r in rows if _named_at(r, thr, margin, short_s) and r["best"] == r["student"])
+    wrong = sum(float(r["sec"]) for r in rows if _named_at(r, thr, margin, short_s) and r["best"] != r["student"])
+    named = right + wrong
+    return {"seconds": round(tot, 1), "named_s": round(named, 1), "right_s": round(right, 1), "wrong_s": round(wrong, 1),
+            "precision": round(right / named, 4) if named else None, "coverage": round(named / tot, 4) if tot else None,
+            "wrong_share": round(wrong / tot, 4) if tot else None}
+
+
+def precision_report(rows: list[dict], min_precision: float = MIN_PRECISION, margin: float | None = None,
+                     short_s: float | None = None) -> dict:
+    """Pure. rows: one per (segment, model) with the teacher's answer as truth (multimic.read_segment_calibration, or
+    replay.py's). Only segments answered as ONE child count. For each model: precision of what it would name, wrong
+    seconds as a share of ALL child speech, coverage by seconds, over a threshold sweep; the threshold with the most
+    coverage while precision >= min_precision; and at that threshold the figures by duration bucket and per child.
+    Uses only the blind groups' answers when there are BLIND_ENOUGH of them (the suggestion cannot lead the teacher
+    there), else all, and says which ("basis")."""
+    import attribute
+    margin = attribute.SETTINGS["class_margin"] if margin is None else margin
+    short_s = attribute.SETTINGS["short_s"] if short_s is None else short_s
+    ones = [r for r in rows if r.get("answer") == "child" and r.get("student") and r.get("sec") is not None]
+    blind_groups = {(r.get("rid"), r.get("g")) for r in ones if r.get("blind")}
+    basis = "blind" if len(blind_groups) >= BLIND_ENOUGH else "all"
+    if basis == "blind":
+        ones = [r for r in ones if r.get("blind")]
+    out = {"basis": basis, "blind_groups": len(blind_groups), "min_precision": min_precision, "models": {}}
+    by_model: dict[str, list] = {}
+    for r in ones:
+        by_model.setdefault(r.get("model", "ecapa"), []).append(r)
+    for model, rs in sorted(by_model.items()):
+        sweep = [dict(_tally(rs, t, margin, short_s), threshold=t) for t in PRECISION_SWEEP]
+        ok = [p for p in sweep if p["precision"] is not None and p["precision"] >= min_precision and p["named_s"] >= 60]
+        pick = max(ok, key=lambda p: (p["coverage"] or 0, -p["threshold"])) if ok else None
+        thr = pick["threshold"] if pick else None
+        d = {"segments": len(rs), "chosen": pick, "sweep": sweep}
+        if thr is not None:
+            d["buckets"] = {lab: _tally([r for r in rs if lo <= float(r["sec"]) < hi], thr, margin, short_s)
+                            for lo, hi, lab in BUCKETS}
+            kids: dict[str, list] = {}
+            for r in rs:
+                kids.setdefault(r["student"], []).append(r)
+            d["children"] = {k: _tally(v, thr, margin, short_s) for k, v in sorted(kids.items())}
+        out["models"][model] = d
+    ranked = [(m, d["chosen"]) for m, d in out["models"].items() if d["chosen"]]
+    out["best"] = max(ranked, key=lambda x: x[1]["coverage"] or 0)[0] if ranked else None
+    return out
+
+
+def format_precision(rep: dict) -> list[str]:
+    f = lambda x: "-" if x is None else f"{100 * x:.1f}"  # noqa: E731
+    lines = [f"precision first: wrong <= {100 * (1 - rep['min_precision']):.0f} % of what is named; answers used: "
+             f"{rep['basis']} ({rep['blind_groups']} blind groups)"]
+    lines.append(f"{'model':22} {'thr':>5} {'precision %':>11} {'coverage %':>10} {'wrong/all %':>11} {'named s':>8}")
+    for m, d in rep["models"].items():
+        c = d["chosen"]
+        if c is None:
+            lines.append(f"{m:22} {'-':>5} {'(no threshold reaches the target with 60 s named)':>40}")
+            continue
+        lines.append(f"{m:22} {c['threshold']:5.2f} {f(c['precision']):>11} {f(c['coverage']):>10} {f(c['wrong_share']):>11} "
+                     f"{c['named_s']:8.0f}")
+    for m, d in rep["models"].items():
+        if not d.get("buckets"):
+            continue
+        lines.append("")
+        lines.append(f"{m} at {d['chosen']['threshold']:.2f}, by length: " + "; ".join(
+            f"{lab}: prec {f(b['precision'])} cov {f(b['coverage'])} of {b['seconds']:.0f} s" for lab, b in d["buckets"].items()))
+        for k, b in d["children"].items():
+            lines.append(f"  {k}: prec {f(b['precision'])} %, coverage {f(b['coverage'])} % of {b['seconds']:.0f} s")
+    lines.append(f"best: {rep['best'] or 'none yet'}")
+    return lines
+
+
 def format_accuracy(res: dict) -> list[str]:
     if not res:
         return ["no answered groups with scores yet"]
@@ -164,10 +251,30 @@ def format_accuracy(res: dict) -> list[str]:
     return lines
 
 
-def build_snapshot(rows: list[dict], vps: dict, s: dict = voice.SETTINGS) -> dict:
+def health(marks: dict, seg_rows: list[dict], last_n: int = 10) -> dict:
+    """Admin > Voices' health part (owner, 28 Nov 2026): the engine, its last run, per recent lesson the mic tracks
+    seen, each track's alignment residual and the processing time, and the shown model's precision by duration
+    bucket. Dates, track names and numbers only: no child, no name, no audio."""
+    import multimic
+    lessons = sorted((m for m in marks.values() if m.get("at")), key=lambda m: m["at"], reverse=True)[:last_n]
+    rep = precision_report(seg_rows)
+    shown = voice.SETTINGS["shown_model"]
+    m = rep["models"].get(shown) or {}
+    return {"engine": multimic.ENGINE, "last_run": lessons[0]["at"] if lessons else None,
+            "lessons": [{"date": x.get("date"), "at": x.get("at"), "tracks": x.get("tracks") or [],
+                         "residual_ms": x.get("residual_ms") or {}, "rejected": x.get("rejected") or {},
+                         "processing_s": sum(v for v in (x.get("timing_s") or {}).values() if isinstance(v, (int, float)))}
+                        for x in lessons],
+            "precision": {"basis": rep["basis"], "model": shown, "chosen": m.get("chosen"), "buckets": m.get("buckets") or {},
+                          "best": rep["best"], "min_precision": rep["min_precision"]}}
+
+
+def build_snapshot(rows: list[dict], vps: dict, s: dict = voice.SETTINGS, marks: dict | None = None,
+                   seg_rows: list[dict] | None = None) -> dict:
     """What Admin > Voices shows from this laptop: each model's accuracy (counts and rates), each child's SECONDS of
-    voice on file, and the settings. No voiceprint, no embedding, no audio, no name: the database refuses anything else."""
-    return {
+    voice on file, the settings, and (with marks) the Lark engine's health. No voiceprint, no embedding, no audio, no
+    name: the database refuses anything else."""
+    out = {
         "accuracy": accuracy(rows, s),
         "enrolment": [{"student_id": sid, "seconds": round(vp.seconds(), 1), "samples": len(vp.samples)}
                       for sid, vp in sorted(vps.items())],
@@ -175,11 +282,25 @@ def build_snapshot(rows: list[dict], vps: dict, s: dict = voice.SETTINGS) -> dic
                      "group_min_s": s["group_min_s"], "enrol_min_s": s["enrol_min_s"],
                      "models": list(s["models"]) if s["models"] else None},
     }
+    if marks:
+        out["health"] = health(marks, seg_rows or [])
+    return out
 
 
 def publish(api) -> dict:
-    snap = build_snapshot(voiceprints.read_calibration(), voiceprints.load_all())
-    return api.rpc("lesson_monitor_publish_voice_stats", {"p_stats": snap})
+    """The snapshot, with the health part when the Lark engine has run here; a database without 20261128190000 refuses
+    the health part, and then the snapshot goes without it, as before."""
+    import multimic
+    from supa import ApiError
+    snap = build_snapshot(voiceprints.read_calibration(), voiceprints.load_all(), marks=multimic.engine_marks(),
+                          seg_rows=multimic.read_segment_calibration())
+    try:
+        return api.rpc("lesson_monitor_publish_voice_stats", {"p_stats": snap})
+    except ApiError as e:
+        if "health" not in snap or "health" not in (e.message or ""):
+            raise
+        snap.pop("health")
+        return api.rpc("lesson_monitor_publish_voice_stats", {"p_stats": snap})
 
 
 def _confirm(text: str, yes: bool) -> bool:
@@ -234,6 +355,13 @@ def main(argv=None) -> int:
             print(ln)
         print("")
         for ln in format_shown(accuracy_shown(rows)):
+            print(ln)
+        import multimic
+        seg = multimic.read_segment_calibration()
+        if a.engine == "old":
+            seg = []
+        print("")
+        for ln in format_precision(precision_report(seg)):
             print(ln)
         print(f"\nshown model: {voice.SETTINGS['shown_model']}; thresholds now: {voice.SETTINGS['thresholds']}, "
               f"margin {voice.SETTINGS['margin']}, at least {voice.SETTINGS['group_min_s']} s")

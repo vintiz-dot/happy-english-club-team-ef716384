@@ -355,22 +355,30 @@ def voice_part(groups: list[dict]) -> dict:
     import voice
     shown = voice.SETTINGS["shown_model"]
     return {"model": voice.SETTINGS["model"] if shown == "ecapa" else shown,
-            "settings": {k: v for k, v in attribute.SETTINGS.items()} | {"group_threshold": voice.threshold_for(shown),
+            # nothing says how many groups are blind (voice.body_part's rule): the teacher must not be able to tell
+            "settings": {k: v for k, v in attribute.SETTINGS.items() if k != "blind_fraction"}
+                        | {"group_threshold": voice.threshold_for(shown),
                                                                           "engine": ENGINE},
+            # mic + seated: the children the board seats at the group's mic, offered first as the answer (a HINT: the
+            # teacher may still pick anyone, "several" or themself); an enrolment group says so
             "groups": [{"key": g["key"], "seconds": g["seconds"], "lines": len(g["lines"]), "suggested": g["suggested"],
-                        "score": g["score"]} for g in groups],
+                        "score": g["score"], "mic": g.get("mic") or ((g.get("enrol") or {}).get("mics") or [None])[0],
+                        "seated": g.get("seated") or [], "enrol": bool(g.get("enrol"))} for g in groups],
             "samples_seconds": {}}
 
 
-def prints_for(models, allowed: set[str], min_s: float) -> dict:
-    """{model: {child: [unit vectors]}}: every sample of every consenting child known well enough (several per child)."""
+def prints_for(models, allowed: set[str], min_s: float, exclude_rid: str | None = None) -> dict:
+    """{model: {child: [unit vectors]}}: every sample of every consenting child known well enough (several per child).
+    exclude_rid: leave out the samples a lesson's own answers made (replay.py scores a lesson it must not have learned
+    from: a held-out lesson)."""
     import voiceprints
     out = {}
     for m in models:
         d = {}
         for sid, vp in voiceprints.load_all(m).items():
-            if sid in allowed and vp.seconds() >= min_s and vp.samples:
-                d[sid] = [np.asarray(x["e"], dtype=np.float64) for x in vp.samples]
+            smp = [x for x in vp.samples if exclude_rid is None or x.get("rid") != exclude_rid]
+            if sid in allowed and sum(x.get("s", 0) for x in smp) >= min_s and smp:
+                d[sid] = [np.asarray(x["e"], dtype=np.float64) for x in smp]
         out[m] = d
     return out
 
@@ -422,6 +430,11 @@ def finish(api, row: dict, body: dict, lk: Lark, embedders: dict, allowed: set[s
     except InterruptedError:
         raise Stopped()
     results = [dict(r, vecs={k: v for k, v in r["vecs"].items()}) for r in results]
+    # a transmitter labelled with the wrong sticker number at import: by voice (two mics whose confident voices are
+    # each other's seated children) and by the transmitter's own metadata (a device seen before under another number)
+    swaps = attribute.mic_swaps(results, seats)
+    unnamed = attribute.apply_swaps(results, swaps)
+    devices = device_check(api, rid)
     # enrolment (enrol.py): the board's one-child taps become one pre-labelled voice group per child, which teaches
     # voiceprints only once the teacher answers it; segments inside a tapped turn belong to that group
     import enrol
@@ -437,6 +450,7 @@ def finish(api, row: dict, body: dict, lk: Lark, embedders: dict, allowed: set[s
     lines_to_groups(body["lines"], spans, groups)
     recount_targets(body)
     speaking = attribute.speaking_seconds(results, lk.teacher_spans)
+    dup = duplication(body["lines"])
     sugg = attribute.map_suggestions(results, seats)
     tt = attribute.talk_time(results, lk.teacher_spans, body["lesson"]["duration_s"])
     if tt is not None:
@@ -447,9 +461,12 @@ def finish(api, row: dict, body: dict, lk: Lark, embedders: dict, allowed: set[s
     body["mics"] = {"teacher_worn": True, "engine": ENGINE, "tracks": lk.tracks, "alignment": lk.alignment,
                     "speaking": speaking, "map_suggestions": sugg,
                     "enrol": {"turns": len(turns), "groups": [g["key"] for g in egroups], "refused": erefused},
+                    "swaps": {"by_voice": swaps, "by_device": devices, "unnamed_segments": unnamed},
                     "settings": {"segments": dict(segments.SETTINGS, band_hz=list(segments.SETTINGS["band_hz"])),
-                                 "vad": lk.act["vad_engine"], "bleed_db": lk.act["bleed"], "timing_s": lk.timing}}
-    note_engine(rid, [g["key"] for g in egroups])
+                                 "vad": lk.act["vad_engine"], "bleed_db": lk.act["bleed"], "timing_s": lk.timing,
+                                 "duplication": dup, "short_s": attribute.SETTINGS["short_s"]}}
+    keep_segments(rid, row.get("session_date"), results)
+    note_engine(rid, [g["key"] for g in egroups], row.get("session_date"), lk)
     named = sum(1 for r in results if r["named"])
     log(f"{rid} lark: {len(results)} segments, {named} named, {len(groups)} voice groups, "
         f"{len(sugg)} board correction(s); {lk.timing['attribute']} s")
@@ -461,14 +478,122 @@ def engine_file() -> Path:
     return pc.sub("state") / "lark_engine.json"
 
 
-def note_engine(rid: str, enrol_keys: list[str]) -> None:
-    """Which recordings this engine made (ids and group keys only), so voice_admin.py accuracy --engine lark scores
-    them apart from the old engine and leaves enrolment groups (suggested by a tap, not by a voice) out."""
+def note_engine(rid: str, enrol_keys: list[str], session_date: str | None = None, lk: "Lark | None" = None) -> None:
+    """Which recordings this engine made, so voice_admin.py accuracy --engine lark scores them apart from the old
+    engine and leaves enrolment groups (suggested by a tap, not by a voice) out; and, for Admin > Voices' health
+    part, each lesson's date, mic tracks, alignment residuals and timings. Ids, dates and numbers only."""
     import json
+    from datetime import datetime, timezone
     p = engine_file()
     d = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
-    d[rid] = {"engine": ENGINE, "enrol": enrol_keys}
+    e = {"engine": ENGINE, "enrol": enrol_keys, "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if session_date:
+        e["date"] = session_date
+    if lk is not None:
+        e["tracks"] = list(lk.tracks)
+        e["residual_ms"] = {k: v.get("residual_ms") for k, v in (lk.alignment.get("tracks") or {}).items()}
+        e["rejected"] = dict(lk.alignment.get("rejected") or {})
+        e["timing_s"] = dict(lk.timing)
+    d[rid] = e
     pc.out(p).write_text(json.dumps(d, separators=(",", ":")), encoding="utf-8")
+
+
+def keep_segments(rid: str, session_date: str | None, results: list[dict]) -> None:
+    """Per segment, until the teacher answers its group: its group, length, mic lead, tier and every model's guess
+    (ids and scores, no embedding), sealed like the pending voice groups and deleted with them after 30 days. The
+    answers then score every model SEGMENT by segment (voice_admin.py accuracy: precision by duration)."""
+    import voiceprints
+    segs = [{"g": r.get("group"), "s": round(r["e"] - r["a"], 2), "lead": r.get("lead_db"), "tier": r.get("tier"),
+             "named": r.get("named"), "guess": r.get("guesses") or {}} for r in results if r.get("group")]
+    voiceprints._write(pc.out(voiceprints.pending_dir() / f"{rid}.segs.vp"),
+                       {"rid": rid, "session_date": session_date or "1970-01-01", "segs": segs})
+
+
+def segment_calibration(rid: str, answers: list[dict], blind_keys: set[str] | None = None) -> int:
+    """The teacher's answers, segment by segment: one row per (segment, model) into seg_calibration.jsonl next to
+    calibration.jsonl. A segment's truth is its group's answer. The guesses were made at lesson time, from voiceprints
+    that held only EARLIER lessons, so every row is a held-out lesson for the model that guessed it."""
+    import json
+
+    import voiceprints
+    path = voiceprints.pending_dir() / f"{rid}.segs.vp"
+    if not path.exists():
+        return 0
+    d = voiceprints._read(path)
+    by_g = {a["group_key"]: a for a in answers}
+    n = 0
+    with pc.out(voiceprints.vp_dir() / "seg_calibration.jsonl").open("a", encoding="utf-8") as f:
+        for i, sg in enumerate(d.get("segs") or []):
+            a = by_g.get(sg.get("g"))
+            if not a:
+                continue
+            for model, gs in (sg.get("guess") or {}).items():
+                f.write(json.dumps({"rid": rid, "g": sg["g"], "i": i, "model": model, "answer": a.get("answer"),
+                                    "student": a.get("student_id"), "best": gs.get("best"), "score": gs.get("score"),
+                                    "second": gs.get("second"), "sec": sg.get("s"), "tier": sg.get("tier"),
+                                    "named": sg.get("named"), "blind": sg.get("g") in (blind_keys or set())},
+                                   separators=(",", ":")) + "\n")
+                n += 1
+    return n
+
+
+def read_segment_calibration() -> list[dict]:
+    """The last row per (recording, segment, model): a changed answer replaces the earlier one."""
+    import json
+
+    import voiceprints
+    p = voiceprints.vp_dir() / "seg_calibration.jsonl"
+    if not p.exists():
+        return []
+    last = {}
+    for x in p.read_text(encoding="utf-8").splitlines():
+        if x.strip():
+            r = json.loads(x)
+            last[(r.get("rid"), r.get("i"), r.get("model"))] = r
+    return list(last.values())
+
+
+def duplication(lines: list[dict]) -> float:
+    """Share of transcript seconds that overlap another line: one utterance heard on four mics must be ONE line (the
+    composite takes one source at a time), so this should stay near 0."""
+    tot = sum(max(0.0, ln["e"] - ln["t"]) for ln in lines)
+    if not tot:
+        return 0.0
+    ov = 0.0
+    srt = sorted(lines, key=lambda ln: ln["t"])
+    for i, ln in enumerate(srt[1:], start=1):
+        prev_end = max(x["e"] for x in srt[:i])
+        ov += max(0.0, min(ln["e"], prev_end) - ln["t"])
+    return round(ov / tot, 4)
+
+
+DEVICE_FILE = "lark_devices.json"
+
+
+def device_check(api, rid: str) -> list[dict]:
+    """The transmitter's own identity (lark-import's source.device: serial or name from the file's metadata), compared
+    with the sticker number it was seen under before on this machine: [{"mic", "seen_as"}] for each that changed.
+    Remembers the numbers seen now (device strings only, no child)."""
+    import json
+    from supa import ApiError
+    try:
+        rows = api.select("class_recording_tracks", {"recording_id": f"eq.{rid}", "track": f"in.({','.join(MICS)})",
+                                                     "select": "*"}) or []
+    except ApiError:
+        return []
+    p = pc.sub("state") / DEVICE_FILE
+    seen = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    out = []
+    for r in rows:
+        dev = ((r.get("source") or {}) if isinstance(r.get("source"), dict) else {}).get("device")
+        if not dev or r.get("track") not in MICS:
+            continue
+        before = seen.get(dev)
+        if before and before != r["track"]:
+            out.append({"mic": r["track"], "seen_as": before})
+        seen[dev] = r["track"]
+    pc.out(p).write_text(json.dumps(seen, separators=(",", ":")), encoding="utf-8")
+    return out
 
 
 def engine_marks() -> dict:

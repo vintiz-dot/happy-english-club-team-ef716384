@@ -343,6 +343,7 @@ console.log("=== saving a report: the server decides whose it is ===");
     alignment: { reference: "room", tracks: { mic1: { ok: true, offset_s: 12.5, drift_ppm: 31.2, residual_ms: 1.4 } }, rejected: {} },
     speaking: { teacher_s: 1800, children_s: { [k1]: 95.5 }, unknown_s: 300, overlap_s: 40, named_s: 95.5 },
     map_suggestions: [{ suggested: k1, mic: "mic3", board_mic: "mic2", seconds: 24, share: 0.8, from_s: 600 }],
+    swaps: { by_voice: [], by_device: [], unnamed_segments: 0 },
     settings: { excess_db: 6 } };
   if (MICS_MIG) {
     refused("a mics part without teacher_worn is refused", await save(ADMIN, rV1, BODY({ mics: { tracks: [] } })), /mics part is not in the expected shape/);

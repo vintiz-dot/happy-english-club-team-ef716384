@@ -3,7 +3,7 @@
 -- Why: the teacher now wears the GCK lapel and four Hollyland LARK MAX 2 transmitters sit among the children. For
 -- such a lesson the server's speaker engine (scripts/lesson-monitor/multimic.py) writes body.mics:
 --   { teacher_worn: true, engine, tracks: ["mic1", ...], alignment: {...}, speaking: {...}, map_suggestions: [...],
---     enrol: {...}, settings: {...} }
+--     enrol: {...}, swaps: {...}, settings: {...} }
 -- The review page shows talk time and the teacher's lines again only when mics.teacher_worn is true
 -- (src/lib/lessonMonitor.ts micRolesKnown, 1491c3d5). Until now lesson_monitor_save_report refused any report
 -- carrying it ("unknown part: mics"); the engine then saves the report without it, so talk time stays hidden.
@@ -91,7 +91,7 @@ BEGIN
       RAISE EXCEPTION 'The report''s mics part is not in the expected shape';
     END IF;
     FOR v_key IN SELECT jsonb_object_keys(p_body -> 'mics') LOOP
-      IF v_key NOT IN ('teacher_worn', 'engine', 'tracks', 'alignment', 'speaking', 'map_suggestions', 'enrol', 'settings') THEN
+      IF v_key NOT IN ('teacher_worn', 'engine', 'tracks', 'alignment', 'speaking', 'map_suggestions', 'enrol', 'swaps', 'settings') THEN
         RAISE EXCEPTION 'The report''s mics part carries an unknown part: %', left(v_key, 40);
       END IF;
     END LOOP;

@@ -179,6 +179,6 @@ def test_board_correction_suggested_for_the_moved_child():
 
 def test_blind_groups_hide_the_suggestion_deterministically(monkeypatch):
     r, _ = lesson_results()
-    monkeypatch.setitem(voice.SETTINGS, "blind_fraction", 1.0)
+    monkeypatch.setitem(A.SETTINGS, "blind_fraction", 1.0)  # the Lark engine's own share (1 in 5 normally)
     gs = A.make_groups(r, rid="rec-1")
     assert all(g["suggested"] is None for g in gs) and gs[0]["blind"] and gs[0]["guesses"]["ecapa"]["best"] == "kid-1"

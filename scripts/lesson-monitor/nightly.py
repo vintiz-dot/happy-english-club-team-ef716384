@@ -475,6 +475,16 @@ def lark_waiting(api, row: dict) -> str | None:
         return None
 
 
+def _lark_segment_calibration(rid: str, answers: list, blind_keys: set) -> None:
+    """The Lark engine's per-segment guesses scored by these answers (multimic.segment_calibration); a recording the
+    engine did not make has no segment file, so nothing happens. Never stops the learning."""
+    try:
+        import multimic
+        multimic.segment_calibration(rid, answers, blind_keys)
+    except Exception as e:  # noqa: BLE001
+        pc.log(f"voices: segment calibration skipped: error_{type(e).__name__.lower()}"[:120])
+
+
 def _lark_prepare(api, row, by, window, folder: Path, guard, use_teacher: bool):
     import multimic
     import transcribe
@@ -590,6 +600,7 @@ def learn_from_answers(api, ctx: dict) -> int:
                 learned += 1 if taught else 0
             for row in _calibration_rows(rid, a, g, shown_model):
                 voiceprints.note_calibration(row)
+        _lark_segment_calibration(rid, rows, {k for k, g in pend.items() if g.get("blind")})
         try:
             api.rpc("lesson_monitor_voice_learned", {"p_recording": rid, "p_groups": [a["group_key"] for a in rows]})
         except ApiError:

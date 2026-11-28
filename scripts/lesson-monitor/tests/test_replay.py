@@ -77,4 +77,6 @@ def test_voice_admin_engine_rows_and_shown_accuracy():
 def test_engine_marks_kept_in_the_state_folder(pilot_root):
     multimic.note_engine("rec-1", ["G2"])
     multimic.note_engine("rec-2", [])
-    assert multimic.engine_marks() == {"rec-1": {"engine": "lark/1", "enrol": ["G2"]}, "rec-2": {"engine": "lark/1", "enrol": []}}
+    m = multimic.engine_marks()
+    assert {k: (v["engine"], v["enrol"]) for k, v in m.items()} == {"rec-1": ("lark/1", ["G2"]), "rec-2": ("lark/1", [])}
+    assert all(v["at"] for v in m.values())

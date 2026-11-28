@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { dayjs } from "@/lib/date";
 import {
-  VOICE_RULES, childRows, headline, modelRows, nextSteps, readyToChoose, showPct, snapshotAge,
+  VOICE_RULES, childRows, headline, healthView, modelRows, nextSteps, readyToChoose, showPct, snapshotAge,
   type ChildState, type Overview, type Verdict,
 } from "@/lib/voiceAdmin";
 
@@ -52,6 +52,75 @@ const Tile = ({ label, value, hint }: { label: string; value: string; hint?: str
     {hint && <div className="mt-1 text-xs text-hec-ink-soft">{hint}</div>}
   </div>
 );
+
+/** The Lark mics engine (owner, 28 Nov 2026): last run, each recent lesson's mic tracks and how well they lined up,
+ * processing time, and the shown model's precision by utterance length. Numbers only. */
+function LarkHealth({ o }: { o: Overview }) {
+  const h = healthView(o);
+  if (!h) return null;
+  const p = h.precision;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Four Lark mics: health</CardTitle>
+        <CardDescription>
+          Engine {h.engine ?? "–"}; last lesson worked {h.lastRun ? dayjs(h.lastRun).format("D MMM YYYY, HH:mm") : "never"}. A mic that lines up worse
+          than {VOICE_RULES.residualMsLimit} ms, or is rejected, is left out of that lesson.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {p && (
+          <div className="space-y-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              {p.meetsTarget ? <CheckCircle2 className="h-4 w-4 text-hec-leaf" aria-hidden /> : <AlertTriangle className="h-4 w-4 text-hec-brass" aria-hidden />}
+              <span>
+                {p.model ?? "Shown model"}: {p.precisionPct === null ? "no threshold reaches the target yet" : `${showPct(p.precisionPct)} right of what it names, covering ${showPct(p.coveragePct)} of child speech at ${p.threshold?.toFixed(2)}`}
+                {" "}(target: at least {100 - VOICE_RULES.wrongPctLimit}% right; scored on {p.basis === "blind" ? "blind answers only" : "all answers"}).
+              </span>
+            </div>
+            {p.buckets.length > 0 && (
+              <table className="w-full text-sm">
+                <thead><tr className="text-left text-hec-ink-soft"><th className="py-1 pr-3">Length</th><th className="pr-3">Seconds</th><th className="pr-3">Right of named</th><th>Covered</th></tr></thead>
+                <tbody>
+                  {p.buckets.map((b) => (
+                    <tr key={b.label} className="border-t border-hec-line">
+                      <td className="py-1 pr-3">{b.label}</td><td className="pr-3 tabular-nums">{Math.round(b.seconds)}</td>
+                      <td className="pr-3 tabular-nums">{showPct(b.precisionPct)}</td><td className="tabular-nums">{showPct(b.coveragePct)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+        {h.lessons.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-hec-ink-soft"><th className="py-1 pr-3">Lesson</th><th className="pr-3">Mics lined up (ms)</th><th>Processing</th></tr></thead>
+              <tbody>
+                {h.lessons.map((l, i) => (
+                  <tr key={`${l.date}-${i}`} className="border-t border-hec-line">
+                    <td className="py-1 pr-3">{l.date ? dayjs(l.date).format("D MMM") : "–"}</td>
+                    <td className="pr-3">
+                      <div className="flex flex-wrap gap-1">
+                        {l.residuals.map((r) => (
+                          <Badge key={r.mic} variant={r.bad ? "destructive" : "secondary"}>
+                            {r.mic}: {r.rejected ? r.rejected.replace(/_/g, " ") : r.ms === null ? "–" : `${r.ms.toFixed(1)}`}
+                          </Badge>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="tabular-nums">{l.minutes} min</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function VoicesTab() {
   const q = useOverview();
@@ -168,7 +237,7 @@ export default function VoicesTab() {
                       <td>
                         <Badge variant={VERDICT[m.verdict].tone}>{VERDICT[m.verdict].label}</Badge>
                         {m.verdict === "too-many-wrong" && m.saferThreshold !== null && (
-                          <div className="mt-1 text-xs text-hec-ink-soft">Wrong stays within 1 in 20 from threshold {m.saferThreshold.toFixed(2)}.</div>
+                          <div className="mt-1 text-xs text-hec-ink-soft">Wrong stays within 1 in 50 from threshold {m.saferThreshold.toFixed(2)}.</div>
                         )}
                       </td>
                     </tr>
@@ -219,6 +288,8 @@ export default function VoicesTab() {
           )}
         </CardContent>
       </Card>
+
+      <LarkHealth o={o} />
 
       {o.by_class.length > 0 && (
         <Card>

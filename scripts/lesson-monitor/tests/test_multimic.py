@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 import align
+import attribute
 import multimic
 import nightly
 import pilot_common as pc
@@ -149,7 +150,7 @@ def lark_on(monkeypatch):
     monkeypatch.setattr(segments, "silero_path", lambda: None)  # Silero rightly hears no speech in synthetic noise
     monkeypatch.setitem(align.SETTINGS, "hop_s", 30.0)
     import voice
-    monkeypatch.setitem(voice.SETTINGS, "blind_fraction", 0.0)  # no group held back on purpose in this test
+    monkeypatch.setitem(attribute.SETTINGS, "blind_fraction", 0.0)  # no group held back on purpose in this test
     monkeypatch.setattr(nightly, "VOICE", {"allowed": {KA, KB, KC}, "embedder": BandEmbedder()})
     monkeypatch.setattr(nightly, "REMOTE", None)
     teach_voiceprints()

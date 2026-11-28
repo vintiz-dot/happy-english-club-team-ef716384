@@ -92,6 +92,20 @@ def format_score(sc: dict) -> list[str]:
     return out
 
 
+def precision_rows(results: list[dict], truth: list[dict]) -> list[dict]:
+    """replay's results as voice_admin.precision_report rows: one per (segment, model), truth from the labels."""
+    out = []
+    for i, r in enumerate(results):
+        who = truth_child(r, truth)
+        if who is None:
+            continue
+        for model, g in (r.get("guesses") or {}).items():
+            out.append({"rid": "replay", "g": f"S{i}", "i": i, "model": model, "answer": "child", "student": who,
+                        "best": g.get("best"), "score": g.get("score"), "second": g.get("second"),
+                        "sec": round(r["e"] - r["a"], 2), "blind": False})
+    return out
+
+
 def taps_as_truth(marks: list[dict], duration_s: float) -> list[dict]:
     import voice
     return [{"from": a, "to": b, "child": sid} for sid, a, b in voice.tap_turns(marks, duration_s, None)]
@@ -232,7 +246,9 @@ def main(argv=None) -> int:
             import plan
             seats = multimic.seats_in_lesson(multimic.mic_map(api, rec), rec, plan.lesson_window(rec)) if not board \
                 else attribute.Seats(board)
-        prints = multimic.prints_for(list(embs), allowed if allowed is not None else _all_children(), voice.SETTINGS["enrol_min_s"])
+        # held out: the samples this lesson's own answers taught are left out of the voiceprints that score it
+        prints = multimic.prints_for(list(embs), allowed if allowed is not None else _all_children(),
+                                     voice.SETTINGS["enrol_min_s"], exclude_rid=a.recording)
         print(f"lesson {len(room) / SR / 60:.1f} min, {len(mics)} mic track(s), {sum(len(v) for v in prints.get(voice.SETTINGS['shown_model'], {}).values())} "
               f"voiceprint samples, models: {', '.join(embs)}")
         res = run_engine(room, teacher, mics, embs, prints, seats, roster)
@@ -240,6 +256,10 @@ def main(argv=None) -> int:
             truth = taps_as_truth(marks, len(room) / SR)
             print(f"truth: {len(truth)} tapped turns from the speaking board")
         for ln in format_score(score(res["results"], truth)):
+            print(ln)
+        import voice_admin
+        print("")
+        for ln in voice_admin.format_precision(voice_admin.precision_report(precision_rows(res["results"], truth))):
             print(ln)
         if res.get("speaking"):
             print(f"speaking seconds: {json.dumps(res['speaking'])}")

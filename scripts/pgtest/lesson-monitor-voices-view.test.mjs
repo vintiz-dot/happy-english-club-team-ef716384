@@ -65,6 +65,16 @@ eq("groups to name: unanswered first, then longest", V.groupsToName([
 eq("a group's lines, at most three", V.linesOf([{ group: "G1" }, { group: "G2" }, { group: "G1" }, { group: "G1" }, { group: "G1" }], "G1"), [0, 2, 3]);
 eq("the child most tapped in a group", V.tappedIn([{ group: "G1", tapped: BEE }, { group: "G1", tapped: MAX }, { group: "G1", tapped: MAX }], "G1"), MAX);
 
+{
+  const h = V.groupHints({ voice: { groups: [
+    { key: "G1", seconds: 30, mic: "mic2", seated: [BEE, MAX, "not-an-id"], enrol: false },
+    { key: "G2", seconds: 9, mic: "room" }, { key: "G3", seconds: 40, mic: "mic1", seated: [BEE], enrol: true }, { key: "x" }] } });
+  eq("Lark groups: the mic and the children seated there (ids only)", h.get("G1"), { mic: "mic 2", seated: [BEE, MAX], enrol: false });
+  ok("a group without a real mic or seats has no hint", !h.has("G2") && !h.has("x"));
+  eq("a voice-card group says so", h.get("G3").enrol, true);
+  eq("an older report has no hints", V.groupHints({ voice: { groups: [{ key: "G1", seconds: 5 }] } }).size, 0);
+}
+
 console.log("=== the screen and its hooks ===");
 {
   const page = readFileSync(resolve(repo, "src/pages/TeacherLessonReports.tsx"), "utf8");

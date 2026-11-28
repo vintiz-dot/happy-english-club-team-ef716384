@@ -11,7 +11,7 @@ import {
   downloadChunk, useDeleteReport, useFeedback, useLessonRoster, useMyLessons, useMyPilotClasses, useMyReports, useRecordingAudioGone, useReport, useRoomChunks,
   useSetTargets, useStopPilot, useVoiceGroups, type ReportRow,
 } from "@/hooks/useLessonMonitor";
-import { hasVoices, lineVoices, speakerOf } from "@/lib/lessonMonitorVoices";
+import { groupHints, hasVoices, lineVoices, speakerOf } from "@/lib/lessonMonitorVoices";
 import { VoiceGroups } from "@/components/lessonMonitor/VoiceGroups";
 
 /**
@@ -104,6 +104,7 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const player = usePlayer(q.data?.recording_id ?? null, view?.offsetS ?? 0);
   // Who said each line (Option B, 24 Nov 2026): taps, voice groups and the teacher's answers.
   const voices = useMemo(() => (q.data ? lineVoices(q.data.body) : []), [q.data]);
+  const hints = useMemo(() => (q.data ? groupHints(q.data.body) : new Map()), [q.data]);
   const groups = useVoiceGroups(q.data && hasVoices(q.data.body) ? id : null);
   const roster = useLessonRoster(groups.data?.length ? (q.data as { session_id?: string | null } | undefined)?.session_id ?? null : null);
   const nameOf = useMemo(() => {
@@ -164,7 +165,7 @@ function ReportDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {groups.data && groups.data.length > 0 && (
         <VoiceGroups reportId={id} rows={groups.data} voices={voices} lines={view.lines} kids={roster.data ?? []}
-          nameOf={nameOf} play={player.gone ? undefined : (t) => void player.play(t)} />
+          nameOf={nameOf} play={player.gone ? undefined : (t) => void player.play(t)} hints={hints} />
       )}
 
       <Feedback row={q.data} />
