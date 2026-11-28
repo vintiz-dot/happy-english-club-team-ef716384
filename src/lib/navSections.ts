@@ -61,6 +61,7 @@ export const TEACHER_GROUPS: NavGroup[] = [{
       id: "student-work", label: "Student work", icon: "Images",
       members: [
         { label: "My student works", path: "/teacher/my-student-works", icon: "Images" },
+        { label: "Class highlights", path: "/teacher/highlights", icon: "Film", keywords: "video clip reception tv upload" },
         { label: "Smart Upload", path: "/teacher/smart-upload", icon: "ScanText", keywords: OCR },
         { label: "Vocabulary audit", path: "/teacher/vocabulary-audit", icon: "Sparkles" },
       ],

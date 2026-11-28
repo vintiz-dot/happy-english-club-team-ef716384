@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  TrendingUp, CalendarDays, ListTodo, BookOpenCheck, NotebookPen, ClipboardList, FileAudio, FileBarChart2, Images, ScanText,
+  TrendingUp, CalendarDays, ListTodo, BookOpenCheck, NotebookPen, ClipboardList, FileAudio, FileBarChart2, Images, Film, ScanText,
   Sparkles, FolderOpen, BookOpen, Languages, Mic, Trophy, PiggyBank, LayoutGrid, UsersRound, UserCog, Building2, School,
   Receipt, Megaphone, Tv, Settings2, History, Bot, HardDrive, Plug, AudioLines, Scale,
 } from "lucide-react";
@@ -8,7 +8,7 @@ import {
 export type NavIcon = LucideIcon;
 
 const ICONS: Record<string, NavIcon> = {
-  TrendingUp, CalendarDays, ListTodo, BookOpenCheck, NotebookPen, ClipboardList, FileAudio, FileBarChart2, Images, ScanText,
+  TrendingUp, CalendarDays, ListTodo, BookOpenCheck, NotebookPen, ClipboardList, FileAudio, FileBarChart2, Images, Film, ScanText,
   Sparkles, FolderOpen, BookOpen, Languages, Mic, Trophy, PiggyBank, LayoutGrid, UsersRound, UserCog, Building2, School,
   Receipt, Megaphone, Tv, Settings2, History, Bot, HardDrive, Plug, AudioLines, Scale,
 };
