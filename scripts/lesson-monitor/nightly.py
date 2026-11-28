@@ -261,12 +261,14 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             pc.log(f"{rid} refused: {code} ({','.join(problems)})")
             return code
         use_teacher = not any(p.endswith("_teacher") for p in problems)
+        has_mics = any(by.get(m) for m in LARK_MICS)  # the Lark transmitters (28 Nov 2026); none = the old path exactly
         locate = getattr(api, "locate", None)
         if locate is not None:  # where each chunk lives (R2 or Supabase): a few requests now, none per chunk
-            locate([c["storage_path"] for t in ("room", "teacher") if t == "room" or use_teacher for c in by[t]])
+            locate([c["storage_path"] for t in ("room", "teacher") if t == "room" or use_teacher for c in by[t]]
+                   + ([c["storage_path"] for m in LARK_MICS for c in by.get(m) or []] if has_mics else []))
         window = plan.lesson_window(row)
         room = audio.TrackJoiner(window, pc.out(folder / "room16k.wav"))
-        teacher = audio.TrackJoiner(window, None)
+        teacher = audio.TrackJoiner(window, pc.out(folder / "teacher16k.wav") if has_mics and use_teacher else None)
         n_bytes, n_done = 0, 0
         n_all = len(by["room"]) + (len(by["teacher"]) if use_teacher else 0)
         for track, joiner in (("room", room), ("teacher", teacher)):
@@ -284,6 +286,7 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
                 n_bytes += len(data)
                 joiner.add(data, int(c["t_start_ms"]))
         room.close()
+        teacher.close()
         pc.log(f"{rid} downloaded {sum(len(by[t]) for t in ('room', 'teacher') if t == 'room' or use_teacher)} chunks, "
                f"{n_bytes // 1_000_000} MB; lesson {int(window[1] - window[0])} s")
         lv_room = room.levels_in_window()
@@ -296,15 +299,19 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
 
         if guard.should_stop():
             raise transcribe.Stopped()
+        lark = None
+        if has_mics:
+            lark = _lark_prepare(api, row, by, window, folder, guard, use_teacher)
+        wav = lark.composite if lark is not None and lark.ok else folder / "room16k.wav"
         duration = window[1] - window[0]
         t_tr = time.time()
         if prog:
             prog.step(rid, "transcribing", 0, duration)
         if REMOTE is not None:
-            segs, tsettings = transcribe_remote(rid, folder / "room16k.wav", model, guard,
+            segs, tsettings = transcribe_remote(rid, wav, model, guard,
                                                 (lambda t: prog.step(rid, "transcribing", t, duration)) if prog else None)
         else:
-            segs = transcribe.transcribe(model, str(folder / "room16k.wav"), should_stop=guard.should_stop,
+            segs = transcribe.transcribe(model, str(wav), should_stop=guard.should_stop,
                                          on_progress=(lambda t: prog.step(rid, "transcribing", t, duration)) if prog else None)
             tsettings = transcribe.settings()
         if prog:
@@ -318,7 +325,12 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
             dict(tsettings, job=pc.JOB_VERSION, step0_talk=bool(step0.get("talk_pass"))),
             offset_s=window[0])
         t_voice = time.time()
-        vres = run_voice(api, row, folder / "room16k.wav", body, lv_teacher, lv_room, window, duration, guard)
+        if lark is not None:
+            body["settings"]["lark"] = lark.settings()
+        if lark is not None and lark.ok:
+            vres = _lark_finish(api, row, body, lark, window, guard)
+        else:
+            vres = run_voice(api, row, folder / "room16k.wav", body, lv_teacher, lv_room, window, duration, guard)
         pc.log(f"{rid} timing: download {int(t_tr - t_start)} s, transcription {int(t_voice - t_tr)} s, "
                f"voices {int(time.time() - t_voice)} s, lesson {int(duration)} s")
     except transcribe.Stopped:
@@ -373,8 +385,17 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         pc.log(f"{rid} kept on this laptop only (--no-upload)")
         return "kept_local"
     try:
-        api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
-                                               "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
+        try:
+            api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
+                                                   "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
+        except ApiError as e:
+            if "mics" not in body or "unknown part: mics" not in (e.message or ""):
+                raise
+            import multimic  # 20261128180000 not pasted yet: the report goes without its mics part (talk time hidden)
+            multimic.strip_mics(body)
+            pc.log(f"{rid} the database has no mics part yet (20261128180000); saved without it")
+            api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
+                                                   "p_audio_seconds": audio_s, "p_processing_seconds": proc_s})
         pc.log(f"{rid} report saved for the lesson's teacher")
         finish_voice(api, row, vres)
         follow_class_report(api, row)
@@ -437,6 +458,54 @@ def setup_remote(on: bool) -> list | None:
     pc.log(f"remote transcription: {', '.join(p.name + ' ' + p.model for p in provs) or 'no provider credentials'}; "
            f"re-checks with beam {CAREFUL_BEAM}")
     return provs
+
+
+# ------------------------------------------------------------------ the Lark mics (28 Nov 2026, multimic.py)
+LARK_MICS = ("mic1", "mic2", "mic3", "mic4")
+_LARK_WAIT_LOGGED: set[str] = set()
+
+
+def lark_waiting(api, row: dict) -> str | None:
+    """Before anything is downloaded: a reason code while this lesson waits for its Lark import, else None. Never
+    stops a lesson: a database without the Lark migrations answers None."""
+    try:
+        import multimic
+        return multimic.should_wait(api, row)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _lark_prepare(api, row, by, window, folder: Path, guard, use_teacher: bool):
+    import multimic
+    import transcribe
+    try:
+        return multimic.prepare(api, row, by, window, folder, guard, folder / "room16k.wav",
+                                folder / "teacher16k.wav" if use_teacher else None)
+    except multimic.Stopped:
+        raise transcribe.Stopped()
+
+
+def _lark_finish(api, row, body: dict, lark, window, guard):
+    """The new engine's voices; a failure leaves the report as the old path would (no voices), with a code."""
+    import multimic
+    import transcribe
+    rid = row["recording_id"]
+    try:
+        embs = _voice_embedders(VOICE) if VOICE is not None else {}
+        if not embs:
+            pc.log(f"{rid} lark: voices off (no voiceprint step); speaking seconds only")
+        res = multimic.finish(api, row, body, lark, embs, (VOICE or {}).get("allowed") or set(), window, guard)
+        return res if VOICE is not None else None
+    except multimic.Stopped:
+        raise transcribe.Stopped()
+    except Exception as e:  # noqa: BLE001
+        pc.log(f"{rid} lark voices skipped: error_{type(e).__name__.lower()}"[:120])
+        for k in ("voice", "mics"):
+            body.pop(k, None)
+        for ln in body["lines"]:
+            for k in ("g", "src"):
+                ln.pop(k, None)
+        return None
 
 
 # ------------------------------------------------------------------ voices
@@ -852,6 +921,20 @@ def _run_batch(api, a, step0, model, progress, transcribe):
         tonight.process = [r for r in tonight.process if r["recording_id"] not in _SEEN]
         _SEEN.update(r["recording_id"] for r, _ in tonight.refuse)
         _SEEN.update(r["recording_id"] for r in tonight.process)
+    if tonight.process:
+        # A lesson whose Lark mic files are still being imported waits, unrecorded and undownloaded, and is looked at
+        # again at the next poll (one or two RPCs per look).
+        keep = []
+        for r in tonight.process:
+            why = lark_waiting(api, r)
+            if why is None:
+                keep.append(r)
+                continue
+            _SEEN.discard(r["recording_id"])
+            if r["recording_id"] not in _LARK_WAIT_LOGGED:
+                _LARK_WAIT_LOGGED.add(r["recording_id"])
+                pc.log(f"{r['recording_id']} waits: {why}")
+        tonight.process = keep
     if a.no_upload:
         local = {f.stem for f in pc.drafts_dir().glob("*.json")} if pc.drafts_dir().exists() else set()
         tonight.process = [r for r in tonight.process if r["recording_id"] not in local]

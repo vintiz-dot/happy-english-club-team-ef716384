@@ -173,7 +173,7 @@ def test_speaking_seconds_and_talk_time():
 def test_board_correction_suggested_for_the_moved_child():
     r, seats = lesson_results()
     sug = A.map_suggestions(r, seats)
-    assert [(x["student_id"], x["mic"], x["board_mic"]) for x in sug] == [("kid-2", "mic3", "mic2")]
+    assert [(x["suggested"], x["mic"], x["board_mic"]) for x in sug] == [("kid-2", "mic3", "mic2")]
     assert sug[0]["seconds"] == 24.0
 
 

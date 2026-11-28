@@ -257,7 +257,8 @@ def _add(arr: np.ndarray, a: float, b: float) -> None:
 
 def map_suggestions(results: list[dict], seats: Seats, s: dict = SETTINGS, shown: str | None = None) -> list[dict]:
     """"Child X's confident segments keep coming from mic M" while the board seats X elsewhere (or nowhere):
-    [{"student_id", "mic", "seconds", "share", "board_mic", "from_s"}] for the teacher to accept or ignore."""
+    [{"suggested": child id, "mic", "seconds", "share", "board_mic", "from_s"}] for the teacher to accept or ignore
+    ("suggested", not "student_id": the report names nobody under a child key, as in the voice groups)."""
     shown = shown or voice.SETTINGS["shown_model"]
     thr = voice.threshold_for(shown) + s["confident_extra"]
     per: dict[str, dict[str, list]] = {}
@@ -277,6 +278,6 @@ def map_suggestions(results: list[dict], seats: Seats, s: dict = SETTINGS, shown
             if len(elsewhere) < 0.5 * len(board):
                 continue
             common = max(set(elsewhere), key=elsewhere.count) if elsewhere else None
-            out.append({"student_id": sid, "mic": mic, "seconds": round(sec, 1), "share": round(sec / total, 2),
+            out.append({"suggested": sid, "mic": mic, "seconds": round(sec, 1), "share": round(sec / total, 2),
                         "board_mic": common, "from_s": round(min(x["a"] for x in rs), 1)})
     return sorted(out, key=lambda d: -d["seconds"])

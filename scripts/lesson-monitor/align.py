@@ -83,7 +83,7 @@ def _frame_db(x: np.ndarray, sr: int, frame_s: float, lo_hz: float | None = None
 
 def find_claps(x: np.ndarray, sr: int, above_db: float = 12.0, frame_s: float = 0.005) -> list[float]:
     """Times (s) of sharp broadband spikes. A clap's high band (>2 kHz) stands above_db over the LOUD speech of the
-    30 seconds before it (90th percentile of 50 ms maxima), and has fallen 12 dB 60 ms later. A syllable can rise as
+    30 seconds before it (90th percentile of 50 ms maxima), and has risen 8 dB within 40 ms and fallen 15 dB 40 ms later. A syllable can rise as
     fast as a clap after a pause, but it is not 12 dB louder than the half-minute of speech around it. A stray loud
     spike (a dropped book) is fine: only three in a row with matching gaps on both tracks are used."""
     db = _frame_db(np.asarray(x, dtype=np.float64), sr, frame_s, lo_hz=2000.0)
@@ -95,14 +95,16 @@ def find_claps(x: np.ndarray, sr: int, above_db: float = 12.0, frame_s: float = 
     blk = db[: nb * per].reshape(nb, per).max(axis=1)
     hist = 600  # 30 s of blocks before
     ref = percentile_filter(blk, 90, size=hist, mode="nearest")  # centred: ref[j] covers blocks j-300..j+299
-    after = int(0.06 / frame_s)
-    i = np.arange(per * 2, nb * per - after - 3)
+    q = int(0.04 / frame_s)  # 40 ms
+    i = np.arange(max(per * 2, q + 2), nb * per - q - 3)
     if len(i) == 0:
         return []
     is_peak = (db[i] >= db[i - 1]) & (db[i] > db[i + 1])
     loud = db[i] - ref[np.maximum(i // per - hist // 2 - 1, hist // 2)] >= above_db  # the 30 s before (the first 30 s at the start)
-    later = np.maximum(np.maximum(db[i + after], db[i + after + 1]), db[i + after + 2])
-    short = db[i] - later >= 12.0
+    # a clap rises AND falls within 40 ms (a syllable, even a plosive or an "s", lasts 100 ms or more)
+    later = np.maximum(np.maximum(db[i + q], db[i + q + 1]), db[i + q + 2])
+    before = np.maximum(db[i - q], db[i - q - 1])
+    short = (db[i] - later >= 15.0) & (db[i] - before >= 8.0)  # (before: a clap over speech still stands out)
     out, peaks = [], []
     for k in i[is_peak & loud & short]:
         t = k * frame_s
@@ -139,10 +141,11 @@ def _match_triples(ref_tr, mic_tr, tol_s: float = 0.08, max_drift_ppm: float = 3
             if np.all(np.abs(np.diff(m) - gr) <= tol_s):
                 cands.append((r, m, float(np.mean(np.array(m) - np.array(r)))))
     best = []
-    for _, _, lag in cands:
+    for r0, _, lag in cands:
         keep = []
         for r, m, l2 in cands:
-            if abs(l2 - lag) <= 0.05 + max_drift_ppm * 1e-6 * 8000 and all(r is not k[0] and m is not k[1] for k in keep):
+            # the same lag, give or take 20 ms of room and what a crystal can drift between the two moments
+            if abs(l2 - lag) <= 0.02 + max_drift_ppm * 1e-6 * abs(r[0] - r0[0])                     and all(r is not k[0] and m is not k[1] for k in keep):
                 keep.append((r, m))
         if len(keep) > len(best):
             best = keep
@@ -201,12 +204,16 @@ def envelope_lag(ref: np.ndarray, sig: np.ndarray, sr: int, frame_s: float = 0.0
     return float(lags[k] * frame_s), score
 
 
-def window_lags(ref: np.ndarray, sig: np.ndarray, sr: int, guess, s: dict = SETTINGS) -> list[tuple[float, float, float]]:
-    """[(room time of the window's middle, lag, psr)] with the lag searched +- margin around guess(t)."""
+def window_lags(ref: np.ndarray, sig: np.ndarray, sr: int, guess, s: dict = SETTINGS,
+                should_stop=None) -> list[tuple[float, float, float]]:
+    """[(room time of the window's middle, lag, psr)] with the lag searched +- margin around guess(t).
+    should_stop is asked before every window (the STOP file, a class switched off): InterruptedError."""
     W, M = int(s["win_s"] * sr), int(s["margin_s"] * sr)
     hop = int(s["hop_s"] * sr)
     out = []
     for a in range(0, max(0, len(ref) - W) + 1, hop):
+        if should_stop is not None and should_stop():
+            raise InterruptedError("stopped")
         r = ref[a: a + W]
         if np.sqrt(np.mean(np.square(r, dtype=np.float64))) < 1e-5:
             continue
@@ -255,7 +262,7 @@ def ransac_line(t: np.ndarray, y: np.ndarray, tol: float, iters: int = 400, seed
 
 # ------------------------------------------------------------------ one track
 def align_track(name: str, ref: np.ndarray, sig: np.ndarray, sr: int, meta_offset_s: float | None = None,
-                s: dict = SETTINGS) -> Fit:
+                s: dict = SETTINGS, should_stop=None) -> Fit:
     """Fit one mic track (sig) to the room track (ref), both mono at sr. meta_offset_s: the import's first guess of
     mic_time - room_time (from the transmitter's start time or timecode), when it has one."""
     if len(sig) < s["win_s"] * sr * 2:
@@ -285,7 +292,7 @@ def align_track(name: str, ref: np.ndarray, sig: np.ndarray, sr: int, meta_offse
 
     best: Fit | None = None
     for gname, g in guesses:
-        pts = [p for p in window_lags(ref, sig, sr, g, s) if p[2] >= s["min_psr"]]
+        pts = [p for p in window_lags(ref, sig, sr, g, s, should_stop) if p[2] >= s["min_psr"]]
         fit = _fit(name, pts, s)
         fit.method, fit.claps = gname + "+gcc", claps
         if fit.ok and anchors:

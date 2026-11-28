@@ -209,7 +209,7 @@ def runs(mask: np.ndarray, merge_gap: int = 0, min_len: int = 1) -> list[tuple[i
 
 def child_segments(act: dict, s: dict = SETTINGS) -> list[dict]:
     """Stretches of child speech: [{"a", "e" (s), "top": loudest mic, "overlap": teacher talking for >= 30 % of it,
-    "excess": {mic: mean dB}, "margin": {mic: mean dB}}]. A stretch is split where the loudest mic changes for longer
+    "excess": {mic: dB}, "margin": {mic: dB}} (90th percentile over the stretch's speech frames)]. A stretch is split where the loudest mic changes for longer
     than switch_s (two children at different mics answering each other) and at max_seg_s."""
     mics = sorted(act["child"])
     if not mics:
@@ -240,8 +240,11 @@ def child_segments(act: dict, s: dict = SETTINGS) -> list[dict]:
                 on |= act["child"][m][x:y]
             seg = {"a": round(x * FRAME_S, 3), "e": round(y * FRAME_S, 3), "top": mics[int(np.bincount(top[x:y]).argmax())],
                    "overlap": bool(act["teacher"][x:y].mean() >= 0.3),
-                   "excess": {m: round(float(np.mean(act["excess"][m][x:y][on])) if on.any() else -99.0, 1) for m in mics},
-                   "margin": {m: round(float(np.mean(act["margin"][m][x:y][on])) if on.any() else -99.0, 1) for m in mics}}
+                   # the voice's peaks (90th percentile), not the gaps between syllables at each mic's floor
+                   "excess": {m: round(float(np.percentile(act["excess"][m][x:y][on], 90)) if on.any() else -99.0, 1)
+                              for m in mics},
+                   "margin": {m: round(float(np.percentile(act["margin"][m][x:y][on], 90)) if on.any() else -99.0, 1)
+                              for m in mics}}
             out.append(seg)
     return out
 

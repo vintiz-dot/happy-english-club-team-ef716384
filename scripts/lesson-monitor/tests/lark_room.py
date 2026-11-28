@@ -25,9 +25,10 @@ def gated(x: np.ndarray, spans, sr: int = SR) -> np.ndarray:
     return (x * g).astype(np.float32)
 
 
-def classroom(seconds: float, teacher_spans, children: dict, seed: int = 0, floors=None):
+def classroom(seconds: float, teacher_spans, children: dict, seed: int = 0, floors=None, bands=None):
     """children: {child id: (mic it sits at, [(from, to)], voice seed)}. Returns ({track: audio}, truth) where truth
-    holds each source's spans."""
+    holds each source's spans. bands: {child id: (lo, hi) Hz} gives that child's voice its own band (a stand-in
+    for a voice a fake embedder can tell apart)."""
     n = int(seconds * SR)
     floors = floors or {"teacher": 0.002, "room": 0.003, "mic1": 0.002, "mic2": 0.004, "mic3": 0.0015, "mic4": 0.003}
     tracks = {k: hiss(n, v, seed + i) for i, (k, v) in enumerate(floors.items())}
@@ -37,7 +38,8 @@ def classroom(seconds: float, teacher_spans, children: dict, seed: int = 0, floo
     for m in MICS:
         tracks[m] += DB(-18) * t
     for cid, (mic, spans, vs) in children.items():
-        v = gated(voice(seconds, SR, vs, f0=280 + 7 * vs, rate_hz=4 + (vs % 3) * 0.4), spans)
+        kw = {"band": bands[cid]} if bands and cid in bands else {}
+        v = gated(voice(seconds, SR, vs, f0=280 + 7 * vs, rate_hz=4 + (vs % 3) * 0.4, **kw), spans)
         tracks["teacher"] += DB(-26) * v
         tracks["room"] += DB(-14) * v
         i = MICS.index(mic)

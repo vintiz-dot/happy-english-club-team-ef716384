@@ -10,14 +10,14 @@ from __future__ import annotations
 import numpy as np
 
 
-def voice(seconds: float, sr: int, seed: int, f0: float = 220.0, rate_hz: float = 4.0) -> np.ndarray:
+def voice(seconds: float, sr: int, seed: int, f0: float = 220.0, rate_hz: float = 4.0, band=(250.0, 3500.0)) -> np.ndarray:
     rng = np.random.default_rng(seed)
     n = int(seconds * sr)
     x = rng.standard_normal(n)
     t = np.arange(n) / sr
     tint = 1.0 + 0.8 * np.sin(2 * np.pi * f0 * t)  # a voiced buzz riding on the noise
     from scipy.signal import butter, sosfilt
-    x = sosfilt(butter(4, (250.0, 3500.0), "bandpass", fs=sr, output="sos"), x * tint)
+    x = sosfilt(butter(4, band, "bandpass", fs=sr, output="sos"), x * tint)  # a test may give each "child" a band
     env = np.clip(np.sin(2 * np.pi * rate_hz * t + rng.uniform(0, 6.28)), 0, None) ** 2
     phrase = np.clip((np.sin(2 * np.pi * 0.15 * t + rng.uniform(0, 6.28)) + 0.3) * 4, 0, 1)  # pauses between phrases
     y = x * env * phrase
