@@ -49,14 +49,15 @@ const MODE: Record<Mode, { label: string; Icon: typeof Users }> = {
   solo: { label: "On your own", Icon: User },
 };
 
-function Chip({ children, tone = "ink" }: { children: React.ReactNode; tone?: "ink" | "accent" | "warn" }) {
+// Chips carry a native title (not a Radix tooltip): SlideView is also rendered to static markup for print.
+function Chip({ children, tone = "ink", title }: { children: React.ReactNode; tone?: "ink" | "accent" | "warn"; title?: string }) {
   const cls =
     tone === "accent"
       ? "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
       : tone === "warn"
         ? "bg-rose-100 text-rose-900 dark:bg-rose-900/40 dark:text-rose-100"
         : "bg-hec-paper text-hec-ink border border-hec-line";
-  return <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${cls}`}>{children}</span>;
+  return <span title={title} className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${cls}`}>{children}</span>;
 }
 
 /** A small speaker button; nothing at all when speech is not available (print). */
@@ -103,9 +104,9 @@ function BookChip({ b }: { b: BookRef }) {
 function Meta({ mode, minutes, book, tag }: { mode?: Mode; minutes?: number; book?: BookRef; tag?: string }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {tag && <Chip>{tag}</Chip>}
-      {mode && (() => { const { label, Icon } = MODE[mode]; return <Chip><Icon className="h-4 w-4" />{label}</Chip>; })()}
-      {typeof minutes === "number" && <Chip><Clock className="h-4 w-4" />{minutes} min</Chip>}
+      {tag && <Chip title="What kind of activity this is">{tag}</Chip>}
+      {mode && (() => { const { label, Icon } = MODE[mode]; return <Chip title={`How the class works on it: ${label.toLowerCase()}`}><Icon className="h-4 w-4" />{label}</Chip>; })()}
+      {typeof minutes === "number" && <Chip title={`Planned time: ${minutes} minutes. The timer button in the top bar counts it down.`}><Clock className="h-4 w-4" />{minutes} min</Chip>}
       {book && <BookChip b={book} />}
     </div>
   );
@@ -288,7 +289,7 @@ function CheckItems({ a }: { a: Assessment }) {
 /** The flag on everything the Speaking & Writing Lab added to a lesson (Deck.lab). */
 export function GrammarLabFlag({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-900 dark:bg-violet-900/40 dark:text-violet-100 ${className}`}>
+    <span title="Added by the Speaking & Writing Lab (fluency, writing and grammar practice on top of the book)" className={`inline-flex items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-900 dark:bg-violet-900/40 dark:text-violet-100 ${className}`}>
       <Sparkles className="h-4 w-4" />Grammar Lab
     </span>
   );

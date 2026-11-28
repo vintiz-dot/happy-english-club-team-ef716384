@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Assessment, BookRef, Deck, Slide, Unit, Worksheet } from "@/lib/lessonDecks/types";
 import { castSlide } from "@/lib/lessonDecks/names";
@@ -11,13 +11,36 @@ import { downloadBlob, tryMakeDocument } from "@/lib/hecDocs";
 import { LISTENING_BANDS, RUBRIC } from "@/lib/lessonDecks/ieltsRubric";
 import { SlideView, SlideContext, WorksheetView, AssessmentView, type SlideCtx } from "./SlideView";
 import { useSpeech } from "./speech";
+import { FlipbookFrame, useFullscreen } from "./FlipbookFrame";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Shuffle, X, Timer, Pause, Play, Printer, Volume2, Turtle, ExternalLink, BookOpen, Drama } from "lucide-react";
+import { ChevronLeft, ChevronRight, Shuffle, X, Timer, Pause, Play, Printer, Volume2, Turtle, ExternalLink, BookOpen, Drama, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 
 /** What a slide is called in the pager tooltip: its title, else its kind. */
 const slideLabel = (s: Slide) => ("title" in s && s.title ? s.title : s.kind);
 const isLab = (d: Deck, k: number) => !!d.lab?.slides.includes(k);
+
+/** A button with a tooltip (the app's own, not the slow native title). */
+function Tip({ tip, children, side = "bottom" }: { tip: ReactNode; children: ReactElement; side?: "top" | "bottom" }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side={side} className="max-w-xs">{tip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** The first Student Book reference anywhere in a slide (its "Show p. X" button), or null. */
+function firstBookRef(x: unknown, depth = 0): BookRef | null {
+  if (!x || typeof x !== "object" || depth > 6) return null;
+  const o = x as Record<string, unknown>;
+  if (o.book === "SB" && typeof o.pages === "string") return o as unknown as BookRef;
+  for (const v of Object.values(o)) {
+    const hit = firstBookRef(v, depth + 1);
+    if (hit) return hit;
+  }
+  return null;
+}
 
 export type ClassFlipbook = FlipbookLite & { id: string; title: string };
 
@@ -295,6 +318,8 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
   const timer = useCountdown();
   const dotsRef = useRef<HTMLDivElement>(null);
   const speech = useSpeech();
+  const fs = useFullscreen();
+  const fsByBook = useRef(false); // full screen was entered by opening the book, so leave it on closing the book
   const raw = deck.slides[i];
   const minutes = "minutes" in raw ? raw.minutes : undefined;
 
@@ -320,6 +345,8 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
       if (!t.ok || !flipbook) return;
       setBook({ url: flipbookUrl(flipbook.url, t.index), label: t.label, note: t.note });
       onBookPage?.(t.index);
+      // The book goes full screen with nothing else on it (called from the click, so the browser allows it).
+      if (!document.fullscreenElement) void fs.enter(document.documentElement).then((ok) => { fsByBook.current = ok; });
     },
     openWorksheet: (id: string, audience: Audience) => {
       const ws = unit?.worksheets?.find((w) => w.id === id);
@@ -327,11 +354,27 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
       if (onWorksheet) onWorksheet(ws, audience);
       else printWorksheet(ws, audience);
     },
-  }), [unit, deck, speech.supported, speech.speak, speech.speakScript, flipbook, onBookPage, onWorksheet]);
+  }), [unit, deck, speech.supported, speech.speak, speech.speakScript, flipbook, onBookPage, onWorksheet, fs]);
+
+  // The book site takes 10-25 s to open a page and cannot turn to another page without reloading,
+  // so the page this slide cites is loaded out of sight while the slide is up: "Show p. X" is then instant.
+  const preUrl = useMemo(() => {
+    if (!flipbook) return null;
+    const ref = firstBookRef(raw);
+    if (!ref) return null;
+    const t = flipTarget(ref, flipbook, unit?.firstEdition);
+    return t.ok ? flipbookUrl(flipbook.url, t.index) : null;
+  }, [raw, flipbook, unit]);
+  const frameUrl = book?.url ?? preUrl;
+
+  const closeBook = useCallback(() => {
+    setBook(null);
+    if (fsByBook.current) { fsByBook.current = false; void fs.exit(); }
+  }, [fs]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (book) { if (e.key === "Escape") setBook(null); return; }
+      if (book) { if (e.key === "Escape") closeBook(); return; }
       if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); go(1); }
       else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
       else if (e.key === "Escape") onClose();
@@ -353,33 +396,51 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
           {speech.supported && (
             <>
-              <Button variant="outline" size="sm" title="Voice for the listen buttons"
-                onClick={() => speech.update({ accent: speech.prefs.accent === "en-GB" ? "en-US" : "en-GB" })}>
-                <Volume2 className="h-4 w-4" />{speech.prefs.accent === "en-GB" ? "UK" : "US"}
-              </Button>
-              <Button variant={speech.prefs.slow ? "default" : "outline"} size="sm" title="Slower speech" onClick={() => speech.update({ slow: !speech.prefs.slow })}>
-                <Turtle className="h-4 w-4" />Slow
-              </Button>
+              <Tip tip={`Voice for the listen buttons: ${speech.prefs.accent === "en-GB" ? "British" : "American"} English. Click to switch to ${speech.prefs.accent === "en-GB" ? "American" : "British"}.`}>
+                <Button variant="outline" size="sm" aria-label="Switch the listening voice between UK and US"
+                  onClick={() => speech.update({ accent: speech.prefs.accent === "en-GB" ? "en-US" : "en-GB" })}>
+                  <Volume2 className="h-4 w-4" />{speech.prefs.accent === "en-GB" ? "UK" : "US"}
+                </Button>
+              </Tip>
+              <Tip tip={speech.prefs.slow ? "Slow speech is ON for the listen buttons. Click for normal speed." : "Read listening texts more slowly, for younger or weaker listeners."}>
+                <Button variant={speech.prefs.slow ? "default" : "outline"} size="sm" aria-pressed={speech.prefs.slow} onClick={() => speech.update({ slow: !speech.prefs.slow })}>
+                  <Turtle className="h-4 w-4" />Slow
+                </Button>
+              </Tip>
             </>
           )}
           {minutes !== undefined && (
             timer.left === null ? (
-              <Button variant="outline" size="sm" onClick={() => timer.start(minutes)}><Timer className="h-4 w-4" />{minutes} min</Button>
+              <Tip tip={`Start a ${minutes}-minute timer for this slide. It stops when you change slide.`}>
+                <Button variant="outline" size="sm" onClick={() => timer.start(minutes)}><Timer className="h-4 w-4" />{minutes} min</Button>
+              </Tip>
             ) : (
-              <Button variant={timer.left <= 0 ? "destructive" : "outline"} size="sm" onClick={timer.toggle}>
-                {timer.running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{timer.left <= 0 ? "Time!" : mm}
-              </Button>
+              <Tip tip={timer.left <= 0 ? "Time is up." : timer.running ? "Pause the timer" : "Carry on with the timer"}>
+                <Button variant={timer.left <= 0 ? "destructive" : "outline"} size="sm" onClick={timer.toggle}>
+                  {timer.running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{timer.left <= 0 ? "Time!" : mm}
+                </Button>
+              </Tip>
             )
           )}
           {onPlay && plays?.map((p) => (
-            <Button key={p.id} variant="outline" size="sm" className="border-amber-400" onClick={() => onPlay(p.id)} title={`Class play "${p.title}": opens the Plays tab; ${p.minutes} minutes on top of the lesson`}>
-              <Drama className="h-4 w-4" />Play +{p.minutes} min
-            </Button>
+            <Tip key={p.id} tip={`Class play "${p.title}": opens the Plays tab, cast for today's class. ${p.minutes} minutes on top of the lesson.`}>
+              <Button variant="outline" size="sm" className="border-amber-400" onClick={() => onPlay(p.id)}>
+                <Drama className="h-4 w-4" />Play +{p.minutes} min
+              </Button>
+            </Tip>
           ))}
-          <Button variant="outline" size="sm" onClick={reshuffle} title="New names (N)"><Shuffle className="h-4 w-4" />New names</Button>
-          <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "teacher")} title="Teacher copy: with answers, scripts and teacher notes"><Printer className="h-4 w-4" />Teacher</Button>
-          <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "student")} title="Student copy: no answers, scripts or teacher notes"><Printer className="h-4 w-4" />Student</Button>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close (Esc)"><X className="h-5 w-5" /></Button>
+          <Tip tip={<>Pick different children from today's attendance for the names on this slide. Key: <kbd className="font-semibold">N</kbd></>}>
+            <Button variant="outline" size="sm" onClick={reshuffle}><Shuffle className="h-4 w-4" />New names</Button>
+          </Tip>
+          <Tip tip="Print the teacher copy of this lesson: answers, listening scripts and teacher notes printed open.">
+            <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "teacher")}><Printer className="h-4 w-4" />Teacher</Button>
+          </Tip>
+          <Tip tip="Print the student copy: no answers, scripts or teacher notes.">
+            <Button variant="outline" size="sm" onClick={() => printDeck(deck, roster, unit, "student")}><Printer className="h-4 w-4" />Student</Button>
+          </Tip>
+          <Tip tip={<>Close the lesson. The class carries on from this slide next time. Key: <kbd className="font-semibold">Esc</kbd></>}>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close (Esc)"><X className="h-5 w-5" /></Button>
+          </Tip>
         </div>
       </div>
       <div className="relative flex-1 overflow-y-auto">
@@ -388,16 +449,36 @@ export function DeckPlayer({ deck, unit, roster, rosterNote, onClose, startAt = 
             <SlideView slide={slides[i]} lab={isLab(deck, i)} />
           </SlideContext.Provider>
         </div>
+        {frameUrl && (
+          // Open: above everything, the classroom tools button included, so only the book shows.
+          // Not open: the same box, full size (the site lays the book out once, for the size it loads at), out of sight.
+          <div data-flipbook-focus={book ? "open" : "preloading"}
+            className={book ? "fixed inset-0 z-[70] bg-black" : "pointer-events-none fixed inset-0 -z-10 opacity-0"}
+            role={book ? "dialog" : undefined} aria-hidden={book ? undefined : true}
+            aria-label={book ? `${flipbook?.title ?? "Flipbook"}, ${book.label}` : undefined}>
+            <FlipbookFrame key={frameUrl} src={frameUrl} title={flipbook?.title ?? "Flipbook"} className="h-full w-full" />
+          </div>
+        )}
         {book && (
-          <div className="absolute inset-0 z-10 flex flex-col bg-black">
-            <div className="flex items-center justify-between gap-2 bg-hec-surface px-3 py-1.5">
-              <p className="flex items-center gap-2 text-sm text-hec-ink"><BookOpen className="h-4 w-4" />{flipbook?.title} · {book.label}{book.note ? ` · ${book.note}` : ""}</p>
-              <div className="flex gap-1">
-                <Button size="sm" variant="outline" onClick={() => window.open(book.url, "_blank", "noopener")}><ExternalLink className="h-4 w-4" />New tab</Button>
-                <Button size="sm" onClick={() => setBook(null)}>Back to the slide</Button>
-              </div>
+          <div className="fixed left-2 top-2 z-[71]">
+            {/* Top left, over the site's logo: its page arrows sit top centre. */}
+            <div className="flex items-center gap-1 rounded-full bg-black/60 p-1 pl-3 text-white opacity-40 shadow-lg backdrop-blur transition-opacity duration-200 hover:opacity-100 focus-within:opacity-100">
+              <span className="flex max-w-[28vw] items-center gap-1.5 truncate text-xs"><BookOpen className="h-3.5 w-3.5 shrink-0" />{book.label}{book.note ? ` · ${book.note}` : ""}</span>
+              <Tip tip={fs.active ? "Leave full screen (the book stays open)" : "Full screen"}>
+                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full text-white hover:bg-white/20 hover:text-white"
+                  aria-label={fs.active ? "Leave full screen" : "Full screen"}
+                  onClick={() => { if (fs.active) { fsByBook.current = false; void fs.exit(); } else void fs.enter(document.documentElement).then((ok) => { fsByBook.current = ok; }); }}>
+                  {fs.active ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+              </Tip>
+              <Tip tip="Open the book in its own browser tab">
+                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full text-white hover:bg-white/20 hover:text-white" aria-label="Open in a new tab"
+                  onClick={() => window.open(book.url, "_blank", "noopener,noreferrer")}><ExternalLink className="h-4 w-4" /></Button>
+              </Tip>
+              <Tip tip={<>Back to the slide. Key: <kbd className="font-semibold">Esc</kbd> (click outside the book first)</>}>
+                <Button size="sm" className="h-8 rounded-full" onClick={closeBook}><ArrowLeft className="h-4 w-4" />Slide</Button>
+              </Tip>
             </div>
-            <iframe key={book.url} src={book.url} title={flipbook?.title ?? "Flipbook"} className="w-full flex-1 border-0 bg-white" allowFullScreen />
           </div>
         )}
       </div>

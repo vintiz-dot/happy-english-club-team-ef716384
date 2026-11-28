@@ -47,6 +47,7 @@ import {
   Edit2,
   Trash2,
   Maximize2,
+  Minimize2,
   Settings,
   Presentation,
   ArrowLeft,
@@ -57,6 +58,7 @@ import {
   Layers,
 } from "lucide-react";
 import { LessonDecksPanel } from "@/components/lessonDecks/LessonDecksPanel";
+import { FlipbookFrame } from "@/components/lessonDecks/FlipbookFrame";
 import { useClassDeckState } from "@/components/lessonDecks/useClassDeckState";
 import { flipbookUrl, pageInUrl } from "@/lib/lessonDecks/bookPages";
 
@@ -96,6 +98,8 @@ export default function TeacherBooks() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const presentationContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<string>("present");
+  // Set by a teacher's click (tab or book choice): the book then goes full screen on its own.
+  const presentSoon = useRef(false);
 
   // Form State for Add / Edit
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -292,6 +296,18 @@ export default function TeacherBooks() {
     }
   };
 
+  // Switching to the book (Presenter tab, or another book) goes straight to full screen, nothing else on it.
+  // Done after the render that shows the book; the click's permission for full screen lasts a few seconds.
+  useEffect(() => {
+    if (!presentSoon.current) return;
+    presentSoon.current = false;
+    if (activeTab !== "present" || !selectedBookId || document.fullscreenElement) return;
+    const el = presentationContainerRef.current;
+    el?.requestFullscreen?.({ navigationUI: "hide" }).catch(() => { /* refused: the "Present Fullscreen" button still works */ });
+  }, [activeTab, selectedBookId]);
+
+  const exitPresentMode = () => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); };
+
   // Open Dialog for Add/Edit
   const handleOpenDialog = (book?: Flipbook) => {
     if (book) {
@@ -478,7 +494,7 @@ export default function TeacherBooks() {
   return (
     <Layout title="Flipbooks & Presentations" hideNavigation={true}>
       <div className="min-h-screen bg-hec-paper p-4 md:p-6 flex flex-col w-full">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 gap-6 w-full">
+        <Tabs value={activeTab} onValueChange={(v) => { if (v === "present" && v !== activeTab) presentSoon.current = true; setActiveTab(v); }} className="flex-1 flex flex-col min-h-0 gap-6 w-full">
           {/* Back and Title Bar */}
           <div className="flex flex-col gap-4 border-b border-hec-line pb-4 shrink-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-3">
@@ -540,7 +556,7 @@ export default function TeacherBooks() {
               <Label htmlFor="active-book-select" className="text-hec-small font-medium text-hec-ink shrink-0">
                 Select Book:
               </Label>
-              <Select value={selectedBookId} onValueChange={setSelectedBookId}>
+              <Select value={selectedBookId} onValueChange={(v) => { if (v !== selectedBookId) presentSoon.current = true; setSelectedBookId(v); }}>
                 <SelectTrigger id="active-book-select" className="flex-1 md:max-w-md">
                   <SelectValue placeholder="-- Select a flipbook --" />
                 </SelectTrigger>
@@ -576,13 +592,18 @@ export default function TeacherBooks() {
                     {classes.find((c) => c.id === activeBook.class_id)?.name ?? "Class"} left off at p. {place.state.flipbook_page}
                   </span>
                 )}
-                <Button
-                  onClick={triggerPresentMode}
-                  className="flex-1 gap-2 md:flex-none"
-                >
-                  <Maximize2 className="h-4 w-4" />
-                  Present Fullscreen
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={triggerPresentMode}
+                      className="flex-1 gap-2 md:flex-none"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                      Present Fullscreen
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">Show only the book, full screen. Pop-ups and redirects from the book's site are blocked. Esc to leave.</TooltipContent>
+                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -612,13 +633,24 @@ export default function TeacherBooks() {
                 }`}
               >
                 {/* Embedded Iframe */}
-                <iframe
+                <FlipbookFrame
                   src={bookSrc}
                   title={activeBook.title}
                   className="w-full flex-1 border-0 bg-white"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
                 />
+
+                {/* Full screen: one small, faint way out (tooltips cannot show inside a full-screen element). */}
+                {isFullscreen && (
+                  <button
+                    type="button"
+                    onClick={exitPresentMode}
+                    aria-label="Leave full screen"
+                    className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-30 shadow-lg backdrop-blur transition-opacity hover:opacity-100 focus-visible:opacity-100"
+                  >
+                    <Minimize2 className="h-3.5 w-3.5" />
+                    Leave full screen (Esc)
+                  </button>
+                )}
 
                 {/* Overlaid classroom tools launcher */}
                 <ClassroomToolsLauncher />
