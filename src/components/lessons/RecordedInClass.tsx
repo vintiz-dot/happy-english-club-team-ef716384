@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Clock, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { recordedLessonState, type RecordedLessonState } from "@/lib/recordedLessonState";
+import { LarkImport } from "@/components/recorder/LarkImport";
 
 /**
  * "Recorded in class": every lesson the Class recorder has touched in the last three weeks, with
@@ -33,6 +35,7 @@ const TONE: Record<RecordedLessonState["tone"], { icon: typeof Clock; cls: strin
 const minutes = (s: number | null) => (s == null ? "" : `${Math.round(s / 60)} min`);
 
 export function RecordedInClass({ userId, onAddTranscript }: { userId: string; onAddTranscript: (classId: string, sessionId: string | null) => void }) {
+  const [larkFor, setLarkFor] = useState<string | null>(null);
   const q = useQuery<Row[]>({
     queryKey: ["recorded-in-class", userId],
     refetchInterval: 60_000,
@@ -51,7 +54,8 @@ export function RecordedInClass({ userId, onAddTranscript }: { userId: string; o
       const soft = async (p: PromiseLike<{ data: any[] | null; error: unknown }>) => { try { const r = await p; return r.error ? null : r.data ?? []; } catch { return null; } };
       const [cls, chunks, reports, runs] = await Promise.all([
         soft(c.from("classes").select("id, name").in("id", classIds)),
-        soft(c.from("class_recording_chunks").select("recording_id, t_end_ms, confirmed_at").in("recording_id", ids).not("confirmed_at", "is", null)),
+        // Teacher and room only: a Lark mic's chunk times are on that transmitter's own clock.
+        soft(c.from("class_recording_chunks").select("recording_id, t_end_ms, confirmed_at").in("recording_id", ids).in("track", ["teacher", "room"]).not("confirmed_at", "is", null)),
         soft(c.from("lesson_monitor_reports").select("recording_id").in("recording_id", ids)),
         soft(c.from("lesson_monitor_runs").select("recording_id, outcome, reason").in("recording_id", ids)),
       ]);
@@ -101,8 +105,16 @@ export function RecordedInClass({ userId, onAddTranscript }: { userId: string; o
                   <span className={`flex items-center gap-1.5 ${T.cls}`}><T.icon className="h-4 w-4 shrink-0" aria-hidden />{r.state.text}</span>
                   {r.recordedS != null && r.recordedS > 0 && <span className="block text-xs text-muted-foreground">{minutes(r.recordedS)} recorded{r.state.lessonMin ? ` of a ${r.state.lessonMin} min lesson` : ""}</span>}
                 </span>
+                {r.status === "complete" && !r.audio_deleted_at && r.scheduled_start && r.scheduled_end && larkFor !== r.id && (
+                  <Button size="sm" variant="outline" className="min-h-9" onClick={() => setLarkFor(r.id)}>Add Lark mics</Button>
+                )}
                 {r.state.canPaste && (
                   <Button size="sm" variant="outline" className="min-h-9" onClick={() => onAddTranscript(r.class_id, r.session_id)}>Paste a transcript</Button>
+                )}
+                {larkFor === r.id && r.scheduled_start && r.scheduled_end && (
+                  <div className="basis-full">
+                    <LarkImport recordingId={r.id} scheduledStart={r.scheduled_start} scheduledEnd={r.scheduled_end} onClose={() => setLarkFor(null)} />
+                  </div>
                 )}
               </li>
             );
