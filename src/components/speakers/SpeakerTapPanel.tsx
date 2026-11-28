@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { MovedToMic } from "@/components/recorder/MicMapBoard";
 import {
   isConversation, NOBODY, offsetLabel, presentChildren, speakingLabel, stateOf, tap, tapOne,
   type SpeakerKind, type SpeakerState,
@@ -209,6 +210,8 @@ export function SpeakerTapPanel({ sessionId, embedded = false }: { sessionId: st
         ) : <p className="text-sm text-muted-foreground">No child is marked present at this lesson yet.</p>
       )}
 
+      {kids.length ? <MovedSection sessionId={sessionId} kids={kids} /> : null}
+
       {embedded ? (
         <>{controls}{recent}</>
       ) : (
@@ -243,5 +246,23 @@ function Tile({ on, disabled, small, onClick, onLongPress, children }: {
         on ? "border-primary bg-primary text-primary-foreground shadow-lg" : "border-border bg-card hover:bg-muted")}>
       {children}
     </button>
+  );
+}
+
+/** One-tap "moved to mic N" for a child who changed seat (the Lark mic map). */
+function MovedSection({ sessionId, kids }: { sessionId: string; kids: Kid[] }) {
+  const [id, setId] = useState("");
+  const kid = kids.find((k) => k.student_id === id);
+  return (
+    <details className="rounded-lg border border-border p-2">
+      <summary className="min-h-11 flex items-center cursor-pointer text-sm font-medium">A child moved to another mic</summary>
+      <div className="space-y-2 pt-2">
+        <select className="w-full min-h-11 rounded-md border border-border bg-card px-2" value={id} onChange={(e) => setId(e.target.value)} aria-label="Which child moved">
+          <option value="">Which child?</option>
+          {kids.map((k) => <option key={k.student_id} value={k.student_id}>{k.full_name}</option>)}
+        </select>
+        {kid ? <MovedToMic sessionId={sessionId} childId={kid.student_id} childName={kid.full_name} /> : null}
+      </div>
+    </details>
   );
 }

@@ -30,6 +30,7 @@ import { LevelMeter, MicTick, Notice, Status } from "./pieces";
 import { NotRecordedNotice, RecordingBar } from "./RecordingBar";
 import { PhoneLinkStatus } from "./PhoneLinkStatus";
 import { SpeakerTapPanel } from "@/components/speakers/SpeakerTapPanel";
+import { MicMapBoard } from "./MicMapBoard";
 import { adopt, askNotifications, attachScreen, CAPTURING_STATES, detachScreen, pressReady, readyFor, resendHeld, sessionFor, sessionState, setLessonLabel, setPrepared, startDay } from "./session";
 
 // `stalled` is a capturing state: Stop stays, the screen must not be left (C2 review 2, item 1).
@@ -514,6 +515,7 @@ export function DailyRecorder({ userId, onSetup, onActiveChange }: { userId: str
                   </ul>
                 ) : null}
               </section>
+              {lesson ? <MicMapBoard sessionId={lesson.sessionId} classId={lesson.classId} /> : null}
               {lesson ? (
                 <section aria-labelledby="sp-h" className="space-y-2 rounded-hec-lg border border-hec-line p-3">
                   <h3 id="sp-h" className="text-lg font-semibold">Who's speaking</h3>
