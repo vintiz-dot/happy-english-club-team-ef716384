@@ -2291,6 +2291,10 @@ console.log("=== 23 Nov 2026: the phone link - Record and Stop on either device 
     return hub;
   }
   const flush = async () => { for (let i = 0; i < 5; i++) { await realSleep(1); } };
+  // The hub hands a command to the other device without awaiting its handler (as a real channel does), and pressing
+  // Ready or Stop runs many async steps through the fake server: wait for what the step should lead to, at most 3 s,
+  // instead of a fixed few milliseconds (it failed under load, a different case each run). The assertion still decides.
+  const until = async (cond, ms = 3000) => { const end = Date.now() + ms; await flush(); while (!cond() && Date.now() < end) await realSleep(2); };
   class RoomOnlySource extends FakeSource {
     async openTracks(ids) {
       this.opens = (this.opens ?? 0) + 1; this.open = true;
@@ -2357,7 +2361,7 @@ console.log("=== 23 Nov 2026: the phone link - Record and Stop on either device 
     ok("link: the phone says the laptop is not ready yet and Record gets both ready", /Press Record/.test(P.ph.view.message), P.ph.view.message);
     eq("link: before Record nothing is pressed and nothing joined", [P.lap.pressed, P.ph.joins], [0, 0]);
     await P.phone.record();
-    await flush();
+    await until(() => P.lap.pressed >= 1 && P.r.state === "recording");
     eq("link: Record on the phone pressed Ready on the laptop, once", P.lap.pressed, 1);
     eq("link: and the laptop records", P.r.state, "recording");
     await P.both();
@@ -2408,12 +2412,12 @@ console.log("=== 23 Nov 2026: the phone link - Record and Stop on either device 
     await P.both();
     ok("late: the phone page sees the laptop recording and asks for one tap (iOS needs it for the microphone)", P.ph.view.canJoinNow && P.ph.view.alert && /Tap Record/.test(P.ph.view.message), P.ph.view.message);
     eq("late: it does not join without the tap", P.ph.joins, 0);
-    await P.phone.record(); await flush();
+    await P.phone.record(); await until(() => P.ph.joins >= 1 && P.ph.view?.joinedId);
     eq("late: Record joins straight away", [P.ph.joins, P.ph.view.joinedId], [1, id]);
     eq("late: a start while the laptop records presses nothing", P.lap.pressed, 0);
     await P.lesson(20);
     ok("late: the phone's chunks start after the laptop's (a phone opened late sends from when it joined)", tch(P.w, id).length >= 1 && tch(P.w, id)[0].t_start_ms >= 30000, `${tch(P.w, id)[0]?.t_start_ms}`);
-    await P.phone.stop(); await flush();
+    await P.phone.stop(); await until(() => P.lap.stops >= 1 && ["uploading", "finalizing", "complete"].includes(P.w.server.recordings.get(id).status));
     eq("stop on the phone: the laptop was stopped", P.lap.stops, 1);
     ok("stop on the phone: the laptop's recording is no longer capturing", ["uploading", "finalizing", "complete"].includes(P.w.server.recordings.get(id).status), P.w.server.recordings.get(id).status);
     await P.both();
@@ -2456,7 +2460,7 @@ console.log("=== 23 Nov 2026: the phone link - Record and Stop on either device 
     await P.armNow();
     const id4 = P.r.recordingId;
     await P.lesson(5);
-    await P.phone.record(); await flush();
+    await P.phone.record(); await until(() => P.ph.joins >= 1);
     await P.lesson(30);
     P.hub.drop = true;
     await P.phone.stop();
