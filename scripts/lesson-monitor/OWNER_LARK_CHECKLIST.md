@@ -16,7 +16,7 @@ four files up with the room, works out who spoke when, and the report shows talk
    - Set the transmitters' clock from the phone if the app offers it (a correct clock helps the first guess).
 3. Paste the migration `supabase/migrations/20261128180000_lesson_monitor_report_mics_part.sql` in the Supabase SQL
    editor, **after** `20261127110000_lesson_monitor_report_voice_part.sql` (and after the Lark import and mic board
-   migrations, `20261128120000_recorder_lark_tracks.sql` and the mic board's own). Until it is pasted the reports
+   migrations, `20261128090000_lesson_mic_seats.sql` and `20261128120000_recorder_lark_tracks.sql`). Until it is pasted the reports
    still save, but without talk time.
 
 ## Every lesson
