@@ -143,16 +143,24 @@ ON CONFLICT (id) DO UPDATE
       file_size_limit = EXCLUDED.file_size_limit,
       allowed_mime_types = EXCLUDED.allowed_mime_types;
 
+-- The class a path belongs to, or NULL. A CASE, not "regex AND ::uuid":
+-- Postgres may evaluate AND in any order, and a failed cast inside a
+-- storage policy would break reads of EVERY bucket.
+CREATE OR REPLACE FUNCTION public.class_highlights_path_class(p text)
+RETURNS uuid LANGUAGE sql IMMUTABLE AS $$
+  SELECT CASE WHEN split_part(p, '/', 1) ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' THEN split_part(p, '/', 1)::uuid END;
+$$;
+
 -- Object path: <class_id>/<file>. The first segment is the class.
 DROP POLICY IF EXISTS class_highlights_obj_insert ON storage.objects;
 CREATE POLICY class_highlights_obj_insert ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'class-highlights'
-    AND split_part(name, '/', 1) ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+    AND public.class_highlights_path_class(name) IS NOT NULL
     AND (
       public.has_role(auth.uid(), 'admin'::public.app_role)
-      OR public.is_staff_of_class(auth.uid(), split_part(name, '/', 1)::uuid)
+      OR public.is_staff_of_class(auth.uid(), public.class_highlights_path_class(name))
     )
   );
 
@@ -163,10 +171,7 @@ CREATE POLICY class_highlights_obj_select ON storage.objects
     bucket_id = 'class-highlights'
     AND (
       public.has_role(auth.uid(), 'admin'::public.app_role)
-      OR (
-        split_part(name, '/', 1) ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-        AND public.is_staff_of_class(auth.uid(), split_part(name, '/', 1)::uuid)
-      )
+      OR public.is_staff_of_class(auth.uid(), public.class_highlights_path_class(name))
     )
   );
 

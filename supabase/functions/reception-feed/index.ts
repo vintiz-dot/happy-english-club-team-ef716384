@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
     const t = hanoiToday();
 
-    const [classesRes, enrollRes, pointsRes, leadersRes, itemsRes, feedbackRes, hwRes, attTotalRes, attPresentRes, engineRes] = await Promise.all([
+    const [classesRes, enrollRes, pointsRes, leadersRes, itemsRes, feedbackRes, hwRes, attTotalRes, attPresentRes, engineRes, todayRes, highlightsRes] = await Promise.all([
       db.from("classes").select("id, name, curriculum, age_range, description, max_students").eq("is_active", true).order("name"),
       db.from("enrollments").select("student_id, class_id, start_date, end_date, students!inner(id, full_name, avatar_url, is_active)")
         .lte("start_date", t.today).or(`end_date.is.null,end_date.gte.${t.today}`).limit(5000),
@@ -124,6 +124,12 @@ Deno.serve(async (req) => {
       // Every child, not a top list (owner, 17 Nov 2026: "show every student
       // in the reception tv").
       db.rpc("leaderboard_tv_feed", { p_top: 1000 }),
+      // Today's lessons: the screen puts a class first around its start and end (focus.js).
+      db.from("sessions").select("class_id, start_time, end_time, status").eq("date", t.today).neq("status", "Canceled").order("start_time"),
+      // Teachers' class highlights an admin approved (20261129090000). Until
+      // that migration is pasted this errors and the screen simply has none.
+      db.from("class_highlights").select("*").eq("status", "approved").or(`show_until.is.null,show_until.gte.${t.today}`)
+        .order("approved_at", { ascending: false }).limit(60),
     ]);
     for (const r of [classesRes, enrollRes, pointsRes, itemsRes]) if (r.error) throw r.error;
 
@@ -272,6 +278,43 @@ Deno.serve(async (req) => {
       review_count: 47,
     };
 
+    const todaySessions = (todayRes && !todayRes.error ? todayRes.data ?? [] : [])
+      .filter((s: any) => classById.has(s.class_id))
+      .map((s: any) => ({ class_name: classById.get(s.class_id).name, start: String(s.start_time).slice(0, 5), end: String(s.end_time).slice(0, 5) }));
+
+    // A clip is shown only while every child in it is on today's register and
+    // no family of theirs said no to reception videos; links last 12 hours
+    // (the TV reloads every 6 and refreshes every 3 minutes).
+    let highlights: any[] = [];
+    const hlRows: any[] = highlightsRes && !highlightsRes.error ? highlightsRes.data ?? [] : [];
+    if (hlRows.length) {
+      const tagged = [...new Set(hlRows.flatMap((h) => h.student_ids ?? []))];
+      const optedOut = new Set<string>();
+      if (tagged.length) {
+        const { data: oo, error: ooErr } = await db.from("students").select("id, reception_video_opt_out").in("id", tagged);
+        if (ooErr) tagged.forEach((id) => optedOut.add(id)); // cannot tell: show none of them
+        else for (const r of oo ?? []) if ((r as any).reception_video_opt_out) optedOut.add((r as any).id);
+      }
+      const sessionDates = new Map<string, string>();
+      const sids = [...new Set(hlRows.map((h) => h.session_id).filter(Boolean))];
+      if (sids.length) {
+        const { data: ss } = await db.from("sessions").select("id, date").in("id", sids);
+        for (const r of ss ?? []) sessionDates.set((r as any).id, (r as any).date);
+      }
+      const ok = hlRows.filter((h) => classById.has(h.class_id) && h.storage_path
+        && (h.student_ids ?? []).every((id: string) => !optedOut.has(id) && kids.has(id)));
+      const { data: signed } = ok.length
+        ? await db.storage.from("class-highlights").createSignedUrls(ok.map((h) => h.storage_path), 12 * 3600)
+        : { data: [] as any[] };
+      const urlOf = new Map<string, string>((signed ?? []).filter((x: any) => x?.signedUrl).map((x: any) => [x.path, x.signedUrl]));
+      highlights = ok.filter((h) => urlOf.has(h.storage_path)).map((h) => ({
+        id: h.id, class_name: classById.get(h.class_id).name, title: h.title ?? null,
+        caption_vi: h.caption_vi ?? null, caption_en: h.caption_en ?? null,
+        duration_seconds: h.duration_seconds ?? null, lesson_date: h.session_id ? sessionDates.get(h.session_id) ?? null : null,
+        video_url: urlOf.get(h.storage_path),
+      }));
+    }
+
     const [feedbackQr, zaloQr, googleQr] = await Promise.all([qr(settings.feedback_url), qr(settings.zalo_url), qr(settings.google_review_url)]);
 
     // The TV checks in on every refresh; the dashboard shows when it last did.
@@ -296,6 +339,8 @@ Deno.serve(async (req) => {
       courses,
       items,
       youtube,
+      today_sessions: todaySessions,
+      highlights,
       feedback: (feedbackRes.data ?? []).map((f) => ({ name: f.name, relation: f.relation, rating: f.rating, message: f.message })),
       qr: { feedback: feedbackQr, zalo: zaloQr, google: googleQr },
     });

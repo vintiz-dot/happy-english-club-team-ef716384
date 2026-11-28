@@ -218,7 +218,124 @@
   // ------------------------------------------------------------ scenes
   function on(sec) { return !feed || !feed.settings || !feed.settings.sections || feed.settings.sections[sec] !== false; }
 
+  // ------------------------------------------------------------ class time
+  // From 10 minutes before a lesson to 20 after (drop-off), and for 15 after
+  // it ends (pick-up), the screen is about THAT class: its welcome or its
+  // well-done card, its board, its highlights, then the asks that matter
+  // most while the parents are standing here (focus.js decides the windows).
+  var FOCUS = window.HEC_FOCUS || null;
+  var focusNow = [], focusKeyNow = "";
+  function currentFocus(f) {
+    if (!FOCUS || !f || HOLD) return [];
+    var at = /[?&]at=(\d{1,2}):(\d{2})/.exec(location.search); // previews: ?at=17:05
+    var now = FOCUS.hanoiNow(Date.now());
+    if (at) now = { day: f.today || now.day, minutes: parseInt(at[1], 10) * 60 + parseInt(at[2], 10) };
+    return FOCUS.classesInFocus(f.today_sessions || [], f.today || "", now);
+  }
+  function boardOf(f, name) {
+    var cb = f.class_boards || [];
+    for (var i = 0; i < cb.length; i++) if (cb[i].class_name === name) return cb[i];
+    return null;
+  }
+  function highlightsOf(f, name) { return filter(f.highlights || [], function (h) { return h && h.video_url && (!name || h.class_name === name); }); }
+  var highlightOffset = {};
+  function takeHighlights(f, name, n) {
+    var hs = highlightsOf(f, name), out = [], key = name || "*";
+    if (!hs.length) return out;
+    var start = highlightOffset[key] || 0;
+    for (var i = 0; i < Math.min(n, hs.length); i++) out.push(hs[(start + i) % hs.length]);
+    highlightOffset[key] = (start + out.length) % hs.length;
+    return out;
+  }
+
+  function buildFocus(f, fc) {
+    var list = [], i, c, b, hs, j;
+    for (i = 0; i < fc.length; i++) {
+      c = fc[i];
+      b = boardOf(f, c.class_name);
+      list.push({ t: c.mode === "arrive" ? ["Welcome, " + c.class_name, "Chào mừng lớp " + c.class_name] : ["Great work, " + c.class_name, "Lớp " + c.class_name + " giỏi lắm"],
+        html: classCard(f, c, b), secs: 1.3 });
+      hs = takeHighlights(f, c.class_name, 3);
+      for (j = 0; j < hs.length; j++) list.push(highlightScene(hs[j]));
+      if (b && (b.everyone || b.top || []).length) {
+        var pieces = chunk(b.everyone || b.top, BOARD_LINES);
+        list.push({ t: ["Class Stars · " + c.class_name, "Ngôi sao lớp " + c.class_name], html: boards([{ class_name: b.class_name, curriculum: b.curriculum, students: b.students, top: pieces[0] }]) });
+      }
+    }
+    // Parents are here and proud: the asks that turn that into word of mouth.
+    if (on("feedback") && f.qr && f.qr.google && f.qr.google.svg && fc[0].mode === "leave") list.push({ t: ["Proud of today?", "Ba mẹ tự hào về con?"], html: reviewAsk(f), secs: 1.2 });
+    if (on("parents") && f.qr && f.qr.zalo && f.qr.zalo.svg) list.push({ t: ["Bring a friend", "Rủ bạn cùng học"], html: friendAsk(f, fc), secs: 1.2 });
+    // Other classes' highlights when this class has none yet.
+    if (!highlightsOf(f, fc[0].class_name).length) {
+      var other = takeHighlights(f, null, 2);
+      for (j = 0; j < other.length; j++) list.push(highlightScene(other[j]));
+    }
+    if (on("feedback") && (f.feedback || []).length) list.push({ t: ["Families Say", "Phụ huynh nói gì"], html: feedback(f, (f.feedback || []).slice(0, 2)), secs: 1.2 });
+    if (on("parents")) list.push({ t: ["Why families choose HEC", "Vì sao ba mẹ chọn HEC"], html: whyHec(f), secs: 1.3 });
+    return list;
+  }
+
+  // The class's own card: who is in it, and a line for the parent.
+  var ARRIVE_LINES = [
+    ["Chúc các con một buổi học thật vui!", "Have a wonderful lesson, everyone!"],
+    ["Hôm nay con sẽ nói tiếng Anh cả buổi đấy!", "Today we speak English all lesson long!"],
+    ["Ba mẹ yên tâm, thầy cô đã sẵn sàng đón con.", "Your teachers are ready and waiting."]
+  ];
+  var LEAVE_LINES = [
+    ["Trên đường về, ba mẹ hỏi con: “Hôm nay con nói được câu gì mới?”", "On the way home, ask: “What new sentence did you say today?”"],
+    ["Một lời khen của ba mẹ hôm nay là động lực lớn nhất của con.", "Your praise today is your child's biggest motivation."],
+    ["Hỏi con: “Hôm nay ai được nhiều sao nhất lớp?”", "Ask: “Who earned the most stars today?”"]
+  ];
+  var cardTurn = 0;
+  function classCard(f, c, b) {
+    var arrive = c.mode === "arrive";
+    var line = (arrive ? ARRIVE_LINES : LEAVE_LINES)[cardTurn++ % 3];
+    var kids = b ? (b.everyone || b.top || []) : [];
+    var faces = "";
+    for (var i = 0; i < kids.length && i < 12; i++) {
+      faces += '<div class="cc-kid rise d' + ((i % 5) + 1) + '">' + photo(kids[i], 112) + '<div class="cc-nm">' + esc(kids[i].name) + "</div>" +
+        (!arrive && kids[i].rank != null && kids[i].rank <= 3 ? '<div class="cc-star">★ ' + fmt(kids[i].points) + "</div>" : "") + "</div>";
+    }
+    var when = arrive ? "Lesson " + c.start + (c.end ? "–" + c.end : "") + " · Bắt đầu lúc " + c.start : "Lesson finished · Tan học lúc " + (c.end || c.start);
+    return '<div class="col classcard" style="height:100%">' +
+      '<div class="eyebrow rise">' + esc(when) + "</div>" +
+      '<div class="h-xl rise d1" style="margin-top:16px;font-size:88px">' + (arrive ? 'Welcome, <span class="gold">' + esc(c.class_name) + "</span>!" : 'Great work, <span class="gold">' + esc(c.class_name) + "</span>!") + "</div>" +
+      '<div class="vi-strong rise d2">' + esc(line[0]) + '</div><div class="lead rise d2" style="margin-top:6px;color:#aebbd6">' + esc(line[1]) + "</div>" +
+      (faces ? '<div class="row wrap cc-kids">' + faces + "</div>" : "") +
+    "</div>";
+  }
+  function reviewAsk(f) {
+    var g = f.qr.google;
+    return '<div class="row ask" style="height:100%;-webkit-align-items:center;align-items:center"><div class="grow">' +
+      '<div class="eyebrow rise">Ba mẹ tự hào về con? · Proud of today?</div>' +
+      '<div class="h-xl rise d1" style="margin-top:22px;font-size:80px">Một đánh giá <span class="gold">5★</span><br>giúp thêm nhiều bạn<br>tìm thấy HEC.</div>' +
+      '<div class="lead rise d2" style="margin-top:22px;color:#aebbd6">One review helps another family find a class like this one. It takes 30 seconds.</div></div>' +
+      '<div class="bigqr col center rise d2"><div class="code">' + g.svg + '</div><div class="a">Đánh giá HEC trên Google</div><div class="b">Review us on Google</div></div></div>';
+  }
+  function friendAsk(f, fc) {
+    var z = f.qr.zalo;
+    return '<div class="row ask" style="height:100%;-webkit-align-items:center;align-items:center"><div class="grow">' +
+      '<div class="eyebrow rise">Rủ bạn cùng học · Learn together</div>' +
+      '<div class="h-xl rise d1" style="margin-top:22px;font-size:80px">Bạn của con cũng<br>muốn <span class="gold">nói tiếng Anh</span><br>tự tin như thế?</div>' +
+      '<div class="vi-strong rise d2" style="max-width:1000px">Nhắn Zalo cho HEC: thầy cô tư vấn lớp phù hợp cho bạn của con, có thể học cùng lớp ' + esc(fc[0].class_name) + ".</div>" +
+      '<div class="lead rise d3" style="margin-top:10px;color:#aebbd6">Does a friend want to speak English like this? Message us and we will find the right class.</div>' +
+      '<div class="hotline rise d4">Zalo / Hotline <b>0975 679 889</b></div></div>' +
+      '<div class="bigqr col center rise d2"><div class="code">' + z.svg + '</div><div class="a">Quét mã để nhắn Zalo</div><div class="b">Scan to chat on Zalo</div></div></div>';
+  }
+  // A teacher's clip from a lesson, approved by an admin. Muted: reception.
+  function highlightScene(h) {
+    var sc = videoScene({ video_url: h.video_url, sound: false, play_seconds: null,
+      title_vi: h.caption_vi || h.title || ("Khoảnh khắc lớp " + h.class_name), title_en: h.caption_en || (h.caption_vi ? "" : "Moments from " + h.class_name),
+      badge: "#HECmoments · " + h.class_name + (h.lesson_date ? " · " + h.lesson_date.split("-").reverse().slice(0, 2).join("/") : "") });
+    sc.t = ["Class highlights · " + h.class_name, "Khoảnh khắc lớp " + h.class_name];
+    sc.maxMs = ((h.duration_seconds || 90) + 30) * 1000;
+    return sc;
+  }
+
   function build(f) {
+    var fc = currentFocus(f);
+    focusNow = fc; focusKeyNow = FOCUS ? FOCUS.focusKey(fc) : "";
+    if (fc.length) { var fl = buildFocus(f, fc); if (fl.length) return fl; }
     var list = [];
     var items = f.items || [];
     var ofKind = function (k) { return filter(items, function (i) { return i.kind === k; }); };
@@ -280,6 +397,11 @@
       var take = Math.min(VIDEOS_PER_LOOP, vs.length);
       for (var vi = 0; vi < take; vi++) vids.push(videoScene(vs[(videoOffset + vi) % vs.length]));
       videoCount = vs.length;
+    }
+    // Teachers' class highlights take turns with the other videos.
+    if (on("videos")) {
+      var hl = takeHighlights(f, null, 3);
+      for (var hi = 0; hi < hl.length; hi++) vids.push(highlightScene(hl[hi]));
     }
     if (on("photos")) {
       var ph = filter(ofKind("photo"), function (p) { return !!p.image_url; });
@@ -628,6 +750,7 @@
   // admin switched sound on. A video that will not play is skipped.
   function videoScene(v) {
     var html = '<div class="videoscene"><video preload="auto"' + (v.sound ? "" : " muted") + ' src="' + esc(v.video_url) + '"></video>' +
+      (v.badge ? '<div class="vbadge">' + esc(v.badge) + "</div>" : "") +
       ((v.title_en || v.title_vi) ? '<div class="cap">' + (v.title_vi ? '<div class="t-vi">' + esc(v.title_vi) + "</div>" : "") +
         (v.title_en ? '<div class="b-en">' + esc(v.title_en) + "</div>" : "") + "</div>" : "") + "</div>";
     var cut, stall, vid;
@@ -747,7 +870,11 @@
   function next() {
     if (!scenes.length) return;
     stopPlaying();
-    if (!HOLD && idx + 1 >= scenes.length && videoCount > VIDEOS_PER_LOOP && feed) {
+    if (!HOLD && feed && FOCUS && FOCUS.focusKey(currentFocus(feed)) !== focusKeyNow) {
+      // a class's drop-off or pick-up window opened or closed: start its playlist
+      scenes = build(feed);
+      idx = -1;
+    } else if (!HOLD && idx + 1 >= scenes.length && (videoCount > VIDEOS_PER_LOOP || focusNow.length || (feed && feed.highlights && feed.highlights.length)) && feed) {
       // round again: the next videos take their turn
       videoOffset = (videoOffset + VIDEOS_PER_LOOP) % videoCount;
       scenes = build(feed);
@@ -799,13 +926,40 @@
   // developer app the call that would refuse it. It does not start one while a
   // video plays, so a 2-second black clip loops invisibly in a corner. It
   // pauses while a real video plays (the TV may have one video decoder).
+  var awakeWanted = true, awakeLastT = -1, awakeStuck = 0;
   function keepAwake(on) {
     var k = $("keepawake");
+    awakeWanted = on;
     if (!k) return;
     try {
       if (on) { var pr = k.play(); if (pr && pr["catch"]) pr["catch"](function () {}); }
       else k.pause();
     } catch (e) {}
+  }
+  // Watchdog (owner, 29 Nov 2026: the screensaver still came on). Every 15 s:
+  // when no real video is playing, the black clip must be playing AND moving;
+  // a clip that stopped, ended or froze is restarted, after two frozen checks
+  // reloaded from its file. A real video scene that froze hands back to it.
+  function awakeWatch() {
+    var k = $("keepawake");
+    if (!k) return;
+    var el = $(front);
+    // A real video owns the decoder; its scene moves on by itself if it stalls (30 s).
+    if (el && el.getElementsByTagName("video").length) { awakeLastT = -1; awakeStuck = 0; return; }
+    awakeWanted = true;
+    try {
+      if (k.ended || k.paused) { k.currentTime = 0; keepAwake(true); }
+      if (k.currentTime === awakeLastT) {
+        if (++awakeStuck >= 2) { awakeStuck = 0; k.load(); keepAwake(true); }
+      } else awakeStuck = 0;
+      awakeLastT = k.currentTime;
+    } catch (e) {}
+  }
+  // A class's window opening mid-scene: cut over within 30 s, but never in
+  // the middle of a video or an album.
+  function focusWatch() {
+    if (!feed || HOLD || !FOCUS || playing) return;
+    if (FOCUS.focusKey(currentFocus(feed)) !== focusKeyNow) { clearTimeout(timer); next(); }
   }
 
   // ------------------------------------------------------------ start
@@ -817,6 +971,8 @@
   setInterval(tick, 10 * 1000);
   setInterval(scrollTicker, 33);
   keepAwake(true);
+  setInterval(awakeWatch, 15 * 1000);
+  setInterval(focusWatch, 30 * 1000);
   refresh();
   setInterval(refresh, REFRESH_MS);
   setTimeout(function () { location.reload(); }, RELOAD_MS);

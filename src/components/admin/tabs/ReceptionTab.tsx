@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import HighlightsReview from "@/components/admin/reception/HighlightsReview";
 
 // The tables are newer than the generated types.
 const db = supabase as any;
@@ -137,10 +138,12 @@ export default function ReceptionTab() {
       <Tabs defaultValue="content">
         <TabsList>
           <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="highlights">Class highlights</TabsTrigger>
           <TabsTrigger value="feedback">Feedback {pending > 0 && <Badge className="ml-2" variant="destructive">{pending}</Badge>}</TabsTrigger>
           <TabsTrigger value="screen">Screen</TabsTrigger>
         </TabsList>
         <TabsContent value="content"><ContentPanel items={data.items} students={data.students} onChange={refresh} /></TabsContent>
+        <TabsContent value="highlights"><HighlightsReview /></TabsContent>
         <TabsContent value="feedback"><FeedbackPanel feedback={data.feedback} onChange={refresh} /></TabsContent>
         <TabsContent value="screen" className="space-y-6">
           {data.settings && <TvPowerCard settings={data.settings} onChange={refresh} />}

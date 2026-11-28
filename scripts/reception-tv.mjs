@@ -6,6 +6,8 @@
 //   node scripts/reception-tv.mjs install    package + install + launch on the TV
 //   node scripts/reception-tv.mjs install-later  package now; the helper installs it when the TV is next on
 //   node scripts/reception-tv.mjs pair       one-off: accept the prompt on the TV so the helper may launch apps
+//   node scripts/reception-tv.mjs pair-input one-off: accept a second prompt so the helper may press a key
+//                                            that keeps the TV's idle timers (screensaver, 4-hour off) from running out
 //   node scripts/reception-tv.mjs check      one pass of the helper (what `watch` does every few minutes)
 //   node scripts/reception-tv.mjs watch      run the helper for ever (Task Scheduler / systemd)
 //   node scripts/reception-tv.mjs status     print what the helper knows
@@ -13,10 +15,12 @@
 //   node scripts/reception-tv.mjs show         put the display in front now and renew Developer Mode
 //   node scripts/reception-tv.mjs autostart  copy the helper to ~/.hec-reception and start it at logon
 //
-// The helper, every 3 minutes during opening hours:
+// The helper, every 90 seconds during opening hours:
 //   - wakes the TV (Wake-on-LAN) if it is off,
 //   - brings the display app back to the front if anything else is showing,
 //   - renews Developer Mode once a day (it lapses after 50 hours otherwise),
+//   - after `pair-input`, presses an unused key (RED) every 4 minutes while the
+//     display is in front, so the TV never counts itself idle,
 // and switches the TV off once at closing time.
 //
 // Settings and secrets live OUTSIDE the repo, in ~/.hec-reception/config.json:
@@ -156,7 +160,12 @@ function install() {
 // LG's own remote-control protocol (SSAP over a WebSocket on port 3000). The
 // first `pair` shows a prompt on the TV; once accepted, the client key lets the
 // helper ask which app is in front, launch ours and switch the TV off.
-function ssap(requests, { pairing = false, timeoutMs = 15000 } = {}) {
+const MAIN_ID = { keyField: "clientKey", appId: "com.happyenglishclub.helper", name: "HEC reception helper",
+  permissions: ["LAUNCH", "CONTROL_POWER", "CONTROL_AUDIO", "READ_RUNNING_APPS", "READ_CURRENT_CHANNEL", "READ_INSTALLED_APPS"] };
+// Its own app id and key: pairing it shows one prompt and leaves the main pairing as it is.
+const INPUT_ID = { keyField: "inputClientKey", appId: "com.happyenglishclub.helper.input", name: "HEC reception keep-awake",
+  permissions: ["CONTROL_MOUSE_AND_KEYBOARD", "CONTROL_INPUT_JOYSTICK", "READ_RUNNING_APPS"] };
+function ssap(requests, { pairing = false, timeoutMs = 15000, id = MAIN_ID, onDone = null } = {}) {
   return new Promise((resolvePromise, reject) => {
     if (typeof WebSocket === "undefined") return reject(new Error("Node 22 or newer is needed (built-in WebSocket)."));
     const ws = new WebSocket(`ws://${cfg.tvIp}:3000`);
@@ -173,10 +182,10 @@ function ssap(requests, { pairing = false, timeoutMs = 15000 } = {}) {
     ws.onopen = () => send({
       id: "reg", type: "register",
       payload: {
-        forcePairing: false, pairingType: "PROMPT", "client-key": cfg.clientKey || undefined,
+        forcePairing: false, pairingType: "PROMPT", "client-key": cfg[id.keyField] || undefined,
         manifest: {
-          manifestVersion: 1, appVersion: "1.0", signed: { appId: "com.happyenglishclub.helper", vendorId: "hec", created: "20261116", localizedAppNames: { "": "HEC reception helper" }, permissions: [] },
-          permissions: ["LAUNCH", "CONTROL_POWER", "CONTROL_AUDIO", "READ_RUNNING_APPS", "READ_CURRENT_CHANNEL", "READ_INSTALLED_APPS"],
+          manifestVersion: 1, appVersion: "1.0", signed: { appId: id.appId, vendorId: "hec", created: "20261116", localizedAppNames: { "": id.name }, permissions: [] },
+          permissions: id.permissions,
         },
       },
     });
@@ -184,7 +193,7 @@ function ssap(requests, { pairing = false, timeoutMs = 15000 } = {}) {
       const m = JSON.parse(String(ev.data));
       if (m.id === "reg") {
         if (m.type === "registered") {
-          if (m.payload?.["client-key"] && m.payload["client-key"] !== cfg.clientKey) { cfg.clientKey = m.payload["client-key"]; saveCfg(); }
+          if (m.payload?.["client-key"] && m.payload["client-key"] !== cfg[id.keyField]) { cfg[id.keyField] = m.payload["client-key"]; saveCfg(); }
           return nextRequest();
         }
         if (m.type === "error") { clearTimeout(timer); ws.close(); return reject(new Error(`TV refused: ${m.error}`)); }
@@ -314,6 +323,38 @@ async function tvAnswers() {
 }
 async function tvAnswersAt() {
   try { await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]], { timeoutMs: 6000 }); return true; } catch { return false; }
+}
+
+// ------------------------------------------------------------------ keep the TV from idling
+// The display already loops a black clip (the TV starts no screensaver while
+// a video plays), but webOS also counts REMOTE input for its screensaver and
+// its "4 Hours Auto Power Off". After `pair-input`, the helper presses RED,
+// a key no system screen uses and the display ignores, every 4 minutes while
+// the display is in front during opening hours. Nothing shows on screen.
+async function pressKey(name = "RED") {
+  const [r] = await ssap([["ssap://com.webos.service.networkinput/getPointerInputSocket"]], { id: INPUT_ID, timeoutMs: 8000 });
+  if (!r?.socketPath) throw new Error("the TV gave no input socket");
+  await new Promise((done, fail) => {
+    const ws = new WebSocket(r.socketPath);
+    const t = setTimeout(() => { try { ws.close(); } catch {} fail(new Error("input socket timeout")); }, 8000);
+    ws.onerror = () => { clearTimeout(t); fail(new Error("input socket refused")); };
+    ws.onopen = () => { ws.send(`type:button
+name:${name}
+
+`); setTimeout(() => { clearTimeout(t); try { ws.close(); } catch {} done(); }, 300); };
+  });
+}
+async function nudge() {
+  if (!cfg.inputClientKey || !openNow().open || Date.now() < (state.nextNudgeAt ?? 0)) return;
+  state.nextNudgeAt = Date.now() + 4 * 60 * 1000;
+  try {
+    const [front] = await ssap([["ssap://com.webos.applicationManager/getForegroundAppInfo"]], { timeoutMs: 6000 });
+    if (front?.appId !== APP_ID) return; // never press keys in someone else's app
+    await pressKey();
+    if (state.nudgeFailing) { log("keep-awake key works again"); delete state.nudgeFailing; saveState(); }
+  } catch (e) {
+    if (!state.nudgeFailing) { log(`keep-awake key failed (${e.message}); run "pair-input" again if this stays`); state.nudgeFailing = true; saveState(); }
+  }
 }
 
 // ------------------------------------------------------------------ admin power buttons
@@ -498,12 +539,13 @@ async function watch() {
   if (!cfg.feedUrl || !cfg.apiKey) log("no feed address saved: the admin buttons and YouTube breaks are off. Run `node scripts/reception-tv.mjs show` once from the repo.");
   let lastCheck = 0;
   for (;;) {
-    if (Date.now() - lastCheck >= 3 * 60 * 1000) {
+    if (Date.now() - lastCheck >= 90 * 1000) {
       lastCheck = Date.now();
       try { await check(); } catch (e) { log(`check failed: ${e.message}`); }
     }
     try { await runAdminCommand(); } catch (e) { if (!/fetch failed/.test(e.message)) log(`admin command check failed: ${e.message}`); }
     try { await youtubeBreak(); } catch (e) { log(`YouTube break failed: ${e.message}`); }
+    try { await nudge(); } catch {}
     await sleep(20 * 1000);
   }
 }
@@ -571,6 +613,12 @@ try {
     console.log(`The helper installs this on the TV when it next comes on: ${keep}`);
   }
   else if (cmd === "pair") { console.log("Look at the TV and accept the prompt with the remote…"); await ssap([], { pairing: true }); console.log("Paired."); }
+  else if (cmd === "pair-input") {
+    console.log("Look at the TV and accept the prompt with the remote (HEC reception keep-awake)…");
+    await ssap([], { pairing: true, id: INPUT_ID });
+    await pressKey();
+    console.log("Paired; pressed RED once. The helper now keeps the TV from idling while the display is in front.");
+  }
   else if (cmd === "check") await check();
   else if (cmd === "show") {
     publicConfig();
@@ -584,7 +632,7 @@ try {
   else if (cmd === "youtube-now") { feedCache.at = 0; await youtubeBreak({ force: true }); }
   else if (cmd === "watch") await watch();
   else if (cmd === "autostart") autostart();
-  else if (cmd === "status") console.log(JSON.stringify({ config: { ...cfg, token: cfg.token ? "(set)" : "(missing)", clientKey: cfg.clientKey ? "(paired)" : "(not paired)" }, state, schedule: describeSchedule(),
+  else if (cmd === "status") console.log(JSON.stringify({ config: { ...cfg, token: cfg.token ? "(set)" : "(missing)", clientKey: cfg.clientKey ? "(paired)" : "(not paired)", inputClientKey: cfg.inputClientKey ? "(paired)" : "(not paired)" }, state, schedule: describeSchedule(),
     // `status 2026-11-21T16:30` checks a Hanoi local time instead of now.
     open: openNow(process.argv[3] ? new Date(`${process.argv[3]}Z`) : undefined) }, null, 2));
   else console.log(readFileSync(fileURLToPath(import.meta.url), "utf8").split("\n").slice(1, 20).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));

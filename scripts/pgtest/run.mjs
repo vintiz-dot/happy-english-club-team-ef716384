@@ -303,6 +303,10 @@ const SUITES = [
   { name: "language support lib", file: "language-support-lib.test.mjs", migrations: [] },
   // Reception display: the public feedback form sends pending rows only;
   // content, settings and approval are admin-only.
+  // Reception display, class time: which classes the screen is about now (focus.js).
+  { name: "reception focus", file: "reception-focus.test.mjs", migrations: [] },
+  // Class highlights: teachers/TAs upload pending clips, only admins approve (reception TV).
+  { name: "class highlights", file: "class-highlights.test.mjs", migrations: ["20261129090000_class_highlights.sql"] },
   {
     name: "reception display",
     file: "reception-display.test.mjs",

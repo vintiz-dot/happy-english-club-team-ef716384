@@ -151,6 +151,8 @@ const PINNED = {
   'src/components/admin/StudentEditDrawer.tsx families insert': 1,
   'src/components/admin/StudentEditDrawer.tsx students update': 1,
   'src/components/admin/StudentForm.tsx students insert': 1,
+  // reception_video_opt_out only (Admin > Reception > Class highlights); no money column.
+  'src/components/admin/reception/HighlightsReview.tsx students update': 1,
   'src/components/shared/EconomyActions.tsx students update': 1,
   'src/components/student/StudentProfileEdit.tsx students update': 2,
   'supabase/functions/create-family/index.ts families insert': 1,
