@@ -195,10 +195,7 @@ export function LarkImport({ recordingId, scheduledStart, scheduledEnd, onClose 
 
   const warnings = picked.map((p) => deviceWarning(memory, p.device, p.tx)).filter((w): w is string => !!w);
   const run = async () => {
-    if (warnings.length && !window.confirm(`${warnings.join("
-")}
-
-Upload with these numbers anyway?`)) return;
+    if (warnings.length && !window.confirm(`${warnings.join("\n")}\n\nUpload with these numbers anyway?`)) return;
     stop.current = false;
     setBusy(true);
     try {
