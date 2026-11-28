@@ -31,6 +31,7 @@ import { dur, ease, stagger, useMotionLevel } from "@/components/fx/motion";
 import { useAgeBand } from "@/hooks/useAgeBand";
 import { fill } from "@/lib/copy/student";
 import { studentDefendCopy, type StudentDefendKey } from "@/lib/copy/studentDefend";
+import { DefensePortfolio, type PortfolioData } from "@/components/cefr/DefensePortfolio";
 import {
   Scale, Loader2, ShieldCheck, PenLine, CheckCircle2, ArrowRight,
 } from "lucide-react";
@@ -81,6 +82,17 @@ export default function StudentDefendLevel() {
   // sends (defended, not_supported, ...) - reads as "submitted, waiting".
   const reviewedByTeacher = claim?.status === "reviewed" || claim?.status === "set_by_teacher";
   const stage = activeTest?.active_stage;
+  const defense: { open: boolean; note: string | null } | null = state?.defense ?? null;
+  const portfolio: PortfolioData | null = state?.portfolio ?? null;
+
+  const startMutation = useMutation({
+    mutationFn: () => invokeDefense({ action: "start_test" }),
+    onSuccess: () => {
+      toast.success("Your defence test is ready - good luck!");
+      queryClient.invalidateQueries({ queryKey: ["cefr-defense-own"] });
+    },
+    onError: (e: any) => toast.error("Couldn't start the test", { description: e.message }),
+  });
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -279,10 +291,55 @@ export default function StudentDefendLevel() {
               </Card>
             )}
 
-            {!activeTest && !gradedTest && (
+            {/* Open: the child starts the adaptive test themselves. */}
+            {!activeTest && defense?.open && (
+              <Card className="border-hec-brass/40">
+                <CardContent className="py-5 space-y-3">
+                  <p className="text-hec-body font-semibold text-hec-ink">
+                    You can defend {claim.claimed_level} now!
+                    <ViBeneath k="defend.openTitle" vars={{ level: claim.claimed_level }} show={viBeneath} />
+                  </p>
+                  {defense.note && <p className="text-hec-small text-hec-ink">{defense.note}</p>}
+                  <p className="text-hec-small text-hec-ink-soft">
+                    Three short stages: the questions get harder or easier as you go, and the last stage has two small writing tasks.
+                    Take your time - about 30 minutes.
+                    <ViBeneath k="defend.openHelp" show={viBeneath} />
+                  </p>
+                  <Button
+                    className="h-auto min-h-hec-target w-full gap-2 whitespace-normal"
+                    disabled={startMutation.isPending}
+                    onClick={() => startMutation.mutate()}
+                  >
+                    {startMutation.isPending
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />Preparing your test…</>
+                      : <><span className="text-left">Start my defence<ViBeneath k="defend.start" show={viBeneath} /></span><ArrowRight className="h-4 w-4 shrink-0" /></>}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {!activeTest && !gradedTest && !defense?.open && (
               <Card>
                 <CardContent className="py-10 text-center text-hec-small text-hec-ink-soft">
                   No defense test yet — your teacher can assign one when you're ready.
+                </CardContent>
+              </Card>
+            )}
+
+            {/* The evidence the child defends with: facts only. */}
+            {portfolio && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-hec-ink-soft" />My evidence
+                    <ViBeneath k="defend.evidence" show={viBeneath} />
+                  </CardTitle>
+                  <CardDescription className="text-hec-small">
+                    Everything you have learnt and done at HEC, and your test certificates. Your teacher looks at all of it together with your defence test.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DefensePortfolio portfolio={portfolio} compact />
                 </CardContent>
               </Card>
             )}

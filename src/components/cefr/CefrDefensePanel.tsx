@@ -18,11 +18,62 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   ShieldCheck, ShieldAlert, ShieldQuestion, Loader2, Scale, FileQuestion,
-  CheckCircle2, XCircle, Sparkles,
+  CheckCircle2, XCircle, Sparkles, DoorOpen,
 } from "lucide-react";
+import { DefensePortfolio } from "@/components/cefr/DefensePortfolio";
+import { StandardizedTestsCard } from "@/components/cefr/StandardizedTestsCard";
+
+const SOURCE_KIND: Record<string, string> = {
+  standardized: "Standardized test",
+  teacher_level: "Teacher-approved level",
+  defense_test: "Adaptive defence test",
+  evidence_audit: "Evidence audit (AI)",
+};
+
+/** The combined case cefr-defense weighs (staff only). */
+export function DefenseCaseSummary({ theCase }: { theCase: any }) {
+  if (!theCase) return null;
+  return (
+    <div className="rounded-hec-md border border-hec-line p-3 space-y-2 text-hec-small">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">The whole case</p>
+        {theCase.combined_level && (
+          theCase.defended
+            ? <Badge className="gap-1 border-hec-leaf/30 bg-hec-leaf-tint text-hec-leaf"><ShieldCheck className="h-3 w-3" />Defended · {theCase.combined_level}</Badge>
+            : <Badge className="gap-1 border-hec-warn/30 bg-hec-warn-tint text-hec-warn"><ShieldAlert className="h-3 w-3" />Not yet · {theCase.combined_level}</Badge>
+        )}
+      </div>
+      <p className="text-hec-ink-soft">{theCase.summary}</p>
+      {(theCase.sources || []).length > 0 && (
+        <table className="w-full text-hec-caption">
+          <thead>
+            <tr className="text-left text-hec-ink-soft">
+              <th className="py-1 font-medium">Evidence</th><th className="font-medium">Level</th><th className="font-medium">Date</th><th className="text-right font-medium">Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            {theCase.sources.map((s: any, i: number) => (
+              <tr key={i} className="border-t border-hec-line text-hec-ink">
+                <td className="py-1">{SOURCE_KIND[s.kind] ?? s.kind}{s.kind === "standardized" ? `: ${s.label}` : ""}</td>
+                <td className="font-semibold">{s.level}</td>
+                <td className="text-hec-ink-soft">{s.date ? String(s.date).slice(0, 10) : "—"}</td>
+                <td className="text-right">×{s.weight}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <p className="text-hec-caption text-hec-ink-soft">
+        A summary for staff. A level reaches the growth chart, the child and the family only when a teacher approves a draft below.
+      </p>
+    </div>
+  );
+}
 
 const LEVELS = ["Pre-A1", "A1", "A2", "B1", "B2", "C1"];
 
@@ -98,6 +149,7 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
     queryClient.invalidateQueries({ queryKey: ["cefr-defense", studentId] });
     queryClient.invalidateQueries({ queryKey: ["cefr-growth", studentId] });
     queryClient.invalidateQueries({ queryKey: ["cefr-drafts"] });
+    queryClient.invalidateQueries({ queryKey: ["level-defense-admin"] });
   };
 
   const setLevelMutation = useMutation({
@@ -119,6 +171,18 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
     onError: (e: any) => toast.error("Couldn't generate the test", { description: e.message }),
   });
 
+  const [note, setNote] = useState<string | null>(null);
+  const defenseMutation = useMutation({
+    mutationFn: (open: boolean) =>
+      invokeDefense({
+        action: "set_defense", student_id: studentId, open,
+        note: note ?? state?.defense?.note ?? null,
+        ...(level ? { level } : {}),
+      }),
+    onSuccess: (_d, open) => { toast.success(open ? "Defence opened - the child can start the test" : "Defence closed"); setNote(null); refresh(); },
+    onError: (e: any) => toast.error("Couldn't change the defence", { description: e.message }),
+  });
+
   const claim = state?.claim;
   const verdict = claim?.evidence;
   const tests: any[] = state?.tests || [];
@@ -134,7 +198,7 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
               CEFR Level Defense
             </CardTitle>
             <CardDescription className="mt-1 text-hec-small">
-              Declare a working level, then let the AI audit the evidence — or have the student defend it in an adaptive test.
+              Declare a working level, record standardized results, audit everything the child has learnt - and let the child defend it in an adaptive test.
             </CardDescription>
           </div>
           {claim && (
@@ -177,7 +241,7 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
                   >
                     {evidenceMutation.isPending
                       ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Auditing…</>
-                      : <><Sparkles className="h-3.5 w-3.5" />Audit evidence</>}
+                      : <><Sparkles className="h-3.5 w-3.5" />Audit all evidence</>}
                   </Button>
                   <Button
                     size="sm" variant="outline" className="gap-1.5"
@@ -191,6 +255,48 @@ export function CefrDefensePanel({ studentId, classId }: { studentId: string; cl
                 </>
               )}
             </div>
+
+            {/* Let the child defend: they start the adaptive test themselves. */}
+            <div className="rounded-hec-md border border-hec-line p-3 space-y-2">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <DoorOpen className={k.icon} />
+                  <div>
+                    <p className="text-hec-small font-semibold text-hec-ink">Let the child defend their level</p>
+                    <p className={k.item}>
+                      {state?.defense?.open
+                        ? `Open since ${String(state.defense.opened_at || "").slice(0, 10)} - the child can start the test on Defend My Level.`
+                        : claim ? "Closed. Open it and the child starts the adaptive test when ready (it closes again once they start)."
+                          : "Choose the level to defend above, then open it."}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={!!state?.defense?.open}
+                  disabled={defenseMutation.isPending || (!claim && !level)}
+                  onCheckedChange={(v) => defenseMutation.mutate(v)}
+                  aria-label="Open the level defence for this child"
+                />
+              </div>
+              <Input
+                placeholder="A line for the child (optional), e.g. Defend A2 before the end of term"
+                value={note ?? state?.defense?.note ?? ""}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={300}
+                className="h-9"
+              />
+            </div>
+
+            <DefenseCaseSummary theCase={state?.case} />
+
+            <StandardizedTestsCard studentId={studentId} onChanged={refresh} />
+
+            {state?.portfolio && (
+              <div className="space-y-2">
+                <p className={k.label}>Everything learnt at HEC</p>
+                <DefensePortfolio portfolio={state.portfolio} />
+              </div>
+            )}
 
             {/* Evidence verdict */}
             {verdict && (

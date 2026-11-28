@@ -91,6 +91,7 @@ export const ADMIN_GROUPS: NavGroup[] = [
     one("Assignments", "/admin?tab=assignments", "ListTodo"),
     one("Journal", "/admin?tab=journal", "NotebookPen"),
     one("Exam Reports", "/admin?tab=exam-reports", "FileBarChart2"),
+    one("Level Defence", "/admin?tab=level-defense", "Scale"),
     one("Lesson reports", "/teacher/class-reports", "ClipboardList"),
     one("Student Work", "/admin/student-work", "Images"),
     one("Smart Upload", "/teacher/smart-upload", "ScanText", OCR),

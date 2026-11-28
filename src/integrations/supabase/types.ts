@@ -595,6 +595,12 @@ export type Database = {
       }
       cefr_level_claims: {
         Row: {
+          case_summary?: Json | null
+          defense_note?: string | null
+          defense_open?: boolean
+          defense_opened_at?: string | null
+          defense_opened_by?: string | null
+          portfolio?: Json | null
           claimed_level: string
           class_id: string | null
           created_at: string
@@ -607,6 +613,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          case_summary?: Json | null
+          defense_note?: string | null
+          defense_open?: boolean
+          defense_opened_at?: string | null
+          defense_opened_by?: string | null
+          portfolio?: Json | null
           claimed_level: string
           class_id?: string | null
           created_at?: string
@@ -619,6 +631,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          case_summary?: Json | null
+          defense_note?: string | null
+          defense_open?: boolean
+          defense_opened_at?: string | null
+          defense_opened_by?: string | null
+          portfolio?: Json | null
           claimed_level?: string
           class_id?: string | null
           created_at?: string
@@ -4954,6 +4972,62 @@ export type Database = {
           },
           {
             foreignKeyName: "student_reports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_standardized_tests: {
+        Row: {
+          certificate_ref: string | null
+          cefr_level: string
+          created_at: string
+          id: string
+          notes: string | null
+          overall_score: number | null
+          recorded_by: string
+          score_label: string | null
+          skill_scores: Json
+          student_id: string
+          test_date: string
+          test_name: string
+          updated_at: string
+        }
+        Insert: {
+          certificate_ref?: string | null
+          cefr_level: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          overall_score?: number | null
+          recorded_by?: string
+          score_label?: string | null
+          skill_scores?: Json
+          student_id: string
+          test_date: string
+          test_name: string
+          updated_at?: string
+        }
+        Update: {
+          certificate_ref?: string | null
+          cefr_level?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          overall_score?: number | null
+          recorded_by?: string
+          score_label?: string | null
+          skill_scores?: Json
+          student_id?: string
+          test_date?: string
+          test_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_standardized_tests_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"

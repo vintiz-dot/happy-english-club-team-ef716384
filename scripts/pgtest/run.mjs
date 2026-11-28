@@ -191,6 +191,8 @@ const SUITES = [
   // the file - so this is the type check, not that.
   { name: "app typecheck", file: "app-typecheck.test.mjs", migrations: [] },
   { name: "nav sections", file: "nav-sections.test.mjs", migrations: [] },
+  // Defend My Level: the combined case, the facts, standardized score bands.
+  { name: "level defense", file: "level-defense.test.mjs", migrations: [] },
   // The public sign-up form offers no staff role (audit F-01).
   { name: "signup form (F-01)", file: "signup-form.test.mjs", migrations: [] },
   // Nor this: the assistant's chat function, run against a stand-in for

@@ -52,6 +52,13 @@
  * `stages` JSONB, which students cannot SELECT (no RLS policy). This
  * function serves SANITIZED items and grades server-side.
  *
+ * The whole case (28 Nov 2026): the audit reads everything learnt here and
+ * the child's STANDARDIZED results (loadEvidence); get_state sends staff the
+ * facts, the standardized results and the combined case (_lib/level-defense-
+ * case.ts), and a child the facts and standardized results only. Staff open
+ * a child's defence (set_defense, Admin > Level Defence); while it is open
+ * the child starts the test themselves (start_test).
+ *
  * Input:  { action, ...params } — see handlers.
  */
 
@@ -60,11 +67,12 @@ import { safeParseJson } from "../_lib/text.ts";
 import { callerHoldsClass, callerHoldsStudent } from "../_lib/auth.ts";
 import { requireSpender, SIGNED_IN_ROLES, type SpendGate } from "../_lib/ai-gate.ts";
 import { checkRateLimit, rateLimitResponse } from "../_lib/rate-limit.ts";
+import { buildPortfolio, combineCase, portfolioLines, type Portfolio } from "../_lib/level-defense-case.ts";
 
 const GATE: SpendGate = { name: "cefr-defense", roles: SIGNED_IN_ROLES, limit: 60, windowMs: 10 * 60_000 };
 /** The actions that call OpenAI, per account. */
 const SPEND = { limit: 20, windowMs: 10 * 60_000 };
-const SPENDING_ACTIONS = new Set(["mine_evidence", "generate_test", "submit_stage"]);
+const SPENDING_ACTIONS = new Set(["mine_evidence", "generate_test", "start_test", "submit_stage"]);
 const CHILD_SUBMITTED = "Submitted - your teacher will review your test.";
 
 const corsHeaders = {
@@ -223,6 +231,130 @@ async function saveDraft(sb: any, row: {
   return data?.id ?? null;
 }
 
+const stripHtml = (s: unknown) => String(s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const rowsOf = (r: { data: any; error: any }, what: string): any[] => {
+  if (r.error) console.error(`cefr-defense: ${what} not read:`, r.error.message);
+  return Array.isArray(r.data) ? r.data : [];
+};
+
+/**
+ * Everything the school holds about a child's English (28 Nov 2026): the
+ * facts (`portfolio`, no model output, safe for the child), the standardized
+ * results and approved levels the case weighs, and - for the audit prompt
+ * only - the teachers' own words (skill comments, homework feedback, exam
+ * reports, approved video feedback, lesson-report parts, work notes).
+ * A table that cannot be read is left out and logged, never fatal.
+ */
+async function loadEvidence(sb: any, studentId: string) {
+  const since = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
+  const q = await Promise.all([
+    sb.from("attendance").select("status, sessions!inner(status, date)").eq("student_id", studentId).limit(2000),
+    sb.from("homework_submissions").select("status, grade, graded_at, teacher_feedback, submitted_at")
+      .eq("student_id", studentId).order("submitted_at", { ascending: false }).limit(300),
+    sb.from("skill_assessments").select("skill, score, date, teacher_comment")
+      .eq("student_id", studentId).gte("date", since).order("date", { ascending: false }).limit(500),
+    sb.from("video_submissions").select("id, status, video_analyses(final_score, final_grade, final_feedback_parent, approved_at)")
+      .eq("student_id", studentId).eq("status", "approved").limit(50),
+    sb.from("student_vocabulary_entries").select("word, mastery_level, cefr")
+      .eq("student_id", studentId).order("created_at", { ascending: false }).limit(1000),
+    sb.from("srs_cards").select("id", { count: "exact", head: true }).eq("student_id", studentId),
+    sb.from("student_error_log").select("error_text, corrected_text, error_type, created_at")
+      .eq("student_id", studentId).order("created_at", { ascending: false }).limit(30),
+    sb.from("student_error_log").select("id", { count: "exact", head: true }).eq("student_id", studentId),
+    sb.from("lesson_report_students").select("part").eq("student_id", studentId).limit(20),
+    sb.from("exam_reports").select("title, exam_date, content_html")
+      .eq("student_id", studentId).order("exam_date", { ascending: false }).limit(6),
+    sb.from("student_standardized_tests").select("id, test_name, test_date, overall_score, score_label, skill_scores, cefr_level, certificate_ref, notes")
+      .eq("student_id", studentId).order("test_date", { ascending: false }).limit(20),
+    sb.from("cefr_assessments").select("level, source, assessed_at")
+      .eq("student_id", studentId).order("assessed_at", { ascending: false }).limit(20),
+    sb.from("student_work").select("teacher_notes, approved_at")
+      .eq("student_id", studentId).not("approved_at", "is", null).not("teacher_notes", "is", null)
+      .order("approved_at", { ascending: false }).limit(10),
+    sb.from("transcript_speaker_metrics")
+      .select("word_count, distinct_words, questions_asked, cefr_estimate, contribution, created_at")
+      .eq("student_id", studentId).order("created_at", { ascending: false }).limit(10),
+  ]);
+  const [att, hw, skills, vids, vocab, srs, errs, errCount, lrs, exams, std, points, work, metrics] = q;
+  const attendance = rowsOf(att, "attendance").filter((a: any) => a.sessions?.status !== "Canceled");
+  const videos = rowsOf(vids, "videos").flatMap((v: any) =>
+    (Array.isArray(v.video_analyses) ? v.video_analyses : v.video_analyses ? [v.video_analyses] : []));
+  const standardized = rowsOf(std, "standardized tests");
+  // Points on the growth chart are published: a teacher made or approved each.
+  const approvedPoints = rowsOf(points, "cefr points");
+  const examRows = rowsOf(exams, "exam reports");
+  const portfolio: Portfolio = buildPortfolio({
+    attendance,
+    homework: rowsOf(hw, "homework"),
+    skills: rowsOf(skills, "skill scores"),
+    videos,
+    vocabulary: rowsOf(vocab, "vocabulary"),
+    srsCards: srs.count ?? 0,
+    errors: errCount.count ?? 0,
+    lessonReports: rowsOf(lrs, "lesson reports").length,
+    examReports: examRows,
+    standardized,
+    approvedPoints,
+  });
+
+  const quote = (s: unknown, n: number) => stripHtml(s).slice(0, n);
+  const teacherWords = [
+    ...rowsOf(skills, "skill scores").filter((s: any) => s.teacher_comment).slice(0, 12)
+      .map((s: any) => `- [${s.skill} ${s.score}, ${s.date}] ${quote(s.teacher_comment, 160)}`),
+    ...rowsOf(hw, "homework").filter((h: any) => h.teacher_feedback).slice(0, 8)
+      .map((h: any) => `- [homework ${h.grade ?? ""}] ${quote(h.teacher_feedback, 160)}`),
+    ...videos.filter((v: any) => v.final_feedback_parent).slice(0, 4)
+      .map((v: any) => `- [video ${v.final_score ?? ""}/100] ${quote(v.final_feedback_parent, 200)}`),
+    ...rowsOf(work, "student work").slice(0, 5).map((w: any) => `- [class work] ${quote(w.teacher_notes, 160)}`),
+    ...rowsOf(lrs, "lesson reports").slice(0, 6).map((l: any) => `- [lesson report] ${quote(JSON.stringify(l.part), 220)}`),
+  ];
+  const dossierParts = [
+    ...portfolioLines(portfolio),
+    standardized.length
+      ? `Standardized test detail:\n${standardized.map((t: any) =>
+          `- ${t.test_name} on ${t.test_date}: CEFR ${t.cefr_level}${t.score_label ? `, ${t.score_label}` : ""}${t.overall_score != null ? `, overall ${t.overall_score}` : ""}` +
+          `${t.skill_scores && Object.keys(t.skill_scores).length ? `, skills ${JSON.stringify(t.skill_scores)}` : ""}${t.notes ? ` (${quote(t.notes, 120)})` : ""}`).join("\n")}`
+      : "",
+    examRows.length
+      ? `School exam reports (teacher-written):\n${examRows.map((e: any) => `- ${e.title}${e.exam_date ? ` (${e.exam_date})` : ""}: ${quote(e.content_html, 400)}`).join("\n")}`
+      : "",
+    teacherWords.length ? `Teachers' own words about the child:\n${teacherWords.join("\n")}` : "",
+    rowsOf(metrics, "speech metrics").length
+      ? `Recent lesson speech metrics:\n${rowsOf(metrics, "speech metrics")
+          .map((m: any) => `- ${String(m.created_at).slice(0, 10)}: ${m.word_count} words, ${m.distinct_words} distinct, ${m.questions_asked} questions, AI est. ${m.cefr_estimate || "?"}. ${m.contribution ? String(m.contribution).slice(0, 150) : ""}`)
+          .join("\n")}`
+      : "No transcript speech data yet.",
+    rowsOf(errs, "errors").length
+      ? `Recent logged errors (verbatim -> correction):\n${rowsOf(errs, "errors")
+          .map((e: any) => `- [${e.error_type}] "${String(e.error_text).slice(0, 100)}" -> "${String(e.corrected_text).slice(0, 100)}"`)
+          .join("\n")}`
+      : "No logged errors.",
+    `Recent vocabulary: ${rowsOf(vocab, "vocabulary").slice(0, 40).map((v: any) => v.word).join(", ") || "none"}`,
+    approvedPoints.length
+      ? `Growth-chart history: ${approvedPoints.map((h: any) => `${h.level} (${h.source}, ${String(h.assessed_at).slice(0, 10)})`).join("; ")}`
+      : "",
+  ].filter(Boolean);
+  return { portfolio, standardized, approvedPoints, dossierParts };
+}
+
+/** The combined case for staff, from what is held now. */
+function caseFor(claim: any, ev: { standardized: any[]; approvedPoints: any[] }, tests: any[]) {
+  const graded = (tests || []).find((t: any) => t.status === "graded" && t.result?.level_estimate);
+  return combineCase({
+    claimed: claim.claimed_level,
+    standardized: ev.standardized,
+    approvedPoints: ev.approvedPoints.filter((p: any) => p.source !== "transcript"),
+    testEstimate: graded ? { level: graded.result.level_estimate, date: String(graded.updated_at || graded.created_at).slice(0, 10) } : null,
+    auditLevel: claim.evidence?.recommended_level && claim.evidence?.verdict !== "insufficient_evidence"
+      ? { level: claim.evidence.recommended_level, date: claim.evidence_checked_at ? String(claim.evidence_checked_at).slice(0, 10) : null }
+      : null,
+  });
+}
+
+/** The child's own view of a standardized result: what the score report says. */
+const childStandardized = (rows: any[]) =>
+  rows.map((t: any) => ({ test_name: t.test_name, test_date: t.test_date, cefr_level: t.cefr_level, score_label: t.score_label }));
+
 /** A child's view of a test: progress only. No result, no routed level. */
 function childTest(test: any) {
   const stages = Array.isArray(test.stages) ? test.stages : [];
@@ -309,6 +441,42 @@ Deno.serve(async (req) => {
       return rl.limited ? rateLimitResponse(rl.resetAt, corsHeaders) : null;
     };
 
+    /** The class of the child's current enrolment (the earliest-started), or null. */
+    const currentClass = async (studentId: string): Promise<string | null> => {
+      const { data } = await sb.from("enrollments").select("class_id, start_date")
+        .eq("student_id", studentId).is("end_date", null).order("start_date", { ascending: true }).limit(1);
+      return data?.[0]?.class_id ?? null;
+    };
+
+    /** Build stage 1 at the claimed level and assign the test. */
+    const assignTest = async (claim: any, studentId: string) => {
+      const { data: studentRow } = await sb
+        .from("students").select("date_of_birth").eq("id", studentId).maybeSingle();
+      const age = studentRow?.date_of_birth
+        ? Math.floor((Date.now() - new Date(studentRow.date_of_birth).getTime()) / 31_557_600_000)
+        : null;
+      const stage1 = await generateStage(key, 1, claim.claimed_level, age, []);
+      const { data: test, error } = await sb
+        .from("cefr_defense_tests")
+        .insert({
+          claim_id: claim.id,
+          student_id: studentId,
+          class_id: claim.class_id,
+          target_level: claim.claimed_level,
+          status: "assigned",
+          current_stage: 1,
+          stages: [stage1],
+          responses: [],
+          created_by: user.id,
+        })
+        .select("*").single();
+      if (error) throw error;
+      await sb.from("cefr_level_claims")
+        .update({ status: "test_assigned", updated_at: new Date().toISOString() })
+        .eq("id", claim.id);
+      return test;
+    };
+
     // Resolve the acting student (for student-initiated actions).
     const { data: ownStudent } = await sb
       .from("students").select("id, full_name, date_of_birth")
@@ -329,7 +497,7 @@ Deno.serve(async (req) => {
         .upsert(
           {
             student_id: studentId,
-            class_id: body.class_id || null,
+            class_id: body.class_id || (await currentClass(studentId)),
             claimed_level: level,
             set_by: user.id,
             status: "unverified",
@@ -354,43 +522,19 @@ Deno.serve(async (req) => {
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
       { const limited = overSpend(); if (limited) return limited; }
 
-      const [{ data: metricsRows }, { data: errRows }, { data: vocabRows }, { data: histRows }, { data: profileRow }, { data: studentRow }] =
-        await Promise.all([
-          sb.from("transcript_speaker_metrics")
-            .select("word_count, distinct_words, questions_asked, cefr_estimate, highlights, contribution, created_at")
-            .eq("student_id", studentId).order("created_at", { ascending: false }).limit(10),
-          sb.from("student_error_log")
-            .select("error_text, corrected_text, error_type, created_at")
-            .eq("student_id", studentId).order("created_at", { ascending: false }).limit(30),
-          sb.from("student_vocabulary_entries")
-            .select("word").eq("student_id", studentId).order("created_at", { ascending: false }).limit(60),
-          sb.from("cefr_assessments")
-            .select("level, source, assessed_at").eq("student_id", studentId)
-            .order("assessed_at", { ascending: false }).limit(10),
-          sb.from("student_learning_profiles")
-            .select("journey_summary").eq("student_id", studentId).maybeSingle(),
-          sb.from("students").select("full_name, date_of_birth").eq("id", studentId).maybeSingle(),
-        ]);
+      const [ev, { data: studentRow }] = await Promise.all([
+        loadEvidence(sb, studentId),
+        sb.from("students").select("full_name, date_of_birth").eq("id", studentId).maybeSingle(),
+      ]);
+      const { data: profileRow } = await sb.from("student_learning_profiles")
+        .select("journey_summary").eq("student_id", studentId).maybeSingle();
 
       const dossier = [
         `CLAIMED LEVEL: ${claim.claimed_level}`,
         `Student: ${studentRow?.full_name || "unknown"}${studentRow?.date_of_birth ? `, born ${studentRow.date_of_birth}` : ""}`,
-        (histRows || []).length
-          ? `Assessment history: ${(histRows || []).map((h: any) => `${h.level} (${h.source}, ${String(h.assessed_at).slice(0, 10)})`).join("; ")}`
-          : "Assessment history: none",
-        (metricsRows || []).length
-          ? `Recent lesson speech metrics:\n${(metricsRows || [])
-              .map((m: any) => `- ${String(m.created_at).slice(0, 10)}: ${m.word_count} words, ${m.distinct_words} distinct, ${m.questions_asked} questions, AI est. ${m.cefr_estimate || "?"}. ${m.contribution ? String(m.contribution).slice(0, 150) : ""}`)
-              .join("\n")}`
-          : "No transcript speech data yet.",
-        (errRows || []).length
-          ? `Logged errors (verbatim → correction):\n${(errRows || [])
-              .map((e: any) => `- [${e.error_type}] "${String(e.error_text).slice(0, 100)}" → "${String(e.corrected_text).slice(0, 100)}"`)
-              .join("\n")}`
-          : "No logged errors.",
-        `Vocabulary bank: ${(vocabRows || []).length} recent words${(vocabRows || []).length ? ` — ${(vocabRows || []).slice(0, 40).map((v: any) => v.word).join(", ")}` : ""}`,
+        ...ev.dossierParts,
         profileRow?.journey_summary ? `Learning journey summary: ${String(profileRow.journey_summary).slice(0, 800)}` : "",
-      ].filter(Boolean).join("\n\n").slice(0, 9000);
+      ].filter(Boolean).join("\n\n").slice(0, 14000);
 
       const verdict = await openaiJson(key, {
         model: "gpt-4o",
@@ -406,8 +550,9 @@ Deno.serve(async (req) => {
               CEFR_DESCRIPTORS +
               "\n\nRULES:\n" +
               "1. Judge ONLY from the evidence given — quote it. Never invent examples.\n" +
-              "2. Weigh production evidence (their actual utterances/errors) above counts and above " +
-              "any earlier AI estimate.\n" +
+              "2. A STANDARDIZED test result (official score report, recorded by staff) is the strongest single " +
+              "evidence when it is recent (under 18 months); then teacher-approved levels and the teachers' own words; " +
+              "then production evidence (their actual utterances/errors); then counts; earlier AI estimates last.\n" +
               "3. Distinguish 'not enough evidence' from 'evidence contradicts the claim'.\n" +
               "4. Errors are informative both ways: an A2 learner attempting B1 structures (even with " +
               "slips) is evidence FOR growth; fossilized basic errors are evidence AGAINST a high claim.\n\n" +
@@ -432,6 +577,16 @@ Deno.serve(async (req) => {
       await sb.from("cefr_level_claims")
         .update({ evidence: verdict, evidence_checked_at: new Date().toISOString(), status, updated_at: new Date().toISOString() })
         .eq("id", claim.id);
+      // The facts and the case go in the columns 20261128200000 adds; before
+      // that migration this write fails on its own and changes nothing else.
+      {
+        const { data: testsNow } = await sb.from("cefr_defense_tests").select("status, result, updated_at, created_at")
+          .eq("student_id", studentId).order("created_at", { ascending: false }).limit(3);
+        const theCase = caseFor({ ...claim, evidence: verdict, evidence_checked_at: new Date().toISOString() }, ev, testsNow || []);
+        const { error: pErr } = await sb.from("cefr_level_claims")
+          .update({ portfolio: ev.portfolio, case_summary: theCase }).eq("id", claim.id);
+        if (pErr) console.error("cefr-defense: portfolio not saved:", pErr.message);
+      }
 
       // A conclusive audit drafts a growth-chart point for a teacher to approve.
       let cefrDraftId: string | null = null;
@@ -460,35 +615,75 @@ Deno.serve(async (req) => {
         .from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
       if (!claim) return respond({ success: false, error: "Set a level first" }, 404);
       { const limited = overSpend(); if (limited) return limited; }
-
-      const { data: studentRow } = await sb
-        .from("students").select("date_of_birth").eq("id", studentId).maybeSingle();
-      const age = studentRow?.date_of_birth
-        ? Math.floor((Date.now() - new Date(studentRow.date_of_birth).getTime()) / 31_557_600_000)
-        : null;
-
-      const stage1 = await generateStage(key, 1, claim.claimed_level, age, []);
-      const { data: test, error } = await sb
-        .from("cefr_defense_tests")
-        .insert({
-          claim_id: claim.id,
-          student_id: studentId,
-          class_id: claim.class_id,
-          target_level: claim.claimed_level,
-          status: "assigned",
-          current_stage: 1,
-          stages: [stage1],
-          responses: [],
-          created_by: user.id,
-        })
-        .select("*").single();
-      if (error) throw error;
-
-      await sb.from("cefr_level_claims")
-        .update({ status: "test_assigned", updated_at: new Date().toISOString() })
-        .eq("id", claim.id);
-
+      const test = await assignTest(claim, studentId);
       return respond({ success: true, test: sanitizeTest(test) });
+    }
+
+    // ── set_defense ──────────────────────────────────────────────────────
+    // Staff open (or close) a child's Level Defence: while open, the child
+    // may start the adaptive test from Defend My Level. With `level` it also
+    // sets the claimed level (creating the claim), like set_level.
+    if (action === "set_defense") {
+      if (!isStaff) return respond({ success: false, error: "Teachers/admins only" }, 403);
+      const studentId = String(body.student_id || "");
+      if (!(await staffHolds(studentId))) return notYours();
+      const level = body.level ? String(body.level) : "";
+      if (level && !LEVELS.includes(level as Level)) return respond({ success: false, error: "Not a valid level" }, 400);
+      const open = body.open === true;
+      const note = body.note == null ? null : String(body.note).trim().slice(0, 300) || null;
+      const { data: existing } = await sb.from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
+      if (!existing && !level) return respond({ success: false, error: "Choose the level to defend first" }, 400);
+      const now = new Date().toISOString();
+      let claim = existing;
+      if (level && (!existing || existing.claimed_level !== level)) {
+        const classId = existing?.class_id ?? (await currentClass(studentId));
+        const { data: up, error } = await sb.from("cefr_level_claims").upsert({
+          student_id: studentId, class_id: classId, claimed_level: level, set_by: user.id,
+          status: "unverified", evidence: null, evidence_checked_at: null, updated_at: now,
+        }, { onConflict: "student_id" }).select("*").single();
+        if (error) throw error;
+        claim = up;
+      }
+      const { data: upd, error: oErr } = await sb.from("cefr_level_claims").update({
+        defense_open: open,
+        defense_opened_by: open ? user.id : null,
+        defense_opened_at: open ? now : null,
+        defense_note: note,
+        updated_at: now,
+      }).eq("id", claim.id).select("*").single();
+      if (oErr) {
+        return respond({ success: false, error: `Opening a defence needs migration 20261128200000 (${oErr.message})` }, 409);
+      }
+      return respond({ success: true, claim: upd });
+    }
+
+    // ── start_test ───────────────────────────────────────────────────────
+    // The child starts the adaptive test themselves, once staff opened the
+    // defence for them. One test at a time; a graded test needs staff to
+    // open the defence again (closing it on every start keeps it to one).
+    if (action === "start_test") {
+      if (!ownStudent?.id) return respond({ success: false, error: "Only a pupil can start their own test" }, 403);
+      const studentId = ownStudent.id;
+      const { data: claim } = await sb.from("cefr_level_claims").select("*").eq("student_id", studentId).maybeSingle();
+      if (!claim || claim.defense_open !== true) {
+        return respond({ success: false, error: "Your teacher hasn't opened your Level Defence yet" }, 403);
+      }
+      const { data: active } = await sb.from("cefr_defense_tests").select("id")
+        .eq("student_id", studentId).neq("status", "graded").limit(1);
+      if (active && active.length) return respond({ success: false, error: "You already have a test to finish" }, 409);
+      { const limited = overSpend(); if (limited) return limited; }
+      // Close the door first so a double tap cannot start two tests.
+      const { data: closed } = await sb.from("cefr_level_claims")
+        .update({ defense_open: false, updated_at: new Date().toISOString() })
+        .eq("id", claim.id).eq("defense_open", true).select("id");
+      if (!closed || !closed.length) return respond({ success: false, error: "Your test is already being prepared" }, 409);
+      try {
+        const test = await assignTest(claim, studentId);
+        return respond({ success: true, test: childTest(test) });
+      } catch (e) {
+        await sb.from("cefr_level_claims").update({ defense_open: true }).eq("id", claim.id);
+        throw e;
+      }
     }
 
     // ── get_state ────────────────────────────────────────────────────────
@@ -504,6 +699,11 @@ Deno.serve(async (req) => {
         sb.from("cefr_defense_tests").select("*").eq("student_id", studentId)
           .order("created_at", { ascending: false }).limit(3),
       ]);
+      // The facts and standardized results, for both views (no model output).
+      const ev = await loadEvidence(sb, studentId);
+      const defense = claim
+        ? { open: claim.defense_open === true, note: claim.defense_note ?? null, opened_at: claim.defense_opened_at ?? null }
+        : { open: false, note: null, opened_at: null };
       if (staffOk) {
         return respond({
           success: true,
@@ -511,6 +711,10 @@ Deno.serve(async (req) => {
             ? { claimed_level: claim.claimed_level, status: claim.status, evidence: claim.evidence, evidence_checked_at: claim.evidence_checked_at }
             : null,
           tests: (tests || []).map(sanitizeTest),
+          defense,
+          portfolio: ev.portfolio,
+          standardized: ev.standardized,
+          case: claim ? caseFor(claim, ev, tests || []) : null,
         });
       }
       // The child: the teacher's level, progress, and a level only once a
@@ -556,6 +760,9 @@ Deno.serve(async (req) => {
         tests: (tests || []).map(childTest),
         approved_level: approved,
         teacher_level: teacherLevel,
+        defense,
+        portfolio: ev.portfolio,
+        standardized: childStandardized(ev.standardized),
       });
     }
 
@@ -680,8 +887,24 @@ Deno.serve(async (req) => {
         .eq("id", testId).select("*").single();
       if (gradeErr) throw gradeErr;
 
+      // The claim's status is the WHOLE case - standardized results, levels
+      // teachers approved, this test, the evidence audit - not the test alone.
+      let caseDefended = defended;
+      try {
+        const { data: claimNow } = await sb.from("cefr_level_claims").select("*").eq("id", test.claim_id).maybeSingle();
+        if (claimNow) {
+          const ev = await loadEvidence(sb, test.student_id);
+          const theCase = caseFor(claimNow, ev, [graded]);
+          if (typeof theCase.defended === "boolean") caseDefended = theCase.defended;
+          const { error: cErr } = await sb.from("cefr_level_claims")
+            .update({ portfolio: ev.portfolio, case_summary: theCase }).eq("id", test.claim_id);
+          if (cErr) console.error("cefr-defense: case not saved:", cErr.message);
+        }
+      } catch (e) {
+        console.error("cefr-defense: case not built:", (e as Error).message);
+      }
       await sb.from("cefr_level_claims")
-        .update({ status: defended ? "defended" : "not_defended", updated_at: new Date().toISOString() })
+        .update({ status: caseDefended ? "defended" : "not_defended", updated_at: new Date().toISOString() })
         .eq("id", test.claim_id);
 
       await saveDraft(sb, {
