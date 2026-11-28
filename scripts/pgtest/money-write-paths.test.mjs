@@ -233,6 +233,7 @@ console.log('\n2. every RPC called is pinned');
     leaderboard_json: 'read', leaderboard_period: 'read', leaderboard_tv_feed: 'read', points_manual_changes: 'read',
     student_points_history: 'read', student_points_summary: 'read', lesson_monitor_delete_report: 'no',
     lesson_monitor_my_classes: 'read', lesson_monitor_my_lessons: 'read', lesson_monitor_report_feedback: 'no', lesson_monitor_name_voice_group: 'no',
+    lesson_monitor_voice_overview: 'read (admin only: voice groups, consent and model figures, no money; voice-admin.test.mjs)',
     lesson_monitor_set_class: 'no', lesson_monitor_set_targets: 'no', lesson_report_claim: 'queue', lesson_report_file: 'read',
     lesson_report_finish: 'queue', lesson_report_teacher_can: 'read', lesson_speaker_recording: 'read',
     lesson_speaker_roster: 'read', video_analysis_claim: 'queue', vocab_claim_daily_save: 'quota',
