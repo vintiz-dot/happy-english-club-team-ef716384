@@ -249,7 +249,10 @@ def make_groups(results: list[dict], rid: str | None, s: dict = SETTINGS, shown:
         key = f"G{n}"
         seconds = float(w.sum())
         sug = sid
-        score = round(float(np.mean([results[i]["score"] for i in idx if results[i]["score"] is not None])), 3) if sid else None
+        # a child named only from the seat (tier seat_short) carries no voice score when no voiceprint scored it
+        # (a lesson before any voiceprint exists): the mean of nothing is NaN, which the report cannot carry
+        voiced = [results[i]["score"] for i in idx if results[i]["score"] is not None]
+        score = round(float(np.mean(voiced)), 3) if sid and voiced else None
         blind = False
         if sug and voice.is_blind(rid, key, dict(voice.SETTINGS, blind_fraction=s.get("blind_fraction", 0.2))):
             sug, score, blind = None, None, True

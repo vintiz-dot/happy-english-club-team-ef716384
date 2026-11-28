@@ -182,3 +182,14 @@ def test_blind_groups_hide_the_suggestion_deterministically(monkeypatch):
     monkeypatch.setitem(A.SETTINGS, "blind_fraction", 1.0)  # the Lark engine's own share (1 in 5 normally)
     gs = A.make_groups(r, rid="rec-1")
     assert all(g["suggested"] is None for g in gs) and gs[0]["blind"] and gs[0]["guesses"]["ecapa"]["best"] == "kid-1"
+
+
+def test_child_named_only_from_the_seat_has_no_score_not_nan():
+    """28 Nov pilot: no voiceprints yet, a 1.1 s segment named from the seat alone (seat_short) gave its group
+    score = mean([]) = NaN and the database refused the whole report."""
+    segs = [seg(5.0, 6.1, {"mic1": 25.0, "mic2": 2.0, "mic3": 2.0, "mic4": 2.0})]
+    seats = A.Seats([{"student_id": "kid-1", "mic": 1, "t": 0}])
+    r = A.attribute(segs, audio_with([(5.0, 6.1, "mic1", 1)]), {"ecapa": Fake()}, {}, seats, set(KIDS.values()))
+    assert r[0]["named"] == "kid-1" and r[0]["tier"] == "seat_short" and r[0]["score"] is None and r[0]["vecs"]
+    gs = A.make_groups(r, rid=None)
+    assert gs[0]["suggested"] == "kid-1" and gs[0]["score"] is None
