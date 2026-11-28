@@ -30,6 +30,7 @@ const REC_MIG = MIGS.find((f) => f.includes("class_recorder"));
 const LM_MIG = MIGS.find((f) => f.includes("lesson_monitor_pilot"));
 const COVER_MIG = MIGS.find((f) => f.includes("lesson_monitor_cover_earlier"));
 const VOICE_MIG = MIGS.find((f) => f.includes("lesson_monitor_report_voice_part")); // 27 Nov 2026, optional
+const MICS_MIG = MIGS.find((f) => f.includes("lesson_monitor_report_mics_part")); // 28 Nov 2026, optional (Lark mics)
 if (!PIPE_MIG || !TA_MIG || !REC_MIG || !LM_MIG || !COVER_MIG) {
   console.log("usage: lesson-monitor.test.mjs <20260717090000_...> <20261111110000_...> <20261112100000_class_recorder.sql> <20261117090000_lesson_monitor_pilot.sql> <20261120090000_lesson_monitor_cover_earlier.sql>");
   console.log("0 passed, 1 failed");
@@ -104,12 +105,14 @@ await db.exec(readFileSync(REC_MIG, "utf8"));
 await db.exec(readFileSync(LM_MIG, "utf8"));
 await db.exec(readFileSync(COVER_MIG, "utf8"));
 if (VOICE_MIG) await db.exec(readFileSync(VOICE_MIG, "utf8"));
+if (MICS_MIG) await db.exec(readFileSync(MICS_MIG, "utf8"));
 ok("applies on top of the class recorder", true);
 {
   let again = null;
   try {
     await db.exec(readFileSync(LM_MIG, "utf8")); await db.exec(readFileSync(COVER_MIG, "utf8"));
     if (VOICE_MIG) await db.exec(readFileSync(VOICE_MIG, "utf8"));
+    if (MICS_MIG) await db.exec(readFileSync(MICS_MIG, "utf8"));
   } catch (e) { again = e.message; }
   ok("and both apply a second time unchanged, in that order", again === null, again ?? "");
   const n = (await one(`SELECT count(*)::int n FROM pg_proc WHERE proname = 'lesson_monitor_set_class'`)).n;
@@ -334,12 +337,31 @@ console.log("=== saving a report: the server decides whose it is ===");
   // an embedding or another model's guess is not. Without that migration a voice part is an unknown part.
   const VOICE = { model: "speechbrain/spkrec-ecapa-voxceleb", settings: { line_min_s: 1, group_threshold: 0.5 },
     groups: [{ key: "G1", seconds: 42.5, lines: 9, suggested: k1, score: 0.71 }], samples_seconds: { [k1]: 63.2 } };
+  // The mics part (20261128180000): what multimic.py writes for a lesson with the teacher's lapel worn and Lark mics
+  // among the children. Child ids only as values; no embedding; teacher_worn a boolean.
+  const MICS = { teacher_worn: true, engine: "lark/1", tracks: ["mic1", "mic2"],
+    alignment: { reference: "room", tracks: { mic1: { ok: true, offset_s: 12.5, drift_ppm: 31.2, residual_ms: 1.4 } }, rejected: {} },
+    speaking: { teacher_s: 1800, children_s: { [k1]: 95.5 }, unknown_s: 300, overlap_s: 40, named_s: 95.5 },
+    map_suggestions: [{ suggested: k1, mic: "mic3", board_mic: "mic2", seconds: 24, share: 0.8, from_s: 600 }],
+    settings: { excess_db: 6 } };
+  if (MICS_MIG) {
+    refused("a mics part without teacher_worn is refused", await save(ADMIN, rV1, BODY({ mics: { tracks: [] } })), /mics part is not in the expected shape/);
+    refused("a mics part with another key is refused", await save(ADMIN, rV1, BODY({ mics: { ...MICS, voiceprints: [] } })), /mics part carries an unknown part: voiceprints/);
+    refused("a mics part carrying embeddings is refused", await save(ADMIN, rV1,
+      BODY({ mics: { ...MICS, speaking: { ...MICS.speaking, vecs: [[0.1]] } } })), /mics part may not carry voice embeddings/);
+    refused("a child's id under a naming key in the mics part is refused", await save(ADMIN, rV1,
+      BODY({ mics: { ...MICS, map_suggestions: [{ student_id: k1, mic: "mic3" }] } })), /may not name or point at a child/);
+  } else {
+    refused("without 20261128180000 a mics part is an unknown part", await save(ADMIN, rV1, BODY({ mics: MICS })), /unknown part: mics/);
+  }
   if (VOICE_MIG) {
     refused("a voice part carrying embeddings is refused", await save(ADMIN, rV1,
       BODY({ voice: { ...VOICE, groups: [{ ...VOICE.groups[0], vecs: [[0.1, 0.2]] }] } })), /may not carry voice embeddings/);
     refused("a voice part naming other models is refused", await save(ADMIN, rV1, BODY({ voice: { ...VOICE, models: ["titanet"] } })), /voice part carries an unknown part: models/);
     refused("a voice part that is not an object is refused", await save(ADMIN, rV1, BODY({ voice: [] })), /voice part is not in the expected shape/);
-    eq("the admin saves Victor's lesson, voice groups included", await save(ADMIN, rV1, BODY({ voice: VOICE })), null);
+    eq("the admin saves Victor's lesson, voice groups included", await save(ADMIN, rV1, BODY({ voice: VOICE, ...(MICS_MIG ? { mics: MICS } : {}) })), null);
+    if (MICS_MIG) eq("and the mics part is kept", (await one(
+      `SELECT (body -> 'mics' ->> 'teacher_worn')::boolean w FROM public.lesson_monitor_reports WHERE recording_id = $1`, [rV1])).w, true);
     eq("and the voice groups are kept", (await one(
       `SELECT body -> 'voice' -> 'groups' -> 0 ->> 'key' k FROM public.lesson_monitor_reports WHERE recording_id = $1`, [rV1])).k, "G1");
   } else {
