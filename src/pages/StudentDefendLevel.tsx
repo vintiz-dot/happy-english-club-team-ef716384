@@ -13,7 +13,7 @@
  * teacher has approved one (approved_level). Nothing derived from an AI
  * reaches a child before a teacher approves.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
@@ -36,8 +36,31 @@ import {
   Scale, Loader2, ShieldCheck, PenLine, CheckCircle2, ArrowRight,
 } from "lucide-react";
 
+/** Reject when a promise has not settled in `ms`: a send must end, never spin. */
+function within<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    p.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+  });
+}
+
+const STUCK = "Couldn't reach the server. Your answers are saved on this device - reload the page (F5) and press the button again.";
+
 const invokeDefense = async (body: Record<string, unknown>) => {
-  const { data, error } = await supabase.functions.invoke("cefr-defense", { body });
+  // The sign-in token lasts an hour and a test can take longer. A renewal
+  // that hangs (a sleeping tab, a dropped connection) used to leave the
+  // button spinning with nothing sent (28 Nov 2026): check it first, bounded.
+  const { data: sess } = await within(supabase.auth.getSession(), 15_000, STUCK);
+  const exp = sess.session?.expires_at ?? 0;
+  if (!sess.session || exp * 1000 < Date.now() + 60_000) {
+    const { error: rErr } = await within(supabase.auth.refreshSession(), 15_000, STUCK);
+    if (rErr) throw new Error("You were signed out. Your answers are saved on this device - sign in again and come back to this page.");
+  }
+  const { data, error } = await within(
+    supabase.functions.invoke("cefr-defense", { body }),
+    180_000,
+    STUCK,
+  );
   if (error) {
     let detail = error.message;
     try {
@@ -82,6 +105,20 @@ export default function StudentDefendLevel() {
   // sends (defended, not_supported, ...) - reads as "submitted, waiting".
   const reviewedByTeacher = claim?.status === "reviewed" || claim?.status === "set_by_teacher";
   const stage = activeTest?.active_stage;
+  // Answers are kept on this device until the stage is sent, so a reload or
+  // a lost connection never costs a child their writing.
+  const draftKey = activeTest && stage ? `hec-defend-answers:${activeTest.id}:${activeTest.current_stage}` : null;
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) setAnswers((a) => (Object.keys(a).length ? a : JSON.parse(saved)));
+    } catch { /* nothing saved */ }
+  }, [draftKey]);
+  useEffect(() => {
+    if (!draftKey || !Object.keys(answers).length) return;
+    try { localStorage.setItem(draftKey, JSON.stringify(answers)); } catch { /* storage full or off */ }
+  }, [draftKey, answers]);
   const defense: { open: boolean; note: string | null } | null = state?.defense ?? null;
   const portfolio: PortfolioData | null = state?.portfolio ?? null;
 
@@ -107,6 +144,7 @@ export default function StudentDefendLevel() {
       });
     },
     onSuccess: (d) => {
+      if (draftKey) { try { localStorage.removeItem(draftKey); } catch { /* ignore */ } }
       setAnswers({});
       if (d.test?.status === "graded") {
         toast.success("Test submitted! Your teacher will review it.");
