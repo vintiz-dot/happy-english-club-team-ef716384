@@ -710,9 +710,12 @@ def finish_voice(api, row: dict, res) -> None:
         return
     rid = row["recording_id"]
     try:
-        api.rpc("lesson_monitor_save_voice_groups", {"p_recording": rid, "p_groups": [
-            {"key": g["key"], "seconds": g["seconds"], "lines": len(g["lines"]), "suggested": g["suggested"], "score": g["score"]}
-            for g in res["groups"]]})
+        groups = [{"key": g["key"], "seconds": g["seconds"], "lines": len(g["lines"]), "suggested": g["suggested"],
+                   "score": g["score"]} for g in res["groups"]]
+        bad = finite_numbers(groups)  # a NaN here made the database refuse every group of the 28 Nov pilot (HTTP 400)
+        if bad:
+            pc.log(f"{rid} voice groups: {len(bad)} figure(s) were not numbers (NaN/inf), saved as empty: {', '.join(bad)}")
+        api.rpc("lesson_monitor_save_voice_groups", {"p_recording": rid, "p_groups": groups})
     except ApiError as e:
         pc.log(f"{rid} voice groups not saved (HTTP {e.status}); the report has none to name")
         return
