@@ -370,6 +370,33 @@ function childTest(test: any) {
     result: null,
     submitted: test.status === "graded",
     created_at: test.created_at,
+    // What the child did, counted, never judged: right answers per stage
+    // (graded by the key, not a model) and words written. No stage level,
+    // no estimate, no verdict.
+    summary: test.status === "graded" ? childSummary(test) : null,
+  };
+}
+
+function childSummary(test: any) {
+  const responses: any[] = Array.isArray(test.responses) ? test.responses : [];
+  const stages = responses.map((r: any) => {
+    const mcq: any[] = Array.isArray(r.mcq) ? r.mcq : [];
+    const writing: any[] = Array.isArray(r.writing) ? r.writing : [];
+    return {
+      stage: Number(r.stage) || null,
+      correct: mcq.filter((m) => m?.correct === true).length,
+      total: mcq.length,
+      writing_tasks: writing.length,
+      words_written: writing.reduce((n, w) => n + String(w?.text || "").trim().split(/\s+/).filter(Boolean).length, 0),
+    };
+  });
+  const last = responses[responses.length - 1];
+  return {
+    stages,
+    correct: stages.reduce((n, x) => n + x.correct, 0),
+    total: stages.reduce((n, x) => n + x.total, 0),
+    words_written: stages.reduce((n, x) => n + x.words_written, 0),
+    submitted_at: last?.submitted_at ?? test.updated_at ?? null,
   };
 }
 
@@ -752,8 +779,22 @@ Deno.serve(async (req) => {
         const relevelled = !!claim && claim.status === "unverified" && String(claim.updated_at || "") > gradedAt;
         setByTeacher = !!m || relevelled;
       }
+      // The child's current level: the latest level a teacher approved or
+      // set (cefr_assessments holds approved points only; model drafts wait
+      // in cefr_assessment_drafts). Fails closed to none.
+      let currentLevel: { level: string; assessed_at: string; source: string } | null = null;
+      {
+        const { data: cur, error: curErr } = await sb.from("cefr_assessments")
+          .select("level, assessed_at, source")
+          .eq("student_id", studentId)
+          .order("assessed_at", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (!curErr && cur && cur[0]) currentLevel = { level: cur[0].level, assessed_at: cur[0].assessed_at, source: cur[0].source };
+      }
       return respond({
         success: true,
+        current_level: currentLevel,
         claim: claim
           ? { claimed_level: claim.claimed_level, status: childClaimStatus(tests || [], { approved: !!approved, setByTeacher, discarded }), evidence: null, evidence_checked_at: null }
           : null,

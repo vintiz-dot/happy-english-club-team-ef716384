@@ -73,6 +73,31 @@ const invokeDefense = async (body: Record<string, unknown>) => {
   return data;
 };
 
+const LEVEL_ORDER = ["Pre-A1", "A1", "A1+", "A2", "A2+", "B1", "B1+", "B2", "B2+", "C1", "C2"];
+const levelRank = (l?: string | null) => (l ? LEVEL_ORDER.indexOf(l) : -1);
+
+/** Where a level on record came from, in a child's words. */
+const SOURCE_WORDS: Record<string, string> = {
+  manual: "set by your teacher",
+  level_defense_test: "from your defence test, checked by your teacher",
+  student_report: "from your progress report, checked by your teacher",
+  exam_report: "from your exam, checked by your teacher",
+};
+
+const shortDate = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+};
+
+type ChildSummary = {
+  stages: { stage: number | null; correct: number; total: number; writing_tasks: number; words_written: number }[];
+  correct: number;
+  total: number;
+  words_written: number;
+  submitted_at: string | null;
+};
+
 /** The Vietnamese draft beneath a key label, for the bands (and devices) that ask for it. */
 function ViBeneath({ k, vars, show }: { k: StudentDefendKey; vars?: Record<string, string | number>; show: boolean }) {
   if (!show) return null;
@@ -121,6 +146,9 @@ export default function StudentDefendLevel() {
   }, [draftKey, answers]);
   const defense: { open: boolean; note: string | null } | null = state?.defense ?? null;
   const portfolio: PortfolioData | null = state?.portfolio ?? null;
+  const currentLevel: { level: string; assessed_at: string; source: string } | null = state?.current_level ?? null;
+  const summary: ChildSummary | null = gradedTest?.summary ?? null;
+  const defendedIt = !!approved && !!claim && levelRank(approved.level) >= levelRank(claim.claimed_level);
 
   const startMutation = useMutation({
     mutationFn: () => invokeDefense({ action: "start_test" }),
@@ -183,6 +211,29 @@ export default function StudentDefendLevel() {
           </div>
         </div>
 
+        {/* My level now: the latest level a teacher approved or set. */}
+        {!isLoading && (
+          <Card className="overflow-hidden">
+            <CardContent className="py-4 flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-hec-lg bg-hec-sunken font-display text-hec-h1 font-medium text-hec-ink">
+                {currentLevel?.level ?? "?"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-hec-caption font-medium uppercase tracking-wider text-hec-ink-soft">My level now</p>
+                {currentLevel ? (
+                  <p className="text-hec-body text-hec-ink">
+                    <span className="font-semibold">{currentLevel.level}</span>
+                    {" - "}{SOURCE_WORDS[currentLevel.source] ?? "checked by your teacher"}
+                    {shortDate(currentLevel.assessed_at) && <span className="text-hec-ink-soft">, {shortDate(currentLevel.assessed_at)}</span>}
+                  </p>
+                ) : (
+                  <p className="text-hec-body text-hec-ink-soft">Your teacher hasn't recorded a level for you yet.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-hec-ink-soft">
             <Loader2 className="h-5 w-5 animate-spin" />Loading…
@@ -202,7 +253,7 @@ export default function StudentDefendLevel() {
                   {claim.claimed_level}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-hec-body font-semibold text-hec-ink">Your teacher believes you're {claim.claimed_level}</p>
+                  <p className="text-hec-body font-semibold text-hec-ink">Level you're defending: {claim.claimed_level}</p>
                   <p className="mt-0.5 text-hec-small text-hec-ink-soft">
                     {claim.status === "reviewed" && approved ? `Your teacher reviewed your test: your level is ${approved.level}.`
                       : claim.status === "reviewed" ? "Your teacher has reviewed your test."
@@ -303,29 +354,64 @@ export default function StudentDefendLevel() {
               </Card>
             )}
 
-            {/* After the test: progress, then the level a teacher approved */}
+            {/* After the test: what the child did, then the level a teacher approved */}
             {!activeTest && gradedTest && (
               <Card className={approved ? "border-hec-leaf/30" : undefined}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     {approved ? (
-                      <><ShieldCheck className="h-5 w-5 text-hec-leaf" />Your teacher's review: {approved.level}</>
+                      <><ShieldCheck className="h-5 w-5 text-hec-leaf" />
+                        {defendedIt ? `You defended ${claim.claimed_level}!` : `Your teacher's review: ${approved.level}`}</>
                     ) : reviewedByTeacher ? (
                       <><CheckCircle2 className="h-5 w-5 text-hec-leaf" />Reviewed by your teacher</>
                     ) : (
-                      <><CheckCircle2 className="h-5 w-5 text-hec-ink-soft" />Test submitted</>
+                      <><CheckCircle2 className="h-5 w-5 text-hec-ink-soft" />Test sent to your teacher</>
                     )}
                   </CardTitle>
                   <CardDescription className="text-hec-small">
                     {approved
-                      ? "Your teacher looked at your test and confirmed this level."
+                      ? defendedIt
+                        ? `Your teacher looked at your test and everything you have done, and confirmed ${approved.level}.`
+                        : `Your teacher looked at your test and everything you have done, and confirmed ${approved.level}. Keep going - you can defend ${claim.claimed_level} again later.`
                       : !reviewedByTeacher
-                        ? "Your teacher will review your test. Your level shows here once they have."
+                        ? "Your teacher now looks at your test together with all your evidence below. Your level shows at the top of this page once they have."
                         : teacherLevel
                           ? `Your teacher set your level: ${teacherLevel.level}.`
                           : "Your teacher has looked at your test."}
                   </CardDescription>
                 </CardHeader>
+                {summary && (
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-hec-md bg-hec-sunken p-2">
+                        <p className="font-display text-hec-h2 font-medium text-hec-ink">{summary.correct}/{summary.total}</p>
+                        <p className="text-hec-caption text-hec-ink-soft">questions right</p>
+                      </div>
+                      <div className="rounded-hec-md bg-hec-sunken p-2">
+                        <p className="font-display text-hec-h2 font-medium text-hec-ink">{summary.words_written}</p>
+                        <p className="text-hec-caption text-hec-ink-soft">words written</p>
+                      </div>
+                      <div className="rounded-hec-md bg-hec-sunken p-2">
+                        <p className="font-display text-hec-h2 font-medium text-hec-ink">{summary.stages.length}</p>
+                        <p className="text-hec-caption text-hec-ink-soft">stages done</p>
+                      </div>
+                    </div>
+                    <ul className="space-y-1">
+                      {summary.stages.map((st, i) => (
+                        <li key={i} className="flex items-center justify-between gap-2 rounded-hec-md border border-hec-line px-3 py-1.5 text-hec-small">
+                          <span className="text-hec-ink">Stage {st.stage ?? i + 1}</span>
+                          <span className="text-hec-ink-soft">
+                            {st.correct} of {st.total} right
+                            {st.writing_tasks > 0 && ` · ${st.writing_tasks} writing ${st.writing_tasks === 1 ? "task" : "tasks"}, ${st.words_written} words`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {shortDate(summary.submitted_at) && (
+                      <p className="text-hec-caption text-hec-ink-soft">Sent on {shortDate(summary.submitted_at)}.</p>
+                    )}
+                  </CardContent>
+                )}
               </Card>
             )}
 
