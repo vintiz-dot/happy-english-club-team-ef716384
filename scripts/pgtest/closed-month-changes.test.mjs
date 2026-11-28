@@ -53,9 +53,13 @@ const t = m.heldTotals(rows);
 ok('totals: how much more and how much less approving everything would charge', t.bills === 2 && t.up === 200 && t.down === 210000, t);
 
 const src = readFileSync(join(repo, 'src', 'components', 'admin', 'ClosedMonthChanges.tsx'), 'utf8');
+// Since 0824f804 the approve call lives in reports/approveClosedBill.ts, shared with the problems list.
+const approveSrc = readFileSync(join(repo, 'src', 'components', 'admin', 'reports', 'approveClosedBill.ts'), 'utf8');
 ok('the panel finds held bills through calculate-tuition-bulk (which never saves) and changes one only with force + reason',
-  /invoke\("calculate-tuition-bulk"/.test(src) && /force: true, reason: why/.test(src) && !/\.from\("invoices"\)\s*\.(update|upsert|insert|delete)/.test(src));
-ok('it prices nothing itself', !/\* ?\(?[\w.]+ ?\/ ?100|session_rate_vnd/.test(src));
+  /invoke\("calculate-tuition-bulk"/.test(src) && /approveClosedBill\(row, why\)/.test(src)
+    && /invoke\("calculate-tuition",[\s\S]*?force: true, reason\b/.test(approveSrc)
+    && ![src, approveSrc].some((t) => /\.from\("invoices"\)\s*\.(update|upsert|insert|delete)/.test(t)));
+ok('it prices nothing itself', ![src, approveSrc].some((t) => /\* ?\(?[\w.]+ ?\/ ?100|session_rate_vnd/.test(t)));
 
 // ---- held.changes: what changed on a held bill (owner, 24 Nov 2026) ----
 // supabase/functions/_lib/held-bill-changes.ts sets the saved bill beside what
