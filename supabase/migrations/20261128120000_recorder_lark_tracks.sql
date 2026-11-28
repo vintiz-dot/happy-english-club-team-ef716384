@@ -24,13 +24,18 @@
 --                                   { "kind": "lark", "transmitter": 1-4,
 --                                     "files": [ { "name", "bytes", "last_modified", "offset_ms", "duration_ms",
 --                                                  "sample_rate", "bit_depth", "float", "channels",
---                                                  "recorded_start", "time_reference_samples", "timecode" } ],
+--                                                  "recorded_start", "time_reference_samples", "timecode", "device" } ],
 --                                     "sample_rate": original Hz, "bit_depth": 16|24|32, "float": bool,
 --                                     "recorded_start": the first file's start as the device wrote it
 --                                                       (BWF bext OriginationDate + TimeReference, else iXML,
 --                                                       else NULL): "YYYY-MM-DDTHH:MM:SS.mmm", device clock,
 --                                                       no time zone,
---                                     "duration_ms": the joined timeline's length }
+--                                     "duration_ms": the joined timeline's length,
+--                                     "device": what identifies the transmitter itself (iXML serial/device tags, BWF
+--                                               OriginatorReference / Originator / Description, a serial in the file
+--                                               name), also per file; NULL when nothing does. The page remembers which
+--                                               device was which sticker number and warns when the teacher's choice
+--                                               contradicts it; the voice engine checks the audio for swapped mics. }
 --                                   sample_rate on the track row itself is the STORED rate (16000).
 --   class_recording_tracks.import_state  NULL for teacher/room; 'importing' while the upload runs, 'complete'
 --                                   once every chunk is confirmed in storage at its byte count.

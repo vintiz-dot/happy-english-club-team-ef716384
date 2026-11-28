@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { sha256Hex } from "@/lib/recorder/hash";
 import {
-  WAV_HEAD_BYTES, LarkFileError, checkLength, chunkPlan, guessTransmitter, layoutTransmitter, parseTrailingChunks,
-  parseWavHeader, sourceForServer, type LarkFile, type TransmitterLayout,
+  WAV_HEAD_BYTES, LarkFileError, checkLength, chunkPlan, deviceIdentity, deviceWarning, guessTransmitter, layoutTransmitter,
+  parseTrailingChunks, parseWavHeader, rememberDevice, rememberedTransmitter, sourceForServer, type DeviceMemory, type LarkFile,
+  type TransmitterLayout,
 } from "@/lib/recorder/larkImport";
 import { encodePlan } from "@/lib/recorder/larkEncode";
 
@@ -22,7 +23,12 @@ import { encodePlan } from "@/lib/recorder/larkEncode";
 
 const BUCKET = "class-recorder-audio";
 
-interface Picked { key: string; file: File; relativePath: string; info?: LarkFile["info"]; error?: string; tx: number | null }
+interface Picked { key: string; file: File; relativePath: string; info?: LarkFile["info"]; error?: string; tx: number | null; device: string | null }
+
+// Which device identity was which sticker number, in this browser (identities and numbers only, never a name).
+const MEMORY_KEY = "hec.lark.deviceTransmitters";
+const loadMemory = (): DeviceMemory => { try { return JSON.parse(localStorage.getItem(MEMORY_KEY) || "{}") || {}; } catch { return {}; } };
+const saveMemory = (m: DeviceMemory) => { try { localStorage.setItem(MEMORY_KEY, JSON.stringify(m)); } catch { /* private mode */ } };
 type TxState =
   | { kind: "idle" }
   | { kind: "working"; done: number; total: number; note: string }
@@ -79,6 +85,7 @@ export function LarkImport({ recordingId, scheduledStart, scheduledEnd, onClose 
   const [busy, setBusy] = useState(false);
   const stop = useRef(false);
   const worker = useRef<Worker | null>(null);
+  const [memory] = useState<DeviceMemory>(loadMemory);
 
   const loadServer = useCallback(async () => {
     const { data } = await (supabase as any).from("class_recording_tracks")
@@ -100,10 +107,13 @@ export function LarkImport({ recordingId, scheduledStart, scheduledEnd, onClose 
     for (const file of Array.from(list)) {
       const relativePath = (file as any).webkitRelativePath || file.name;
       if (/^\./.test(file.name)) continue;                       // macOS ._ files on the card
-      const p: Picked = { key: `${relativePath}|${file.size}|${file.lastModified}`, file, relativePath, tx: guessTransmitter(file.name, relativePath) };
+      const p: Picked = { key: `${relativePath}|${file.size}|${file.lastModified}`, file, relativePath, tx: guessTransmitter(file.name, relativePath), device: null };
       try {
         if (!/\.(wav|wave|bwf)$/i.test(file.name)) throw new LarkFileError("not_wav", "Not a WAV file");
         p.info = await readHeader(file);
+        p.device = deviceIdentity(p.info, file.name);
+        // The device remembered from an earlier upload wins over a guess from the name.
+        p.tx = rememberedTransmitter(loadMemory(), p.device) ?? p.tx;
       } catch (e) { p.error = errText(e); p.tx = null; }
       fresh.push(p);
     }
@@ -174,13 +184,21 @@ export function LarkImport({ recordingId, scheduledStart, scheduledEnd, onClose 
       set({ kind: "working", done, total: spans.length, note: "The server is checking every part" });
       const fin = await rpc<{ chunks: number; audio_ms: number }>("recorder_lark_finish", { p_recording: recordingId, p_transmitter: tx });
       set({ kind: "done", chunks: fin.chunks, minutes: Math.round(fin.audio_ms / 60000) });
+      let mem = loadMemory();
+      for (const p of picked) if (p.tx === tx) mem = rememberDevice(mem, p.device, tx);
+      saveMemory(mem);
     } catch (e) {
       if (isFinal(e)) set({ kind: "refused", error: errText(e) });
       else set({ kind: "paused", done, total: spans.length, error: errText(e) });
     }
   }
 
+  const warnings = picked.map((p) => deviceWarning(memory, p.device, p.tx)).filter((w): w is string => !!w);
   const run = async () => {
+    if (warnings.length && !window.confirm(`${warnings.join("
+")}
+
+Upload with these numbers anyway?`)) return;
     stop.current = false;
     setBusy(true);
     try {
@@ -232,6 +250,7 @@ export function LarkImport({ recordingId, scheduledStart, scheduledEnd, onClose 
                 {p.relativePath}
                 {p.info && <span className="text-muted-foreground"> · {Math.round(p.info.durationMs / 60000)} min, {p.info.sampleRate / 1000} kHz {p.info.bitDepth}-bit{p.info.isFloat ? " float" : ""}</span>}
                 {p.error && <span className="block text-rose-700">Refused: {p.error}</span>}
+                {deviceWarning(memory, p.device, p.tx) && <span className="block text-amber-700">{deviceWarning(memory, p.device, p.tx)}</span>}
               </span>
               {p.info && (
                 <select aria-label={`Transmitter for ${p.file.name}`} className="border rounded px-2 min-h-9" disabled={busy}

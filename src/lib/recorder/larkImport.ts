@@ -34,6 +34,9 @@ export interface WavMeta {
   ixml?: { samplesSinceMidnight?: number; sampleRate?: number; timecodeRate?: string; timecodeFlag?: string; note?: string };
   description?: string;
   originator?: string;
+  originatorReference?: string;
+  /** iXML fields that name the device (any tag with SERIAL, DEVICE or MACHINE in it), as written. */
+  device?: Record<string, string>;
 }
 
 export interface WavInfo {
@@ -72,6 +75,7 @@ function readBext(b: Uint8Array, o: number, size: number, meta: WavMeta) {
   const v = new DataView(b.buffer, b.byteOffset + o, Math.min(size, b.length - o));
   meta.description = cstr(b, o, 256) || undefined;
   meta.originator = cstr(b, o + 256, 32) || undefined;
+  meta.originatorReference = cstr(b, o + 288, 32) || undefined;
   meta.originationDate = cstr(b, o + 320, 10) || undefined;
   meta.originationTime = cstr(b, o + 330, 8) || undefined;
   const tr = u64(v, 338);
@@ -89,6 +93,9 @@ function readIxml(b: Uint8Array, o: number, size: number, meta: WavMeta) {
   ix.timecodeRate = tag("TIMECODE_RATE");
   ix.timecodeFlag = tag("TIMECODE_FLAG");
   ix.note = tag("NOTE");
+  const dev: Record<string, string> = {};
+  for (const m of xml.matchAll(/<([A-Z0-9_]*(?:SERIAL|DEVICE|MACHINE)[A-Z0-9_]*)>\s*([^<]{1,80}?)\s*<\/([A-Z0-9_]+)>/gi)) if (m[3].toUpperCase() === m[1].toUpperCase()) dev[m[1].toUpperCase()] = m[2];
+  if (Object.keys(dev).length) meta.device = { ...(meta.device ?? {}), ...dev };
   if (Object.values(ix).some((x) => x !== undefined)) meta.ixml = ix;
 }
 
@@ -200,6 +207,47 @@ export function recordedStart(info: WavInfo): { sec: number; text: string; timeO
 }
 
 /** Transmitter 1-4 from a folder or file name, or null. The folder wins (a card copied into "TX2/"). */
+/**
+ * What identifies the transmitter itself, from its metadata or file name: an iXML serial / device tag, the BWF
+ * OriginatorReference, the Originator and Description, or a serial in the file name ("SN12345678"). Null when
+ * nothing does. A model name alone ("Lark Max 2") is the same on every transmitter, so the page remembers an
+ * identity only while it has always meant one sticker number (deviceMemory below).
+ */
+export function deviceIdentity(info: WavInfo, name = ""): string | null {
+  const m = info.meta;
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(m.device ?? {}).sort()) if (v) parts.push(`${k}=${v}`);
+  if (m.originatorReference) parts.push(`ref=${m.originatorReference}`);
+  if (m.originator) parts.push(`by=${m.originator}`);
+  if (m.description && m.description.length <= 80) parts.push(`desc=${m.description}`);
+  const sn = /(?<![A-Za-z0-9])(?:SN|S\/N|SERIAL)[\s_:#-]*([A-Z0-9]{6,})(?![A-Za-z0-9])/i.exec(name.replace(/\.[^.]+$/, ""));
+  if (sn) parts.push(`sn=${sn[1].toUpperCase()}`);
+  return parts.length ? parts.join("; ") : null;
+}
+
+/** Which sticker number each device identity has been: 1-4, or 0 once it has been two different numbers. */
+export type DeviceMemory = Record<string, number>;
+
+/** The number this identity was before, when it has only ever been one. */
+export function rememberedTransmitter(mem: DeviceMemory, id: string | null): 1 | 2 | 3 | 4 | null {
+  const n = id ? mem[id] : undefined;
+  return n && n >= 1 && n <= 4 ? (n as 1 | 2 | 3 | 4) : null;
+}
+
+/** After a transmitter is uploaded and checked: remember its identities' number (two numbers = not an identity). */
+export function rememberDevice(mem: DeviceMemory, id: string | null, transmitter: number): DeviceMemory {
+  if (!id) return mem;
+  const was = mem[id];
+  return { ...mem, [id]: was === undefined || was === transmitter ? transmitter : 0 };
+}
+
+/** A warning when the teacher's number contradicts what this device was before, else null. */
+export function deviceWarning(mem: DeviceMemory, id: string | null, chosen: number | null): string | null {
+  const was = rememberedTransmitter(mem, id);
+  if (!was || !chosen || was === chosen) return null;
+  return `This file's device was transmitter ${was} last time, and you chose ${chosen}: check the sticker before uploading`;
+}
+
 export function guessTransmitter(name: string, relativePath = ""): 1 | 2 | 3 | 4 | null {
   const pats = [
     /(?<![A-Za-z0-9])(?:TX|RX)[\s_-]*([1-4])(?![0-9])/i,
@@ -326,6 +374,7 @@ export function sourceForServer(l: TransmitterLayout) {
     bit_depth: first?.info.bitDepth ?? null,
     float: first?.info.isFloat ?? null,
     recorded_start: first?.start?.text ?? null,
+    device: first ? deviceIdentity(first.info, first.name) : null,
     duration_ms: l.durationMs,
     placed_by: l.placedBy,
     files: l.files.map((f) => ({
@@ -343,6 +392,7 @@ export function sourceForServer(l: TransmitterLayout) {
       time_reference_samples: f.info.meta.timeReferenceSamples ?? null,
       timecode: f.info.meta.ixml ?? null,
       originator: f.info.meta.originator ?? null,
+      device: deviceIdentity(f.info, f.name),
     })),
   };
 }

@@ -338,7 +338,7 @@ function makeWav({ rate = 48000, bits = 32, float = true, channels = 1, samples,
   parts.push(chunk("fmt ", fmt));
   if (bext) {
     const b = Buffer.alloc(602);
-    b.write("Lark Max 2", 256, "ascii"); b.write(bext.date, 320, "ascii"); b.write(bext.time, 330, "ascii");
+    b.write("Lark Max 2", 256, "ascii"); if (bext.ref) b.write(bext.ref, 288, "ascii"); b.write(bext.date, 320, "ascii"); b.write(bext.time, 330, "ascii");
     b.writeUInt32LE(bext.timeRef % 0x100000000, 338); b.writeUInt32LE(Math.floor(bext.timeRef / 0x100000000), 342);
     parts.push(chunk("bext", b));
   }
@@ -384,6 +384,23 @@ refused("an 8-bit WAV is refused", msg(() => parse(makeWav({ samples: sine(48, 4
 refused("a compressed (ADPCM) WAV is refused", msg(() => parse(makeWav({ samples: sine(48, 48000), bits: 16, float: false }).map((b, k) => (k === 20 ? 2 : b)))), /unsupported.*compressed/);
 
 eq("transmitter guesses", ["TX1_0001.WAV", "LARK_MAX2_TX3_20261128.wav", "MIC 2.wav", "Ch4-003.WAV", "REC_0001.WAV", "TX12.WAV"].map((n) => L.guessTransmitter(n)), [1, 3, 2, 4, null, null]);
+{
+  const a = parse(makeWav({ samples: new Float64Array(48), bext: { date: "2026-11-28", time: "17:30:00", timeRef: 1, ref: "LMX2TX0A1B2C" } }));
+  const id = L.deviceIdentity(a, "REC_0001.WAV");
+  ok("the BWF OriginatorReference identifies the device", /ref=LMX2TX0A1B2C/.test(id ?? ""), id ?? "null");
+  const x = parse(makeWav({ samples: new Float64Array(48), ixml: "<BWFXML><DEVICE_SERIAL>8812-77</DEVICE_SERIAL><MACHINE_NAME>TX3</MACHINE_NAME></BWFXML>" }));
+  eq("iXML serial and machine tags identify the device", L.deviceIdentity(x, "a.wav"), "DEVICE_SERIAL=8812-77; MACHINE_NAME=TX3");
+  eq("a serial in the file name identifies it", L.deviceIdentity(parse(makeWav({ samples: new Float64Array(48) })), "LARK_SN4F22A901_0001.WAV"), "sn=4F22A901");
+  eq("nothing identifies a plain file", L.deviceIdentity(parse(makeWav({ samples: new Float64Array(48) })), "REC_0001.WAV"), null);
+  let mem = L.rememberDevice({}, id, 2);
+  eq("a device uploaded as transmitter 2 is pre-selected as 2 next time", L.rememberedTransmitter(mem, id), 2);
+  ok("choosing 3 for it warns before upload", /was transmitter 2 last time, and you chose 3/.test(L.deviceWarning(mem, id, 3) ?? ""));
+  eq("choosing 2 does not", L.deviceWarning(mem, id, 2), null);
+  mem = L.rememberDevice(mem, id, 4);
+  eq("an identity that has been two numbers (a model name, not a serial) is forgotten", [L.rememberedTransmitter(mem, id), L.deviceWarning(mem, id, 1)], [null, null]);
+  const src = L.sourceForServer(L.layoutTransmitter(2, [{ key: "k", name: "REC_0001.WAV", bytes: 1, info: a }]));
+  ok("the identity is kept in the track's source, per file and for the track", src.device === id && src.files[0].device === id);
+}
 eq("the folder wins", L.guessTransmitter("REC_0001.WAV", "Lesson/TX4/REC_0001.WAV"), 4);
 
 const lf = (name, info, extra = {}) => ({ key: name, name, bytes: 1, info, ...extra });
