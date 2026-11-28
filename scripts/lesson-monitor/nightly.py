@@ -50,7 +50,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
+import re
 import shutil
 import sys
 import time
@@ -384,6 +386,9 @@ def process_one(api, row: dict, model, step0: dict, keep_local: bool, prog=None)
         write_draft(row, body, audio_s, proc_s, html_copy=True)
         pc.log(f"{rid} kept on this laptop only (--no-upload)")
         return "kept_local"
+    bad = finite_numbers(body)
+    if bad:
+        pc.log(f"{rid} {len(bad)} figure(s) were not numbers (NaN/inf), saved as empty: {', '.join(bad[:12])}"[:400])
     try:
         try:
             api.rpc("lesson_monitor_save_report", {"p_recording": rid, "p_job_version": pc.JOB_VERSION, "p_body": body,
@@ -913,6 +918,37 @@ def main(argv=None) -> int:
             return 0
         api.rpc("lesson_monitor_expire")  # also keeps the sign-in warm; the session renews itself
         look_after_class_reports(api)
+
+
+_UUIDISH = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
+
+
+def finite_numbers(body) -> list[str]:
+    """Replace every NaN / infinite number in the report with None, in place; return where they were.
+    Python writes NaN into JSON but the database refuses the whole body ("Empty or invalid json"): the owner's
+    first four-mic pilot (28 Nov 2026) lost its finished report that way after 75 minutes of work. The paths name
+    fields only: a child id used as a key is printed as "*" (logs carry codes, never a child)."""
+    out: list[str] = []
+
+    def walk(v, path):
+        if isinstance(v, dict):
+            for k in list(v):
+                p = f"{path}.{'*' if _UUIDISH.match(str(k)) else k}" if path else str(k)
+                if isinstance(v[k], float) and not math.isfinite(v[k]):
+                    v[k] = None
+                    out.append(p)
+                else:
+                    walk(v[k], p)
+        elif isinstance(v, list):
+            for i, x in enumerate(v):
+                if isinstance(x, float) and not math.isfinite(x):
+                    v[i] = None
+                    out.append(f"{path}[]")
+                else:
+                    walk(x, f"{path}[]")
+
+    walk(body, "")
+    return list(dict.fromkeys(out))
 
 
 _SEEN: set[str] = set()  # --watch only: recordings this run has already taken up
