@@ -54,6 +54,7 @@ export const TEACHER_GROUPS: NavGroup[] = [{
         // The lesson monitor's own reports: voice groups to name, transcript, talk time (owner, 27 Nov 2026: put it on a tab).
         { label: "Lesson monitor", path: "/teacher/lesson-reports", icon: "FileAudio", keywords: "voices voice groups monitor transcript", pilotOnly: true },
         { label: "Exam reports", path: "/teacher/exam-reports", icon: "FileBarChart2" },
+        { label: "Level Defence", path: "/teacher/level-defense", icon: "Scale", keywords: "cefr level defend standardized cambridge ielts" },
       ],
     },
     {

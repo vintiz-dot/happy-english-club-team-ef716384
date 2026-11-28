@@ -58,6 +58,7 @@ const TeacherProfile = lazy(() => import("./pages/TeacherProfile"));
 const StudentJournal = lazy(() => import("./pages/StudentJournal"));
 const TeacherJournal = lazy(() => import("./pages/TeacherJournal"));
 const TeacherExamReports = lazy(() => import("./pages/TeacherExamReports"));
+const TeacherLevelDefense = lazy(() => import("./pages/TeacherLevelDefense"));
 const TeacherResources = lazy(() => import("./pages/TeacherResources"));
 const StudentResources = lazy(() => import("./pages/StudentResources"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -176,6 +177,7 @@ function AppContent() {
                   <Route path="/teacher/assignments" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherAssignments /></ProtectedRoute>} />
                   <Route path="/teacher/journal" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherJournal /></ProtectedRoute>} />
                   <Route path="/teacher/exam-reports" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherExamReports /></ProtectedRoute>} />
+                  <Route path="/teacher/level-defense" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLevelDefense /></ProtectedRoute>} />
                   <Route path="/teacher/leaderboards" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherLeaderboards /></ProtectedRoute>} />
                   <Route path="/teacher/resources" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherResources /></ProtectedRoute>} />
                   <Route path="/teacher/vocabulary-audit" element={<ProtectedRoute allowedRole={["teacher", "admin"]}><TeacherVocabularyAudit /></ProtectedRoute>} />

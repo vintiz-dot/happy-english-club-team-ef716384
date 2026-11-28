@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Loader2, Scale, Search } from "lucide-react";
 import { CefrDefensePanel } from "@/components/cefr/CefrDefensePanel";
 import { CefrDraftsCard } from "@/components/cefr/CefrDraftsCard";
+import { useAuth } from "@/hooks/useAuth";
 
 const LEVELS = ["Pre-A1", "A1", "A2", "B1", "B2", "C1"];
 /** set_defense calls are counted by cefr-defense's gate (60 per 10 minutes). */
@@ -71,8 +72,14 @@ function stateOf(r: Row): string {
   return STATUS[r.claim.status] ? r.claim.status : "unverified";
 }
 
-export default function LevelDefenseTab() {
+/**
+ * `scope="teacher"` (Teaching > Level Defence, /teacher/level-defense): only
+ * the classes the signed-in teacher or TA teaches (is_teacher_of_class, the
+ * same test cefr-defense applies to every write).
+ */
+export default function LevelDefenseTab({ scope = "admin" }: { scope?: "admin" | "teacher" } = {}) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
@@ -84,7 +91,8 @@ export default function LevelDefenseTab() {
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
 
   const { data: rows = [], isLoading, error } = useQuery<Row[]>({
-    queryKey: ["level-defense-admin"],
+    queryKey: ["level-defense-admin", scope, user?.id ?? null],
+    enabled: scope === "admin" || !!user?.id,
     queryFn: async () => {
       const [enr, claims, std, points, tests] = await Promise.all([
         supabase.from("enrollments").select("student_id, class_id, students(id, full_name), classes(id, name)").is("end_date", null),
@@ -94,8 +102,19 @@ export default function LevelDefenseTab() {
         supabase.from("cefr_defense_tests").select("student_id, status").neq("status", "graded"),
       ]);
       if (enr.error) throw enr.error;
+      let enrolments = (enr.data ?? []) as any[];
+      if (scope === "teacher") {
+        // A teacher sees only their own classes, whatever else RLS lets them read.
+        const classIds = [...new Set(enrolments.map((e) => e.class_id).filter(Boolean))] as string[];
+        const mine = new Set<string>();
+        await Promise.all(classIds.map(async (id) => {
+          const { data } = await supabase.rpc("is_teacher_of_class", { user_id: user!.id, class_id: id });
+          if (data === true) mine.add(id);
+        }));
+        enrolments = enrolments.filter((e) => mine.has(e.class_id));
+      }
       const byStudent = new Map<string, Row>();
-      for (const e of (enr.data ?? []) as any[]) {
+      for (const e of enrolments) {
         const s = Array.isArray(e.students) ? e.students[0] : e.students;
         const c = Array.isArray(e.classes) ? e.classes[0] : e.classes;
         if (!s?.id) continue;
